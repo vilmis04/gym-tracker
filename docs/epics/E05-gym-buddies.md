@@ -59,19 +59,18 @@
 **Why:** Users need to act on requests they received and keep track of the ones they sent.
 
 **Scope**
-- Buddies page tab **Requests** with two lists:
-  - **Incoming:** avatar, name, sent date, **Accept** / **Decline**.
-  - **Outgoing:** avatar, name, sent date, **Cancel**.
-- Badge on the Buddies nav item with the number of incoming pending requests.
+- **Incoming:** shown as cards at the top of the Buddies page ("Tomas wants to be your gym buddy") with **Accept** / **Decline** (no separate Requests tab — see [mock-ups](../ui-mockups.md)).
+- **Outgoing:** avatar, name, sent date, **Cancel**, listed in the Add-buddy sheet (Q14).
+- No count badge on the nav item; Home shows pending buddy requests together with session invitations.
 - Optimistic updates with rollback on error.
 
 **Out of scope:** Push/email notifications.
 
 **Acceptance criteria**
-- [ ] Accepting moves the person to the buddy list immediately and the badge count drops.
+- [ ] Accepting moves the person to the buddy list immediately and the request card disappears (also from Home).
 - [ ] Declining removes the request from the incoming list; the requester sees it removed from their outgoing list (the reason isn't shown).
 - [ ] Cancelling an outgoing request removes it for both users.
-- [ ] Badge shows the correct count and is hidden at 0.
+- [ ] The pending count on Home is correct and the row is hidden at 0.
 - [ ] Empty states for both lists.
 
 **Depends on:** E05-T01
@@ -82,7 +81,8 @@
 **Scope**
 - Buddies page tab **Buddies**: avatar, name, "Buddies since {date}", "Last trained together {relative date}" or "Not trained together yet".
 - Sorted by last shared session (most recent first), then name.
-- Row menu: **Start session with…** (opens E07-T02 with the buddy pre-selected), **View progress together** (E09-T04, when available), **Remove buddy** (confirmation dialog).
+- Tapping a row: **Start session with…** (opens E07-T02 with the buddy pre-selected). Row "⋯" menu (long-press on mobile): **Remove buddy** (confirmation dialog). No "View progress together" (D10).
+- "Add buddy" is a round + button in the page header.
 - Local filter field when the list has more than 10 buddies.
 
 **Out of scope:** Buddy profile page.
@@ -121,12 +121,12 @@
 **Scope**
 - Subscribe to `buddy_connections` changes for the current user (Supabase Realtime), plus refetch on window focus.
 - Toast when a new request arrives ("Jonas wants to be your gym buddy" with **View**) or when someone accepts yours.
-- Updates the nav badge live.
+- Updates the pending count on Home and the request cards live.
 
 **Out of scope:** Email and push notifications; a notifications inbox.
 
 **Acceptance criteria**
-- [ ] When A sends a request, B (with the app open) sees a toast and the badge update within 3 seconds, without reloading.
+- [ ] When A sends a request, B (with the app open) sees a toast and the request card within 3 seconds, without reloading.
 - [ ] When B accepts, A sees a toast and B appears in A's list.
 - [ ] No duplicate toasts for the same event.
 - [ ] Works after the phone wakes from sleep (refetch on focus).

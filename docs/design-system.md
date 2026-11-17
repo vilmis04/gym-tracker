@@ -1,8 +1,10 @@
 # Design System
 
+Visual reference: [UI mock-ups](ui-mockups.md) ([design canvas](https://claude.ai/artifact/FsPAXBmTkAVZ3SPNsBWqNS#page-dcb81aee8d83)), every screen in light and dark.
+
 ## Principles
 
-- **Clean and minimal**: one primary action per screen, generous whitespace, no decorative noise.
+- **Clean and minimal**: one primary action per screen, generous whitespace, no decorative noise. Secondary details and actions go behind a "⋯" menu or a collapsed row.
 - **Earth tones and soft pastels**: muted, warm, natural. Nothing neon, saturated or flashy.
 - **Calm feedback**: success and errors use muted sage and terracotta, never bright green or red.
 - **Mobile-first**: thumb-reachable primary actions, 44 × 44 px min touch targets.
@@ -45,7 +47,7 @@ Defined as CSS variables (HSL) in `globals.css` and mapped into Tailwind. Compon
 | `--border` | Sand 200 | Charcoal 800 |
 | `--foreground` | Bark 900 | Linen 100 |
 | `--muted-foreground` | Bark 700 | Linen 300 |
-| `--primary` | Sage 500 | Sage 300 |
+| `--primary` | Sage 500, darkened to `#5E7152` for AA contrast with light text | Sage 300 |
 | `--primary-foreground` | Sand 50 | Charcoal 950 |
 | `--secondary` | Clay 400 (15% tint) | Clay 400 (20% tint) |
 | `--accent` | Dusty Blue 300 (20% tint) | Dusty Blue 300 (15% tint) |
@@ -67,7 +69,7 @@ Exact values are validated for contrast in E02-T01; any value that fails AA is a
 ## Spacing, shape, elevation
 
 - 4 px spacing grid; page gutter 16 px mobile, 24 px desktop.
-- Radius: 8 px controls, 12 px cards, full for avatars/chips.
+- Radius: 10–14 px controls, 18–20 px cards and sheets, full for avatars/chips.
 - Elevation: borders over shadows; one soft shadow level for popovers and dialogs.
 - Motion: 150–200 ms ease-out; respect `prefers-reduced-motion`.
 
@@ -89,9 +91,10 @@ Exact values are validated for contrast in E02-T01; any value that fails AA is a
 
 ## Layout
 
-- Mobile: bottom navigation with 4 items — **Home**, **Sessions**, **Progress**, **Buddies**; settings via avatar menu.
-- Desktop (≥ 1024 px): left sidebar with the same items; content max width 1120 px.
+- Mobile: bottom navigation with 4 items — **Home**, **Sessions**, **Progress**, **Buddies**; settings via avatar menu. No count badges on nav items; pending invitations and requests are surfaced on Home and in tab labels.
+- Desktop (≥ 1024 px): left sidebar with the same items; content max width 1180 px.
 - Header: page title, language switch and theme toggle in avatar menu.
+- Scroll bars are hidden in the app shell (`scrollbar-width: none`); content still scrolls by touch, wheel and keyboard.
 
 ## Iconography
 

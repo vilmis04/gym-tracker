@@ -112,7 +112,7 @@ _Milestone: M3 · See progress_
 | E09-T01 | [Metrics library & RPCs](epics/E09-progress-dashboards.md#e09-t01--metrics-library--rpcs--m) | M | E08-T01 |
 | E09-T02 | [Dashboard: user per session](epics/E09-progress-dashboards.md#e09-t02--dashboard-user-per-session--m) | M | E09-T01, E07-T05 |
 | E09-T03 | [Dashboard: user per exercise](epics/E09-progress-dashboards.md#e09-t03--dashboard-user-per-exercise--m) | M | E09-T01 |
-| E09-T04 | [Compare with buddy](epics/E09-progress-dashboards.md#e09-t04--compare-with-buddy--s) | S | E09-T03 |
+| ~~E09-T04~~ | ~~[Compare with buddy](epics/E09-progress-dashboards.md#e09-t04--compare-with-buddy--s)~~ — dropped (D10) | — | — |
 | E09-T05 | [Progress overview page](epics/E09-progress-dashboards.md#e09-t05--progress-overview-page--m) | M | E09-T02, E09-T03 |
 | E09-T06 | [Filters by tag / muscle group](epics/E09-progress-dashboards.md#e09-t06--filters-by-tag--muscle-group--s) | S | E09-T05 |
 

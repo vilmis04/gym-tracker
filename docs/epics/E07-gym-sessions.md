@@ -36,8 +36,8 @@
 
 **Scope**
 - "New session" from Home and Sessions page (and "Start session with…" on a buddy).
-- Form: **When** (date/time, default now), **Title** (optional; placeholder shows the generated default), **Location** (optional, free text with last used locations as suggestions), **Invite buddies** (multi-select Combobox of buddies).
-- Two submit buttons: **Start now** (status `active`) and **Plan** (status `planned`, enabled when time is in the future).
+- Form: **When** (date/time, default now), **Who's coming** (buddies as toggle chips; a search field appears when there are more than ~8 buddies), and a collapsed **Add title or location** row revealing **Title** (optional; placeholder shows the generated default) and **Location** (optional, free text with last used locations as suggestions).
+- Two submit buttons at the bottom: **Start now** (primary, status `active`) and **Plan for later** (text button, status `planned`; if the time is still "now" it opens the time picker first).
 - Default title by locale and weekday: "Antradienio treniruotė" / "Tuesday session".
 - Warn (not block) if the user already has an active session: "You have an active session. Continue it instead?"
 
@@ -47,7 +47,7 @@
 - [ ] A solo session can be started with one tap after opening the form (all defaults).
 - [ ] Invited buddies see the invitation in their Invitations tab.
 - [ ] Only buddies appear in the invite picker.
-- [ ] **Plan** with a past time shows a validation error; **Start now** always works.
+- [ ] **Plan for later** with a past time shows a validation error; **Start now** always works.
 - [ ] After saving, the user lands on the session page.
 - [ ] The default title is in the active language and matches the weekday.
 
@@ -61,8 +61,9 @@
   - **Upcoming:** active session pinned on top with **Continue**, then planned sessions ascending by time.
   - **Invitations:** pending invites with **Accept** / **Decline** (E07-T04).
   - **History:** completed sessions, newest first, paginated (20 per page); cancelled sessions shown muted with a "Cancelled" label.
-- Session card: date/time, title, location, participant AvatarStack, status chip, number of exercises (history).
-- Badge on the Sessions nav item for pending invitations.
+- Session row (plain list, not cards): day/date, title, one muted line (time · who's coming, or exercises for history), and one trailing label when relevant (**Continue**, **Respond**, PR count, "Cancelled").
+- Pending invitation count in the tab label ("Invitations · 2"); no badge on the nav item.
+- **New session** is a round + button in the page header.
 
 **Out of scope:** Calendar view (part of E09-T05).
 
@@ -70,7 +71,7 @@
 - [ ] An active session always appears first in Upcoming with a working **Continue** button.
 - [ ] Each tab has a translated empty state with a relevant action.
 - [ ] History loads more items on scroll without duplicates.
-- [ ] Invitation badge count matches the Invitations tab.
+- [ ] The count in the Invitations tab label matches the list and the count on Home.
 
 **Depends on:** E07-T01
 
@@ -96,7 +97,7 @@
 **Why:** The session page is the hub of a workout: who's there, its state, and the actions to start, finish or change it.
 
 **Scope**
-- Session page header: title, date/time, location, status chip, participants (avatars with status), menu with actions.
+- Session page header: title, status with elapsed time ("Active · 42 min"), and a "⋯" menu with the actions (participants and location live in the menu/details view on mobile; desktop shows "with Jonas and Ona" under the title and a **Complete session** button).
 - Owner actions: edit details, invite more buddies, remove a participant, cancel session.
 - Any participant: **Start** (planned → active), **Complete** (active → completed, with confirmation and short summary "5 exercises · 42 sets"), **Reopen** (within edit window).
 - Below the header: the exercise list / logging area (E08).
@@ -137,12 +138,11 @@
 **Why:** Home should get users into their workout in one tap and show what needs attention.
 
 **Scope**
-- Home sections (only shown if relevant):
-  1. **Active session** card with **Continue**.
-  2. **Next planned session** with time and participants.
-  3. **Invitations** count with link (sessions + buddy requests).
-  4. **Recent sessions** (last 3 completed) with link to their summaries.
-  5. Primary button **Start session**.
+- Home sections (only shown if relevant), kept short on purpose:
+  1. **Active session** card with **Continue**; when there is none, a primary **Start session** button takes its place.
+  2. **Up next**: the next planned session with time and who's coming.
+  3. One row with the pending count ("2 session invitations", including buddy requests) linking to the right place.
+- Recent sessions are not on mobile Home; they are in Sessions › History. Desktop Home adds month stats, the activity heatmap and the week agenda (E09-T05).
 - New-user empty state: 3 steps — "Add a gym buddy", "Start your first session", "Log your first set".
 
 **Out of scope:** Progress tiles (E09-T05).

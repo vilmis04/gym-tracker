@@ -62,11 +62,12 @@
 **Scope**
 - Page `/[locale]/progress/exercise/[exerciseId]`.
 - Exercise selector (Combobox limited to exercises the user has logged) at the top.
-- Metric selector: **Top weight**, **Est. 1RM**, **Volume**, **Total reps** (bodyweight: reps metrics only).
-- Range selector: 1M / 3M / 6M / 1Y / All (default 3M).
+- Metric selector: **Top weight**, **Est. 1RM**, **Volume**, **Total reps** (bodyweight: reps metrics only); a 2 × 2 button grid on mobile.
+- Range selector: 1M / 3M / 6M / 1Y / All (default 3M). On mobile it's in the exercise header menu, so the main view stays on the default 3M; desktop shows it next to the metric buttons.
 - Line chart (Recharts, chart tokens) with PR points marked; tooltip with date, value and sets.
-- Stat tiles: current best, change over the selected range (absolute and %), number of sessions.
-- History table: date, sets (e.g. "60×8, 60×8, 57,5×7"), top set, volume, note; newest first; paginated.
+- Headline instead of stat tiles: current best in large type, with the change over the selected range in absolute value **and** percent ("+10 kg · +14% in 3 months").
+- History list: date, sets (e.g. "60×8, 60×8, 57,5×7"), top set; newest first; paginated. Shown below the chart on desktop; on mobile it's reached by scrolling below the metric buttons.
+- Only the current user's data is shown (D10).
 - Selected metric and range stored in URL params.
 
 **Out of scope:** Buddy comparison (E09-T04).
@@ -75,12 +76,16 @@
 - [ ] Chart, tiles and table show the same data for the selected range and metric.
 - [ ] Tapping a chart point or table row opens that session's summary.
 - [ ] With fewer than 2 sessions, a friendly empty state replaces the chart ("Log this exercise again to see progress").
-- [ ] Chart is readable in both themes, at 360 px, and has an accessible text alternative (table).
+- [ ] Chart is readable in both themes, at 360 px, and has an accessible text alternative (summary label plus the history list).
+- [ ] The change shows both the absolute value and the percent, in both locales.
 - [ ] Changing metric/range doesn't reload the page and can be shared via URL.
 
 **Depends on:** E09-T01
 
 ### E09-T04 · Compare with buddy — `S`
+
+> **Dropped from MVP (decision D10, mock-up review):** progress shows only your own data. Kept below for reference only; do not implement.
+
 **Why:** Training together is motivating; comparing progress with a buddy on the same exercise adds to that, within privacy limits.
 
 **Scope**
@@ -103,7 +108,7 @@
 **Why:** Users need an entry point to see all their progress at a glance and drill into slices.
 
 **Scope**
-- Page `/[locale]/progress` with summary tiles: sessions this month (vs last month), total volume this month, weekly streak (weeks in a row with ≥ 1 session), PRs this month.
+- Page `/[locale]/progress` with summary numbers: sessions this month, weekly streak (weeks in a row with ≥ 1 session), records this month (total volume dropped from the headline to keep it short). The same numbers and the 12-month heatmap also appear on desktop Home. Layout of this page is not designed yet (Q12).
 - Slice tabs:
   - **By exercise:** list of logged exercises with sparkline (last 8 sessions, top weight or e1RM), latest top set, trend arrow, last date; sortable by last done / most improved / name.
   - **By session:** activity heatmap/calendar (last 12 months, earth-tone scale) + list of sessions linking to summaries.

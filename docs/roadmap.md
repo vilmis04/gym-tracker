@@ -30,7 +30,7 @@ Sizes: **S** ≤ 1 day, **M** 1–3 days (one developer). Estimates are rough an
 | 4 | Sessions | E06-T04, E06-T06, E07-T01…T05, E07-T07 |
 | 5 | Logging | E08-T01…T06, E07-T06, E03-T05 |
 | 6 | Realtime & dashboards | E08-T07, E09-T01…T03, E05-T05, E06-T07 |
-| 7 | Dashboards & polish | E09-T04…T06, E08-T08, E05-T06, E10-T01, E10-T06 |
+| 7 | Dashboards & polish | E09-T05…T06, E08-T08, E05-T06, E10-T01, E10-T06 |
 | 8 | Launch | E10-T02…T05, E10-T07 |
 
 Parallel tracks are possible after Sprint 2: one developer on E05 → E07, another on E06.

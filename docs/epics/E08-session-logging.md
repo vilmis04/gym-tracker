@@ -74,11 +74,12 @@
 **Why:** This is where users spend most of their time in the gym; logging sets for each person must be fast, clear and one-handed.
 
 **Scope**
-- Exercise card (expanded): name, machine, tags; **participant switcher** (avatars as a SegmentedControl; defaults to the current user).
+- Exercise card (expanded): name; **participant switcher** (avatar + name chips; defaults to the current user). Machine, tags and card actions (move, remove, note, Copy all) are in the card's "⋯" menu, not on the main view.
+- **Desktop (≥ 1024 px):** instead of the switcher, all participants' columns are shown side by side (last time, sets, kg/reps inputs and add button per person), with the session's exercise list on the left.
 - For the selected participant:
   - Set list: `#`, weight, reps; tap a set to edit inline; swipe or menu to delete.
   - **Add set** row: weight and reps NumberSteppers + **✓ Add** button.
-- Collapsed card: one summary line per participant, e.g. "Jonas · 3 × 8 @ 60 kg", "Ona · 4 × 10 @ 25 kg".
+- Collapsed card: a single line with the exercise name and **your own** result, e.g. "Bench press · 4 × 8 · 82.5 kg" ("Not started" when you have no sets). Not a total set count across participants. Other participants' summaries appear when the card is expanded and their chip is selected.
 - Only one card expanded at a time; expanding scrolls it into view.
 - Optimistic updates (TanStack Query) with rollback and a toast on error.
 - Haptic feedback on add (where supported).
@@ -91,7 +92,8 @@
 - [ ] Editing and deleting a set work and are kept after reload.
 - [ ] A failed save shows the set as failed with **Retry**, and nothing is lost.
 - [ ] Usable one-handed on a 360 px phone: Add button and steppers in the lower half of the screen.
-- [ ] Collapsed summaries are correct for every participant (unit test of summary formatter, both locales).
+- [ ] The collapsed summary shows the current user's result correctly (unit test of summary formatter, both locales).
+- [ ] On desktop, every accepted participant has a logging column and sets can be added in any column without switching.
 
 **Depends on:** E08-T02, E02-T05
 
@@ -100,12 +102,12 @@
 
 **Scope**
 - When an exercise card is opened, fetch `last_attempt` for all accepted participants in one request (prefetched when the card is added or the session loads).
-- Show a muted reference block per participant: "Last time · 12 Nov: 60×8, 60×8, 57,5×7".
+- Show one muted reference line for the selected participant: "Last time 60×8 · 60×8 · 57,5×7" (date and last note in the line's details/tooltip).
 - Pre-fill the **Add set** inputs:
   - Set N → last attempt's set N.
   - After last attempt's set count, or if no last attempt: repeat the participant's previous set in this session.
   - No history at all: weight empty, reps 10 (placeholder).
-- **Copy all** button: logs all last-attempt sets at once as new sets (editable afterwards).
+- **Copy all** in the card's "⋯" menu: logs all last-attempt sets at once as new sets (editable afterwards).
 - Clear visual difference between reference values (muted, italic label "Last time") and logged values.
 - Link on the reference block to that previous session's summary.
 
@@ -124,7 +126,7 @@
 **Why:** Lifters note things like seat height, grip or pain; notes per person per exercise help next time.
 
 **Scope**
-- Notes field (Textarea, collapsible "Add note") in each participant's section of the card.
+- Notes field (Textarea) opened from **Add note** in the card's "⋯" menu, for the selected participant; once a note exists it shows as one muted line under the sets.
 - Autosave 800 ms after typing stops, plus on blur; status "Saving…" / "Saved".
 - Max 1000 characters with counter after 800.
 - Last attempt's note shown in the reference block ("Last note: seat 4").
