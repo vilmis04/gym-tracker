@@ -12,7 +12,7 @@ Gym Tracker is a clean, minimal web app for logging workouts together with frien
 | [data-model.md](data-model.md) | Database schema, relationships, RLS policies, key queries |
 | [design-system.md](design-system.md) | Earth-tone pastel palette, typography, components, dark/light |
 | [roadmap.md](roadmap.md) | Milestones, epic order, dependencies |
-| [backlog.md](backlog.md) | All tasks with scope and acceptance criteria in one page (generated from `epics/` by `scripts/generate-backlog.py`) |
+| [backlog.md](backlog.md) | Summary table of all tasks, linking to their details in the epic files |
 | [epics/](epics/) | One file per epic with detailed tasks and acceptance criteria |
 | [open-questions.md](open-questions.md) | Decisions still to confirm with stakeholders |
 
