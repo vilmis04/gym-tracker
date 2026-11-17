@@ -58,15 +58,17 @@
 - Lighthouse (mobile, throttled 4G) for landing, Home, session logging and Progress overview.
 - Bundle analysis (`@next/bundle-analyzer`); lazy-load charts and heavy pickers.
 - `EXPLAIN ANALYZE` for all RPCs on the demo dataset scaled ×10; add missing indexes.
-- Measure set-logging round-trip time (p95) on preview.
+- Measure set-logging round-trip time (p95) on the Coolify preview/staging deployment; check server CPU/memory under a small load test (e.g. 20 concurrent users) and set container resource limits in Coolify.
+- Make sure static assets (`/_next/static`) are served with long-lived cache headers.
 
-**Out of scope:** CDN or infrastructure changes beyond Vercel/Supabase defaults.
+**Out of scope:** Adding a CDN or more servers (only if measurements show it's needed).
 
 **Acceptance criteria**
 - [ ] LCP < 2.5 s and Lighthouse performance ≥ 90 on the four pages.
 - [ ] Set logging round-trip p95 < 300 ms.
 - [ ] No RPC over 150 ms on the scaled dataset.
 - [ ] First-load JS for the session page under 200 kB (gzipped).
+- [ ] Server stays below 70% CPU and memory during the load test, with resource limits set.
 
 **Depends on:** E10-T01
 
@@ -78,7 +80,8 @@
 - Confirm the service-role key is only used in the webhook/admin module.
 - Webhook signature verification and replay handling.
 - Rate limits on `search_users`, exercise/machine creation and buddy requests (e.g. Upstash or Postgres-based counter).
-- Security headers (CSP, HSTS, frame-ancestors), dependency audit (`npm audit`, Dependabot).
+- Security headers (CSP, HSTS, frame-ancestors), dependency audit (`npm audit`, Dependabot), Docker base image scan (e.g. Trivy).
+- Self-hosted server: Coolify and OS up to date, SSH key-only, firewall (22/80/443 only), Coolify dashboard behind strong auth/2FA, no unused open ports.
 - Check that no private data (emails, notes) appears in logs or error tracking.
 
 **Out of scope:** External penetration test.
@@ -87,7 +90,8 @@
 - [ ] Every table has RLS tests for all four operations.
 - [ ] Rate limits return a translated "Too many requests" after the threshold.
 - [ ] Security headers score A on securityheaders.com (or equivalent check).
-- [ ] No high or critical dependency vulnerabilities open.
+- [ ] No high or critical vulnerabilities open in dependencies or the Docker image.
+- [ ] Server hardening checklist completed (port scan shows only 22/80/443).
 - [ ] Review notes stored in `docs/security-review.md`.
 
 **Depends on:** E10-T01
@@ -139,9 +143,10 @@
 
 **Scope**
 - Production Clerk instance with verified Google OAuth consent screen (app name, logo, privacy policy URL).
-- Custom domain + HTTPS; Clerk and Supabase configured for it.
+- Custom domain pointed to the Coolify server; HTTPS certificate issued by Coolify's proxy; Clerk (production instance) and Supabase configured for the domain.
 - Supabase production: point-in-time recovery/backups enabled, seed data loaded, connection limits checked.
-- Error tracking alerts (new error types, error spikes) to the team channel; uptime check.
+- Error tracking alerts (new error types, error spikes) to the team channel; external uptime check on `/api/health`.
+- Coolify: backup of its own configuration/database enabled, server disk-usage alerts, old Docker images cleaned up automatically.
 - Analytics (privacy-friendly) for the success metrics in the vision doc.
 - Smoke test on production with a real Google account.
 

@@ -109,26 +109,28 @@
 
 **Depends on:** E01-T04
 
-### E01-T06 · Environments & deployment — `S`
-**Why:** Product and testers need a link to every change, and production releases must be repeatable and safe.
+### E01-T06 · Docker image for self-hosting — `S`
+**Why:** The app runs on a self-hosted Coolify server, so it needs a small, secure, reproducible Docker image.
 
 **Scope**
-- Vercel project linked to the repo: preview deployment per PR, production on `main`.
-- Supabase projects: **staging** (used by previews) and **production**.
-- GitHub Action on merge to `main`: `supabase db push` to production before the Vercel production build is promoted; staging gets migrations on every PR merge to `main` too.
-- Secrets set in Vercel/GitHub per environment.
-- Short runbook in `docs/` (how to deploy, roll back, run a migration manually).
+- `next.config` with `output: 'standalone'`.
+- Multi-stage `Dockerfile` (deps → build → runtime) on Node LTS Alpine/slim; runtime runs as a non-root user; includes `sharp` for image optimization.
+- `NEXT_PUBLIC_*` values passed as build arguments; server secrets read at runtime only (never baked into the image).
+- `.dockerignore` (node_modules, .next, .git, tests, docs).
+- Health check route `GET /api/health` (returns 200 and the app version; no auth, no DB secrets) and a `HEALTHCHECK` in the Dockerfile.
+- `npm run docker:build` / `docker:run` scripts and a short section in the README.
+- CI job builds the image on every PR (no push), so a broken Dockerfile is caught early.
 
-**Out of scope:** Custom domain and production Clerk instance (E10-T07).
+**Out of scope:** Coolify setup and deployment pipeline (E01-T08).
 
 **Acceptance criteria**
-- [ ] Every PR shows a preview URL that works against staging.
-- [ ] Merging to `main` applies new migrations to production and deploys the app without manual steps.
-- [ ] A failed migration stops the production deploy.
-- [ ] No secret values exist in the repository or build logs.
-- [ ] The runbook explains how to roll back to the previous deployment.
+- [ ] `docker build` followed by `docker run` with an env file serves the app on port 3000 and passes the health check.
+- [ ] The final image is under ~250 MB and runs as a non-root user.
+- [ ] `docker history` / image inspection shows no server secrets (e.g. `CLERK_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
+- [ ] `/api/health` responds 200 without signing in.
+- [ ] CI fails if the image can't be built.
 
-**Depends on:** E01-T05
+**Depends on:** E01-T01
 
 ### E01-T07 · Error tracking & shared Result type — `S`
 **Why:** We need to know when something breaks in production, and every Server Action should return errors in the same shape so the UI can show translated messages.
@@ -148,3 +150,31 @@
 - [ ] Every `ErrorCode` has an `errors.*` key (checked once i18n exists).
 
 **Depends on:** E01-T01
+
+### E01-T08 · Coolify environments & deployment pipeline — `M`
+**Why:** Product and testers need a link to every change, and production releases to the self-hosted Coolify server must be repeatable, safe and easy to roll back.
+
+**Scope**
+- **Coolify server:** Coolify instance on our server (same region as Supabase), SSH key-only access, firewall allowing only 22/80/443, automatic OS security updates.
+- **Coolify apps** (Dockerfile build pack, connected via the Coolify GitHub App):
+  - **Production** app on the custom domain, tracking `main`, automatic deploy on push **off**.
+  - **Preview deployments** enabled for pull requests (`pr-{n}.<staging-domain>`), using staging variables.
+- **Variables:** build-time (`NEXT_PUBLIC_*`) and runtime secrets set per environment in Coolify; nothing in the repo.
+- **Supabase Cloud:** **staging** project (used by previews) and **production** project.
+- **Clerk Cloud:** dev instance for local/previews, production instance for production; allowed origins/redirect URLs and webhook endpoints set for the Coolify domains.
+- **GitHub Action on merge to `main`:** `supabase db push` to staging, then to production; on success, trigger the Coolify production deploy via its API/webhook (token stored as a GitHub secret). A failed migration stops the deploy.
+- Coolify health check on `/api/health`; deploy is marked failed if the new container isn't healthy (old container keeps running).
+- **Runbook** in `docs/deployment.md`: how deploys work, how to roll back (redeploy previous image in Coolify), how to run a migration manually, how to rotate secrets, server access.
+
+**Out of scope:** Custom domain DNS details and production Clerk Google consent screen (E10-T07); multi-instance scaling.
+
+**Acceptance criteria**
+- [ ] Opening a PR creates a Coolify preview URL that works against Supabase staging and Clerk dev (sign-in works).
+- [ ] Closing/merging the PR removes its preview deployment.
+- [ ] Merging to `main` applies new migrations and then deploys production without manual steps.
+- [ ] A failing migration stops the production deploy, and the current production version keeps running.
+- [ ] A deploy whose container fails the health check doesn't replace the running version.
+- [ ] Rolling back to the previous version takes under 5 minutes by following the runbook.
+- [ ] No secret values exist in the repository, Docker image or build logs; the server only accepts SSH keys.
+
+**Depends on:** E01-T05, E01-T06

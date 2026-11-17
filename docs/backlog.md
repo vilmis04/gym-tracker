@@ -2,7 +2,7 @@
 
 Summary of all tasks. Each task links to its full description, scope and acceptance criteria in the epic file. Sizes: **S** ≤ 1 day, **M** 1–3 days. The [Definition of Done](roadmap.md#definition-of-done) applies to every task.
 
-**Totals:** 64 tasks (39 × S, 25 × M), roughly 89 developer-days (S = 1, M = 2).
+**Totals:** 65 tasks (39 × S, 26 × M), roughly 91 developer-days (S = 1, M = 2).
 
 ## [E01 · Project Foundation](epics/E01-foundation.md)
 _Milestone: M1 · Walking skeleton_
@@ -14,8 +14,9 @@ _Milestone: M1 · Walking skeleton_
 | E01-T03 | [Supabase client helpers](epics/E01-foundation.md#e01-t03--supabase-client-helpers--s) | S | E01-T02 (token wiring finalized in E04-T02) |
 | E01-T04 | [Testing setup](epics/E01-foundation.md#e01-t04--testing-setup--m) | M | E01-T02 |
 | E01-T05 | [CI pipeline](epics/E01-foundation.md#e01-t05--ci-pipeline--s) | S | E01-T04 |
-| E01-T06 | [Environments & deployment](epics/E01-foundation.md#e01-t06--environments--deployment--s) | S | E01-T05 |
+| E01-T06 | [Docker image for self-hosting](epics/E01-foundation.md#e01-t06--docker-image-for-self-hosting--s) | S | E01-T01 |
 | E01-T07 | [Error tracking & shared Result type](epics/E01-foundation.md#e01-t07--error-tracking--shared-result-type--s) | S | E01-T01 |
+| E01-T08 | [Coolify environments & deployment pipeline](epics/E01-foundation.md#e01-t08--coolify-environments--deployment-pipeline--m) | M | E01-T05, E01-T06 |
 
 ## [E02 · Design System & Theming](epics/E02-design-system.md)
 _Milestone: M1 · Walking skeleton_

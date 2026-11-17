@@ -17,7 +17,9 @@
 | Testing | **Vitest** + Testing Library (unit), **Playwright** (e2e) | |
 | Lint / format | ESLint, Prettier, TypeScript strict | |
 | CI | GitHub Actions | lint, typecheck, unit, e2e, DB migration check |
-| Hosting | Vercel (app) + Supabase Cloud (DB) | Preview deployment per PR |
+| Hosting (app) | **Self-hosted Coolify** (Docker, Next.js `output: 'standalone'`) | Preview deployment per PR via Coolify; TLS via Coolify's proxy |
+| Hosting (DB) | **Supabase Cloud** | Staging + production projects |
+| Auth provider | **Clerk Cloud** | Dev instance (local + previews) and production instance |
 
 ## System overview
 
@@ -29,8 +31,9 @@
 └─────┬──────┘                       │ session token (JWT, sub = Clerk user id)
       │ RSC / Server Actions         ▼
 ┌─────▼──────────────────┐   ┌──────────────────────┐
-│ Next.js server (Vercel)│──▶│ Supabase Postgres    │
-│ - Clerk middleware     │   │ - RLS on every table │
+│ Next.js server         │──▶│ Supabase Cloud       │
+│ (Docker on Coolify)    │   │ - RLS on every table │
+│ - Clerk middleware     │   │                      │
 │ - Supabase client with │   │ - auth.jwt()->>'sub' │
 │   Clerk token          │   │ - Realtime channels  │
 └────────────────────────┘   └──────────────────────┘
@@ -104,19 +107,30 @@ The session logging screen subscribes to Supabase Realtime (Postgres changes on 
 | Env | App | DB | Clerk |
 |---|---|---|---|
 | Local | `next dev` | Supabase CLI (Docker) | Clerk dev instance |
-| Preview | Vercel preview per PR | Supabase staging project | Clerk dev instance |
-| Production | Vercel production | Supabase production project | Clerk production instance |
+| Preview | Coolify preview deployment per PR (`pr-{n}.<staging-domain>`) | Supabase staging project | Clerk dev instance |
+| Production | Coolify production app (custom domain) | Supabase production project | Clerk production instance |
 
-Secrets: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server only). Documented in `.env.example`.
+Secrets: set per environment in Coolify (runtime and build-time variables) and in GitHub Actions (migrations only): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server only). Documented in `.env.example`.
+
+## Deployment (self-hosted Coolify)
+
+- The app is built from a multi-stage `Dockerfile` using Next.js `output: 'standalone'` (small Node image, `sharp` for image optimization, runs as non-root).
+- `NEXT_PUBLIC_*` variables are inlined at build time, so they're set as **build variables** in Coolify for each environment; server secrets are **runtime variables**.
+- Coolify is connected to the GitHub repo through its GitHub App. Automatic deploys on push are **off** for production: a GitHub Action first applies Supabase migrations, then triggers the Coolify deploy through its API/webhook. A failed migration stops the deploy.
+- Pull requests get Coolify **preview deployments**, wired to the Supabase staging project and the Clerk dev instance.
+- Coolify's proxy (Traefik) handles HTTPS certificates (Let's Encrypt) and routing.
+- The server should be in the same region as the Supabase project (e.g. EU Central) to keep database latency low.
+- The Next.js cache lives in the container filesystem; it's fine with one instance. Running more than one instance later needs a shared cache handler.
+- Clerk webhooks need a public URL: production → production domain; the Clerk dev instance → the staging/preview URL.
 
 ## Non-functional requirements
 
 | Area | Target |
 |---|---|
 | Performance | LCP < 2.5 s on mid-range phone (4G); set logging round-trip < 300 ms p95 |
-| Availability | Rely on Vercel/Supabase SLAs; no custom infra |
+| Availability | App runs on a single self-hosted Coolify server; the app container is stateless, so recovery = redeploy the last good image. Supabase and Clerk rely on their cloud SLAs. Health check at `/api/health` |
 | Security | RLS on 100% of tables; RLS tests in CI; no service key in client bundle |
 | Privacy | Users see only their own data, buddies' public profile, and shared session data. Account deletion removes personal data (GDPR) |
 | Accessibility | WCAG 2.1 AA, contrast checked in both themes |
 | Browser support | Last 2 versions of Chrome, Safari (iOS), Firefox, Edge |
-| Observability | Vercel analytics + error tracking (e.g. Sentry) |
+| Observability | Error tracking (e.g. Sentry), privacy-friendly analytics (e.g. Plausible or Umami, can also run on Coolify), uptime monitoring of `/api/health`, container logs in Coolify |

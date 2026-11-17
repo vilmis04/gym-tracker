@@ -24,7 +24,7 @@ Sizes: **S** ≤ 1 day, **M** 1–3 days (one developer). Estimates are rough an
 
 | Sprint (2 wk) | Focus | Tasks |
 |---|---|---|
-| 1 | Skeleton | E01-T01…T07, E02-T01, E03-T01, E04-T01, E04-T02 |
+| 1 | Skeleton | E01-T01…T08, E02-T01, E03-T01, E04-T01, E04-T02 |
 | 2 | Shell & profile | E02-T02…T06, E03-T02…T04, E04-T03…T05 |
 | 3 | Buddies & catalog | E05-T01…T04, E06-T01…T03, E06-T05 |
 | 4 | Sessions | E06-T04, E06-T06, E07-T01…T05, E07-T07 |
