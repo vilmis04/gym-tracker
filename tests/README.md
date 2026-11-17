@@ -8,6 +8,8 @@ Three levels, each with its own command. All of them run on a clean checkout (`n
 | Database, RLS   | Vitest (Node) against local Supabase            | `tests/db/**/*.test.ts`                 | `npm run test:db` (after `npm run db:start`) |
 | End-to-end      | Playwright: desktop Chromium + WebKit iPhone 14 | `tests/e2e/**/*.spec.ts`                | `npm run e2e` · `npm run e2e:ui`             |
 
+CI runs all three on every PR (see [docs/ci.md](../docs/ci.md)): unit with coverage, DB tests on a fresh local Supabase stack, e2e on both projects against the production build.
+
 Coverage for unit tests: `npm run test:coverage` (V8; text summary in the terminal, HTML in `coverage/index.html`, `coverage/lcov.info` for CI).
 
 ```
@@ -100,7 +102,7 @@ Needs:
 - A test user in the dev instance: create `e2e-user+clerk_test@example.com` once in the Clerk dashboard (Users → Create user), or set `E2E_CLERK_USER_EMAIL` to another `+clerk_test` address. `+clerk_test` addresses never receive real mail.
 - The app must load Clerk (`<ClerkProvider>`), which arrives in **E04-T01**.
 
-Without the keys, Clerk-dependent specs are skipped with a clear reason; `tests/e2e/sign-in.spec.ts` is the example and `tests/e2e/home.spec.ts` (placeholder page loads) always runs. **Until E04-T01 the sign-in example is skipped everywhere**; E04-T01/T02 add the keys to CI and make it a required check.
+Without the keys, Clerk-dependent specs are skipped with a clear reason; `tests/e2e/sign-in.spec.ts` is the example and `tests/e2e/home.spec.ts` (placeholder page loads) always runs. **Until E04-T01 the sign-in example is skipped everywhere**; E04-T01/T02 set the `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` repository secrets, which the CI e2e job already passes through (see [docs/ci.md](../docs/ci.md#secrets-and-variables)).
 
 ## Writing tests
 

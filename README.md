@@ -53,6 +53,10 @@ Open [http://localhost:3000](http://localhost:3000) — you should see the place
 
 Before opening a PR run `npm run lint && npm run typecheck && npm run format:check && npm test && npm run build` (plus `npm run test:db` and `npm run e2e` when you touched the database or a user flow).
 
+## CI
+
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every pull request and on pushes to `main`: lint/typecheck/format, unit tests, database tests on a fresh Supabase with all migrations plus a check that `src/types/database.ts` is up to date, the production build, and Playwright e2e (report and traces uploaded on failure). Branch protection (a one-time manual setup) makes the **CI passed** check and one approval required to merge into `main`. See [docs/ci.md](docs/ci.md) for the jobs, how to read failures, optional secrets and the branch protection setup.
+
 ## Database (Supabase)
 
 The schema lives in [`supabase/migrations`](supabase/migrations) and is the only way to change it (see [architecture conventions](docs/architecture.md#conventions)). Local development runs the full Supabase stack in Docker through the [Supabase CLI](https://supabase.com/docs/guides/local-development), installed as a dev dependency (`npx supabase …` works too).
@@ -75,7 +79,7 @@ npm run db:reset              # rebuild the DB from all migrations + supabase/se
 npm run db:types              # regenerate src/types/database.ts
 ```
 
-Commit the migration and the regenerated `src/types/database.ts` in the same PR. `db:types` is deterministic: running it on an unchanged schema produces no diff (CI will enforce this from E01-T05). Never edit a migration that has already been merged; add a new one.
+Commit the migration and the regenerated `src/types/database.ts` in the same PR. `db:types` is deterministic: running it on an unchanged schema produces no diff, and CI fails the PR if the committed file is out of date. Never edit a migration that has already been merged; add a new one.
 
 **Search helpers.** The first migration enables `pg_trgm` and `unaccent` (in the `extensions` schema) and adds `public.f_unaccent(text)`, an `immutable` wrapper you can use in generated columns and indexes, e.g. `lower(f_unaccent(trim(name)))`; `select f_unaccent('Ąžuolas')` returns `Azuolas`. Trigram indexes use `extensions.gin_trgm_ops`.
 
