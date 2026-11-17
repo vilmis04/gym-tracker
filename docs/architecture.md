@@ -76,7 +76,7 @@ src/
     buddies/  sessions/  exercises/  logging/  progress/
       components/  actions.ts  queries.ts  schemas.ts
   lib/
-    supabase/ (server.ts, client.ts)
+    supabase/ (server.ts, client.ts, admin.ts — service role, webhook/admin jobs only)
     i18n/
     tags/   (auto-tag rules)
     utils/

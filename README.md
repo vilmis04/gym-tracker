@@ -75,6 +75,27 @@ Commit the migration and the regenerated `src/types/database.ts` in the same PR.
 
 **Troubleshooting.** If ports 54320–54329 are taken, stop the other stack (`npx supabase stop --project-id <id>`) or change the ports in `supabase/config.toml`. `npm run db:stop -- --no-backup` also deletes the local data volumes.
 
+## Supabase clients
+
+Never call `createClient` from `@supabase/supabase-js` directly; use the helpers in [`src/lib/supabase`](src/lib/supabase). All three are typed with the generated `Database` (`src/types/database.ts`), so table and column names are checked by `npm run typecheck`.
+
+| Helper                  | Import                  | Use in                                                  | Key / RLS                                                    |
+| ----------------------- | ----------------------- | ------------------------------------------------------- | ------------------------------------------------------------ |
+| `createServerClient()`  | `@/lib/supabase/server` | Server Components, Server Actions, Route Handlers       | anon key + user's token, RLS applies; new client per request |
+| `createBrowserClient()` | `@/lib/supabase/client` | Client components (TanStack Query live views, Realtime) | anon key + user's token, RLS applies; singleton per tab      |
+| `createAdminClient()`   | `@/lib/supabase/admin`  | Clerk webhook and admin jobs only                       | **service-role key, bypasses RLS**; server only              |
+
+```ts
+import { createServerClient } from "@/lib/supabase/server";
+
+const supabase = createServerClient();
+const { data, error } = await supabase.from("sample_notes").select("id, body");
+```
+
+- **User token.** Both user-facing helpers accept `{ accessToken }`, a `() => Promise<string | null>` that returns the Clerk session token (Clerk is a Supabase third-party auth provider). Until Clerk is wired in (E04-T02) the default returns `null`, so requests use the anon key and RLS only lets through what `anon` may see.
+- **Server only.** `server.ts` and `admin.ts` start with `import "server-only"`: importing them from a `"use client"` module fails `next build`. The service-role key has no `NEXT_PUBLIC_` prefix, so it is never inlined into the browser bundle.
+- **Env vars** are read when a client is created, not at import, so `npm run build` works without them; a missing variable throws an error naming it.
+
 ## Project structure
 
 Code lives in `src/` and follows [docs/architecture.md → Code structure](docs/architecture.md#code-structure). Import from `src/` with the `@/` alias, e.g. `import { x } from "@/lib/utils/x"`.
