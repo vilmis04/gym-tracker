@@ -11,3 +11,7 @@ next-env.d.ts
 
 # Product & architecture docs are hand-formatted; don't reflow them
 docs/
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/

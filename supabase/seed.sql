@@ -1,0 +1,3 @@
+-- Seed data for local development and CI, applied by `npm run db:reset`
+-- after all migrations. Filled in by later epics (tags, common machines,
+-- sample exercises). Keep it idempotent and free of real user data.
