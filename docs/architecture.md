@@ -111,14 +111,15 @@ The session logging screen subscribes to Supabase Realtime (Postgres changes on 
 | Preview | Coolify preview deployment per PR (`pr-{n}.<staging-domain>`) | Supabase staging project | Clerk dev instance |
 | Production | Coolify production app (custom domain) | Supabase production project | Clerk production instance |
 
-Secrets: set per environment in Coolify (runtime and build-time variables) and in GitHub Actions (migrations only): `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server only). Documented in `.env.example`.
+Secrets: set per environment in Coolify (runtime and build-time variables; build-time values passed as BuildKit secrets) and in GitHub Actions environments `staging` / `production` (migration and deploy credentials only: Supabase access token, project ref, DB password; Coolify URL, API token, app UUID). App variables: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server only). Documented in `.env.example`.
 
 ## Deployment (self-hosted Coolify)
 
 - The app is built from a multi-stage `Dockerfile` using Next.js `output: 'standalone'` (Node 22 Alpine pinned by digest, `sharp` for image optimization, runs as non-root user `nextjs`, listens on port 3000). The commit SHA is passed as the `APP_VERSION` build argument and reported by `GET /api/health` (public, no DB), which the image's `HEALTHCHECK` and Coolify probe. See README → Docker.
-- `NEXT_PUBLIC_*` variables are inlined at build time, so they're set as **build variables** in Coolify for each environment; server secrets are **runtime variables**.
-- Coolify is connected to the GitHub repo through its GitHub App. Automatic deploys on push are **off** for production: a GitHub Action first applies Supabase migrations, then triggers the Coolify deploy through its API/webhook. A failed migration stops the deploy.
-- Pull requests get Coolify **preview deployments**, wired to the Supabase staging project and the Clerk dev instance.
+- `NEXT_PUBLIC_*` variables are inlined at build time, so they're set as **build variables** in Coolify for each environment; server secrets are **runtime variables**. Coolify's *Docker BuildKit secrets* mode passes build variables as secrets (so `SENTRY_AUTH_TOKEN` never lands in the image); the Dockerfile accepts both secrets and build args. Variable table per environment: [deployment.md → Variables](deployment.md#6-variables).
+- Coolify is connected to the GitHub repo through its GitHub App. Automatic deploys on push are **off** for production: after CI passes on `main`, `.github/workflows/deploy.yml` applies Supabase migrations to staging, then production (`supabase db push`), then pins the Coolify app to that commit and triggers the deploy through the Coolify API, and waits until `/api/health` reports the commit. A failed migration stops the deploy. Runbook (setup, rollback, manual migrations, secret rotation): [deployment.md](deployment.md).
+- Migrations are forward-only and must be backward-compatible with the running version (expand/contract), because rollbacks only change the container and old/new containers overlap during a rolling update.
+- Pull requests into `main` get Coolify **preview deployments** (`pr-{n}.<staging-domain>`), wired to the Supabase staging project and the Clerk dev instance, deleted when the PR closes. Stacked PRs (base ≠ `main`) get no preview.
 - Coolify's proxy (Traefik) handles HTTPS certificates (Let's Encrypt) and routing.
 - The server should be in the same region as the Supabase project (e.g. EU Central) to keep database latency low.
 - The Next.js cache lives in the container filesystem; it's fine with one instance. Running more than one instance later needs a shared cache handler.

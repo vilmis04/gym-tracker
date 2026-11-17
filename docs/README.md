@@ -13,6 +13,7 @@ Gym Tracker is a clean, minimal web app for logging workouts together with frien
 | [design-system.md](design-system.md) | Earth-tone pastel palette, typography, components, dark/light |
 | [ui-mockups.md](ui-mockups.md) | UI mock-ups ([design canvas](https://claude.ai/artifact/FsPAXBmTkAVZ3SPNsBWqNS#page-dcb81aee8d83)), screen list and design decisions |
 | [ci.md](ci.md) | CI pipeline: jobs, failures, secrets, branch protection |
+| [deployment.md](deployment.md) | Deployment runbook: Coolify/Supabase/Clerk setup, deploy pipeline, previews, rollback, migrations, secret rotation, go-live checklist |
 | [roadmap.md](roadmap.md) | Milestones, epic order, dependencies |
 | [backlog.md](backlog.md) | Summary table of all tasks, linking to their details in the epic files |
 | [epics/](epics/) | One file per epic with detailed tasks and acceptance criteria |

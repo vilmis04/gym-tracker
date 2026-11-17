@@ -70,12 +70,16 @@ curl http://localhost:3000/api/health   # {"status":"ok","version":"<commit sha>
 ```
 
 - **Build arguments (public, inlined into the browser bundle):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `APP_VERSION` (the commit SHA reported by `/api/health` and used as the Sentry release; defaults to the `package.json` version) and the optional Sentry settings `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT`, `SENTRY_ORG`, `SENTRY_PROJECT` ([Error tracking](#error-tracking-sentry)). `docker:build` reads the `NEXT_PUBLIC_*`, `SENTRY_ORG` and `SENTRY_PROJECT` lines of `.env.local` (or your shell env), passes `SENTRY_AUTH_TOKEN` from your shell as a BuildKit secret if set, and passes extra arguments through to `docker build`.
-- **Build secret:** `SENTRY_AUTH_TOKEN` (source-map upload) only via `--secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN`; it isn't stored in the image or its history.
+- **Build secret:** `SENTRY_AUTH_TOKEN` (source-map upload) only via `--secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN`; it isn't stored in the image or its history. The build step also accepts every build argument above as an optional BuildKit secret with the variable's name (`--secret id=NEXT_PUBLIC_SUPABASE_URL,env=…`, `id=SENTRY_AUTH_TOKEN`, …), which is how Coolify passes them with build secrets on ([docs/deployment.md → Variables](docs/deployment.md#6-variables)).
 - **Runtime only (secrets):** `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (optional, not secret: `SENTRY_DSN`, `ENABLE_TEST_ERROR_PAGE`). Pass them with `--env-file`/`-e` when the container starts; never as `--build-arg` (build arguments are visible in `docker history`).
 - **Health check:** `GET /api/health` returns `200 {"status":"ok","version":…}` without auth or database access. The image's `HEALTHCHECK` calls it; `docker inspect --format '{{.State.Health.Status}}' <container>` shows `healthy` within a few seconds.
 - **Local Supabase from the container:** `127.0.0.1` inside the container is the container itself. To use the local stack, build and run with `NEXT_PUBLIC_SUPABASE_URL=http://host.docker.internal:54321` (on Linux also add `--add-host=host.docker.internal:host-gateway` to `docker run`).
 
 CI builds the image on every PR (no push) and checks that the container becomes healthy (see [docs/ci.md](docs/ci.md)).
+
+## Deployment
+
+Coolify builds this Dockerfile on our server. Every pull request into `main` gets a preview at `https://pr-<n>.<staging-domain>` (Supabase staging, Clerk dev), removed when the PR closes. After CI passes on `main`, [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs `supabase db push` against staging, then production, then deploys that exact commit to Coolify through its API and waits until `/api/health` reports it; a failed migration stops the deploy. Until the one-time setup is done (repository variable `DEPLOY_ENABLED=true`), the workflow skips with a notice. The runbook — setup checklist, variables per environment, rollback, manual migrations, secret rotation, troubleshooting — is [docs/deployment.md](docs/deployment.md).
 
 ## Database (Supabase)
 

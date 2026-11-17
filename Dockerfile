@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-# Production image for self-hosting (E01-T06; deployed by Coolify, E01-T08).
+# Production image for self-hosting (E01-T06; deployed by Coolify, E01-T08:
+# docs/deployment.md).
 # Multi-stage: deps (npm ci) → builder (next build, standalone output) → runner.
 #
 #   docker build -t gym-tracker \
@@ -50,6 +51,11 @@ ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 ARG APP_VERSION=""
+# Secrets aren't part of BuildKit's cache key, so a changed secret value alone
+# would reuse the old `npm run build` layer. Coolify passes a hash of its build
+# secrets as this build arg (and declares it too); declaring it here keeps
+# that cache-busting independent of Coolify editing the Dockerfile.
+ARG COOLIFY_BUILD_SECRETS_HASH=""
 ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY} \
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY} \
@@ -66,7 +72,28 @@ COPY . .
 # ARG/ENV: it's only present while this RUN executes and isn't stored in any
 # layer or in `docker history`. Without it, nothing is uploaded:
 #   docker build --secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN ...
+#
+# Coolify (E01-T08, docs/deployment.md → Build secrets) with "Build secrets:
+# Docker BuildKit secrets" passes *every* build-time variable as a secret whose
+# id is the variable name, and no build args. The optional file mounts below
+# (/run/secrets/<NAME>, only present when that secret is passed) are exported
+# for this RUN, so the same Dockerfile works with build args (CI, local) and
+# with Coolify's secrets. Coolify leaves a RUN that already mounts secrets
+# unchanged. File mounts, not `env=`: a missing `env=` secret would blank the
+# value that came from the build arg.
 RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
+    --mount=type=secret,id=SENTRY_AUTH_TOKEN \
+    --mount=type=secret,id=NEXT_PUBLIC_SUPABASE_URL \
+    --mount=type=secret,id=NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    --mount=type=secret,id=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
+    --mount=type=secret,id=NEXT_PUBLIC_SENTRY_DSN \
+    --mount=type=secret,id=NEXT_PUBLIC_SENTRY_ENVIRONMENT \
+    --mount=type=secret,id=SENTRY_ORG \
+    --mount=type=secret,id=SENTRY_PROJECT \
+    --mount=type=secret,id=APP_VERSION \
+    for file in /run/secrets/*; do \
+      [ -f "$file" ] && export "${file##*/}=$(cat "$file")"; \
+    done; \
     mkdir -p public && npm run build
 # npm installs every Linux sharp binary (glibc, musl, wasm); keep only the one
 # this image runs (linux-musl, current CPU arch) to save ~25 MB. Fails the
@@ -83,7 +110,9 @@ FROM ${NODE_IMAGE} AS runner
 WORKDIR /app
 
 # Commit SHA (or any release id) reported by GET /api/health; not a secret.
-# Empty → /api/health falls back to the package.json version.
+# Empty → /api/health falls back to the package.json version. A runtime
+# APP_VERSION overrides it (Coolify sets APP_VERSION=$SOURCE_COMMIT at runtime
+# too, because with build secrets no build arg reaches this stage).
 ARG APP_VERSION=""
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
