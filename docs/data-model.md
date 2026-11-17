@@ -185,6 +185,6 @@ Tables that exist only for foundation tooling. They are **not** part of the prod
 
 | Table | Added by | Used by | Drop when |
 |---|---|---|---|
-| `sample_notes` (`id uuid PK`, `owner_id text not null default auth.jwt()->>'sub'`, `body text not null`, `created_at timestamptz`) | `20261117215612_add_sample_notes_fixture.sql` (E01-T03) | `src/lib/supabase/__typetests__/server-client.typetest.tsx` (typed-query check), E01-T04 example RLS test | Real tables have their own RLS tests (at the latest with E04-T03 `profiles`); delete the type test and example RLS test in the same PR |
+| `sample_notes` (`id uuid PK`, `owner_id text not null default auth.jwt()->>'sub'`, `body text not null`, `created_at timestamptz`) | `20261117215612_add_sample_notes_fixture.sql` (E01-T03) | `src/lib/supabase/__typetests__/server-client.typetest.tsx` (typed-query check), `tests/db/rls/sample-notes.test.ts` (E01-T04 example RLS test) | Real tables have their own RLS tests (at the latest with E04-T03 `profiles`); delete the type test and example RLS test in the same PR |
 
 `sample_notes` RLS: enabled; `select` / `insert` / `update` / `delete` only `to authenticated` where `(select auth.jwt()->>'sub') = owner_id`; no policy for `anon`.

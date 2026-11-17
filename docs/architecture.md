@@ -14,7 +14,7 @@
 | Forms / validation | **react-hook-form** + **zod** | Zod schemas shared between client and server actions |
 | Charts | **Recharts** | Themed with design tokens |
 | Data fetching (client) | **TanStack Query** | Only for interactive client views (session logging) |
-| Testing | **Vitest** + Testing Library (unit), **Playwright** (e2e) | |
+| Testing | **Vitest** + Testing Library (unit), Vitest + signed JWTs against local Supabase (RLS), **Playwright** + `@clerk/testing` (e2e) | See [tests/README.md](../tests/README.md) |
 | Lint / format | ESLint, Prettier, TypeScript strict | |
 | CI | GitHub Actions | lint, typecheck, unit, e2e, DB migration check |
 | Hosting (app) | **Self-hosted Coolify** (Docker, Next.js `output: 'standalone'`) | Preview deployment per PR via Coolify; TLS via Coolify's proxy |
