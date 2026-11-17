@@ -11,9 +11,9 @@ All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and (e
 | **Lint, typecheck, format** (`checks`) | `npm run lint`, `npm run typecheck`, `npm run format:check` (all three always run, so one push shows every problem)          | any ESLint warning/error, type error, unformatted file        |
 | **Unit tests** (`unit`)            | `npm run test:coverage` (Vitest `unit` project, coverage printed in the log)                                                       | a failing unit/component test                                 |
 | **Database tests & types** (`db`)  | `npx supabase start` on an **empty** database (applies every migration + `seed.sql`), then the types check, then `npm run test:db` | a broken migration, out-of-date `src/types/database.ts`, a failing RLS/DB test |
-| **Build** (`build`)                | `npm run build`                                                                                                                    | the production build fails                                    |
+| **Build** (`build`)                | `npm run build` with no Sentry variables (the build must not need a Sentry account)                                                | the production build fails                                    |
 | **Docker image** (`docker`)        | builds the [`Dockerfile`](../Dockerfile) with Buildx (no push; layers cached in the GitHub Actions cache), starts the container and waits for its `HEALTHCHECK`, checks it doesn't run as root and that `/api/health` returns the commit SHA | the image doesn't build, the container isn't healthy within ~60 s, runs as root, or `/api/health` is wrong |
-| **E2E tests** (`e2e`)              | installs Playwright Chromium + WebKit (cached per Playwright version), `CI=1 npm run e2e` — Playwright builds the app and serves it with `next start` on port 3000 | a failing spec on `chromium-desktop` or `webkit-mobile`       |
+| **E2E tests** (`e2e`)              | installs Playwright Chromium + WebKit (cached per Playwright version), `CI=1 npm run e2e` — Playwright builds the app and serves it with `next start` on port 3000. The build's Sentry DSN points at a fake ingest server the error-tracking spec runs (`NEXT_PUBLIC_SENTRY_DSN=http://public@127.0.0.1:8999/1`, `ENABLE_TEST_ERROR_PAGE=1`, `APP_VERSION=<sha>`; [tests/README.md](../tests/README.md#error-tracking-fake-sentry)) | a failing spec on `chromium-desktop` or `webkit-mobile`       |
 | **CI passed** (`ci-passed`)        | waits for all jobs above                                                                                                           | any of them failed or was cancelled                           |
 
 **CI passed** is the single check branch protection requires, so adding a job only means listing it in `ci-passed.needs`.
@@ -46,6 +46,8 @@ None are required today. Optional, set under **Settings → Secrets and variable
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | secret   | e2e     | Clerk **dev** instance publishable key — enables the Clerk sign-in specs   |
 | `CLERK_SECRET_KEY`                  | secret   | e2e     | Clerk **dev** instance secret key (never production; `clerkSetup()` refuses it) |
 | `E2E_CLERK_USER_EMAIL`              | variable | e2e     | Override the e2e test user (default `e2e-user+clerk_test@example.com`)    |
+
+No Sentry secret is used in CI: PR builds never upload source maps (that happens in the Coolify build, E01-T08, with `SENTRY_AUTH_TOKEN` as a build secret).
 
 Without both Clerk keys the sign-in specs are skipped with a reason. They become meaningful in E04-T01 (app wired to Clerk). Secrets are not passed to PRs from forks, so there they stay skipped.
 

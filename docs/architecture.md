@@ -91,7 +91,7 @@ Each feature folder owns its server actions (mutations), queries (reads) and zod
 
 ## Conventions
 
-- **Mutations** go through Server Actions that validate with zod and return a typed `Result<T, ErrorCode>`. Error codes map to translated messages.
+- **Mutations** go through Server Actions wrapped in `withAction()` (`src/lib/actions/with-action.ts`), which validates the input with zod and returns a typed `Result<T>` (`src/lib/result.ts`): `{ ok: true, data }` or `{ ok: false, error: ErrorCode, fields? }`. Error codes (`src/lib/errors.ts`: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION`, `CONFLICT`, `LOCKED`, `UNKNOWN`) map to translated `errors.*` messages. Expected failures (`AppError`, known Postgres codes) are returned, not reported; anything else becomes `UNKNOWN` and is reported to error tracking.
 - **Reads** happen in Server Components where possible; client components use TanStack Query only for live views.
 - **Database schema** changes only via `supabase/migrations`; types regenerated in the same PR.
 - **No hard-coded UI strings.** All text goes through `next-intl`; CI fails on missing keys.
@@ -134,4 +134,4 @@ Secrets: set per environment in Coolify (runtime and build-time variables) and i
 | Privacy | Users see only their own data, buddies' public profile, and shared session data. Account deletion removes personal data (GDPR) |
 | Accessibility | WCAG 2.1 AA, contrast checked in both themes |
 | Browser support | Last 2 versions of Chrome, Safari (iOS), Firefox, Edge |
-| Observability | Error tracking (e.g. Sentry), privacy-friendly analytics (e.g. Plausible or Umami, can also run on Coolify), uptime monitoring of `/api/health`, container logs in Coolify |
+| Observability | Error tracking with Sentry (`@sentry/nextjs`; browser, Node and edge; release = commit SHA, same as `/api/health`; source maps uploaded at build time; PII scrubbed in `beforeSend`; see README → Error tracking), privacy-friendly analytics (e.g. Plausible or Umami, can also run on Coolify), uptime monitoring of `/api/health`, container logs in Coolify |

@@ -69,8 +69,9 @@ npm run docker:run     # docker run --rm --env-file .env.local -p 3000:3000 gym-
 curl http://localhost:3000/api/health   # {"status":"ok","version":"<commit sha>"}
 ```
 
-- **Build arguments (public, inlined into the browser bundle):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `APP_VERSION` (the commit SHA reported by `/api/health`; defaults to the `package.json` version). `docker:build` reads the `NEXT_PUBLIC_*` lines of `.env.local` (or your shell env) and passes extra arguments through to `docker build`.
-- **Runtime only (secrets):** `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`. Pass them with `--env-file`/`-e` when the container starts; never as `--build-arg` (build arguments are visible in `docker history`).
+- **Build arguments (public, inlined into the browser bundle):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `APP_VERSION` (the commit SHA reported by `/api/health` and used as the Sentry release; defaults to the `package.json` version) and the optional Sentry settings `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT`, `SENTRY_ORG`, `SENTRY_PROJECT` ([Error tracking](#error-tracking-sentry)). `docker:build` reads the `NEXT_PUBLIC_*`, `SENTRY_ORG` and `SENTRY_PROJECT` lines of `.env.local` (or your shell env), passes `SENTRY_AUTH_TOKEN` from your shell as a BuildKit secret if set, and passes extra arguments through to `docker build`.
+- **Build secret:** `SENTRY_AUTH_TOKEN` (source-map upload) only via `--secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN`; it isn't stored in the image or its history.
+- **Runtime only (secrets):** `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (optional, not secret: `SENTRY_DSN`, `ENABLE_TEST_ERROR_PAGE`). Pass them with `--env-file`/`-e` when the container starts; never as `--build-arg` (build arguments are visible in `docker history`).
 - **Health check:** `GET /api/health` returns `200 {"status":"ok","version":…}` without auth or database access. The image's `HEALTHCHECK` calls it; `docker inspect --format '{{.State.Health.Status}}' <container>` shows `healthy` within a few seconds.
 - **Local Supabase from the container:** `127.0.0.1` inside the container is the container itself. To use the local stack, build and run with `NEXT_PUBLIC_SUPABASE_URL=http://host.docker.internal:54321` (on Linux also add `--add-host=host.docker.internal:host-gateway` to `docker run`).
 
@@ -124,6 +125,66 @@ const { data, error } = await supabase.from("sample_notes").select("id, body");
 - **User token.** Both user-facing helpers accept `{ accessToken }`, a `() => Promise<string | null>` that returns the Clerk session token (Clerk is a Supabase third-party auth provider). Until Clerk is wired in (E04-T02) the default returns `null`, so requests use the anon key and RLS only lets through what `anon` may see.
 - **Server only.** `server.ts` and `admin.ts` start with `import "server-only"`: importing them from a `"use client"` module fails `next build`. The service-role key has no `NEXT_PUBLIC_` prefix, so it is never inlined into the browser bundle.
 - **Env vars** are read when a client is created, not at import, so `npm run build` works without them; a missing variable throws an error naming it.
+
+## Server Actions and errors
+
+Every mutation is a Server Action wrapped in `withAction()` ([`src/lib/actions/with-action.ts`](src/lib/actions/with-action.ts)) and returns a [`Result<T>`](src/lib/result.ts): `{ ok: true, data }` or `{ ok: false, error: ErrorCode, fields? }`. The UI never shows raw messages; it translates `errorMessageKey[error]` (`errors.*` keys, [`src/lib/errors.ts`](src/lib/errors.ts); messages arrive with next-intl in E03).
+
+```ts
+"use server";
+import { z } from "zod";
+
+import { withAction } from "@/lib/actions/with-action";
+import { createServerClient } from "@/lib/supabase/server";
+
+export const renameSession = withAction(
+  z.object({ id: z.uuid(), name: z.string().trim().min(1).max(100) }),
+  async ({ id, name }) => {
+    const { data, error } = await createServerClient()
+      .from("sessions")
+      .update({ name })
+      .eq("id", id)
+      .select("id")
+      .single();
+    if (error) throw error; // PGRST116 → NOT_FOUND, 42501 → FORBIDDEN, 23505 → CONFLICT
+    // Expected failures: throw new AppError("LOCKED") (from "@/lib/errors").
+    return data;
+  },
+);
+// → { ok: true, data } | { ok: false, error: "VALIDATION", fields: { name: "VALIDATION" } } | …
+```
+
+| Error code                             | When                                                                                                  |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `VALIDATION`                           | the zod schema rejected the input; `fields` maps each invalid path (`"sets.0.reps"`) to a code        |
+| `UNAUTHORIZED`, `LOCKED`, …            | the handler threw `new AppError(code)` (expected, **not** reported)                                   |
+| `FORBIDDEN` / `NOT_FOUND` / `CONFLICT` | the handler threw a Supabase `PostgrestError` `42501` / `PGRST116` / `23505` (expected, not reported) |
+| `UNKNOWN`                              | anything else: reported to Sentry, message never sent to the client                                   |
+
+`redirect()`, `notFound()` and other Next.js control-flow errors pass through untouched. Example and tests: [`src/lib/actions/example-action.ts`](src/lib/actions/example-action.ts).
+
+## Error tracking (Sentry)
+
+[`@sentry/nextjs`](https://docs.sentry.io/platforms/javascript/guides/nextjs/) reports errors from the browser ([`src/instrumentation-client.ts`](src/instrumentation-client.ts), [`src/app/global-error.tsx`](src/app/global-error.tsx)), the Node.js server and the edge runtime ([`src/instrumentation.ts`](src/instrumentation.ts): `onRequestError` catches Server Component, route handler and Server Action errors). It is **off unless a DSN is set**, so local dev, CI and builds need no Sentry account.
+
+| Variable                         | When            | Where                                                                           | Purpose                                                                                                                                                                                     |
+| -------------------------------- | --------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SENTRY_DSN`         | build           | Docker build arg / Coolify build variable                                       | Enables Sentry in the browser (and on the server unless `SENTRY_DSN` is set). Public by design.                                                                                             |
+| `SENTRY_DSN`                     | runtime         | container env                                                                   | Optional server-side DSN override.                                                                                                                                                          |
+| `NEXT_PUBLIC_SENTRY_ENVIRONMENT` | build           | build arg                                                                       | `production` / `preview`; defaults to `NODE_ENV`.                                                                                                                                           |
+| `APP_VERSION`                    | build + runtime | build arg                                                                       | The **release** (commit SHA); `/api/health` reports the same value.                                                                                                                         |
+| `SENTRY_ORG`, `SENTRY_PROJECT`   | build           | build arg                                                                       | Where source maps are uploaded.                                                                                                                                                             |
+| `SENTRY_AUTH_TOKEN`              | build           | **secret** (`docker build --secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN`) | Uploads source maps (then deletes them from the build, so they're never served). Without it nothing is uploaded. Never a build arg.                                                         |
+| `ENABLE_TEST_ERROR_PAGE`         | runtime         | container env                                                                   | `1` enables `/debug/error` (404 otherwise): `?throw=server` throws in a Server Component, the button throws in a client component. Use it to check a deployment's events, then turn it off. |
+
+**Privacy.** Events carry no emails, tokens or cookies: `dataCollection` turns off user info, cookies, bodies, query strings, SQL values and local variables, and `beforeSend` ([`src/lib/sentry/scrub.ts`](src/lib/sentry/scrub.ts)) replaces emails with `[email]`, JWTs with `[jwt]`, drops `Authorization`/`Cookie`/`*token*`/`*secret*`/`*password*` fields and keeps only the user's id. Tracing and session replay are off.
+
+**Try it locally** without Sentry: `tests/e2e/error-tracking.spec.ts` starts a fake ingest server and checks both errors arrive with the release and no email:
+
+```bash
+NEXT_PUBLIC_SENTRY_DSN=http://public@127.0.0.1:8999/1 ENABLE_TEST_ERROR_PAGE=1 APP_VERSION=local-test \
+  CI=1 npm run e2e -- --project chromium-desktop tests/e2e/error-tracking.spec.ts
+```
 
 ## Tests
 

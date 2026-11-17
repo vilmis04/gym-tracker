@@ -31,6 +31,8 @@ export default defineConfig({
         "src/**/__typetests__/**",
         "src/**/*.test.{ts,tsx}",
         "src/types/database.ts",
+        // Browser Sentry init (E01-T07); covered by tests/e2e/error-tracking.spec.ts.
+        "src/instrumentation-client.ts",
       ],
       reporter: ["text", "html", "lcov"],
       reportsDirectory: "coverage",
