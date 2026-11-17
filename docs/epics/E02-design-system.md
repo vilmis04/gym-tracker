@@ -123,9 +123,10 @@ See [design-system.md](../design-system.md) for the palette and component list.
 **Scope**
 - Authenticated layout for `(app)` routes.
 - Mobile (< 1024 px): fixed bottom navigation with **Home**, **Sessions**, **Progress**, **Buddies** (icon + label, safe-area padding for iPhones).
-- Desktop (≥ 1024 px): left sidebar with the same items; content max width 1120 px.
+- Desktop (≥ 1024 px): left sidebar with the same items (text only, no badges); content max width 1180 px.
 - Header: page title, back button on detail pages, avatar menu (language, theme, settings, sign out).
-- Badge slot on nav items (used by E05-T03 and E07-T03).
+- No count badges on nav items; pending counts are shown on Home and in tab labels (see [mock-ups](../ui-mockups.md)).
+- Scroll bars hidden in the app shell; content still scrolls.
 - Shared page patterns: `PageHeader`, `PageSkeleton`, `EmptyState` usage, `loading.tsx`/`error.tsx` per section.
 - Placeholder pages for the four sections.
 

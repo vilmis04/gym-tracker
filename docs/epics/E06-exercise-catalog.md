@@ -56,7 +56,7 @@
 **Scope**
 - `ExercisePicker` built on the Combobox (E02-T04), backed by `search_exercises` and `recent_exercises`.
 - Before typing: section "Recently used" (up to 8). While typing: ranked results.
-- Each result: exercise name (bold match), machine name (muted), up to 3 tag chips.
+- Shown as a bottom sheet on mobile. Each result: exercise name (bold match) and machine name (muted). Tags are not shown in results, to keep the list easy to scan.
 - When there's no exact normalized match: footer button **"+ Create '{query}'"**, which opens the create form (E06-T04) with the name pre-filled.
 - Props: `onSelect(exercise)`, `excludeIds` (already in the session; shown as "Already added" and selectable to jump to it).
 
@@ -75,11 +75,12 @@
 **Why:** When an exercise isn't in the catalog, users must be able to add it in a few seconds without leaving the session.
 
 **Scope**
-- Form in a sheet (mobile) / dialog (desktop) with fields:
-  - **Name** (required, 2–80 chars)
-  - **Description** (optional, ≤ 500 chars)
+- Form as a full screen opened from the picker (mobile) / dialog (desktop), with fields:
+  - **Name** (required, 2–80 chars), pre-filled from the search
   - **Machine** (optional; Combobox with create-new, E06-T06)
-  - **Tags** (optional; multi-select Combobox of existing tags). Auto-suggested tags (E06-T05) are pre-selected and marked "suggested"; they update as name/machine change until the user edits tags manually.
+  - **Tags** (optional): auto-suggested tags (E06-T05) shown as removable chips under "Tags · suggested from the name", plus a **+ Tag** chip to add more; they update as name/machine change until the user edits tags manually.
+  - **Description** (optional, ≤ 500 chars), collapsed behind "Add description".
+- Primary button **Create and add to session** (when opened from a session); back arrow returns to the search.
 - Zod schema shared between client and Server Action.
 - Duplicate check before submit (debounced) and on save: "This exercise already exists" with **Use existing**.
 - After creating from the picker, the new exercise is selected and the user returns to the session.

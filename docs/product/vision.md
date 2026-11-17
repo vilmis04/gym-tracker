@@ -65,6 +65,7 @@ Primary languages: **Lithuanian** and **English**. Mobile-first usage (in the gy
 | D7 | Completed sessions stay editable by participants for 7 days, then become read-only. | Fix typos without letting history drift. |
 | D8 | Dashboards show your own data; buddy data is visible only for sessions you both took part in. | Privacy by default. |
 | D9 | The Next.js app is **self-hosted on Coolify** (Docker); **Supabase** and **Clerk** use their cloud services. | Control over app hosting and cost, while keeping managed database and auth. |
+| D10 | **No comparing with other users.** Progress dashboards show only your own data; there is no buddy overlay or leaderboard. | Keeps progress personal and motivating; decided in the mock-up review. |
 
 ## Glossary
 
