@@ -1,0 +1,47 @@
+# Keep the build context small and free of secrets (Dockerfile, E01-T06).
+# Dependencies and build output are recreated inside the image.
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+next-env.d.ts
+
+# Never send local env files (secrets) to the build.
+.env*
+!.env.example
+
+# Git, CI, editor and OS files
+.git
+.github
+.gitignore
+.vscode
+.idea
+.DS_Store
+*.pem
+npm-debug.log*
+
+# Tests, reports and tooling the production build doesn't use (test files
+# are also left out so `next build` type-checks app code only)
+src/**/*.test.ts
+src/**/*.test.tsx
+src/**/__typetests__
+tests
+coverage
+playwright-report
+test-results
+blob-report
+playwright
+playwright.config.ts
+vitest.config.mts
+eslint.config.mjs
+.prettierrc.json
+.prettierignore
+
+# Supabase CLI project (migrations are applied by CI, not the app image)
+supabase
+
+# Docs
+docs
+Dockerfile
+.dockerignore

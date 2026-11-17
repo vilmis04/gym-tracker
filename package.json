@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "docker:build": "sh scripts/docker-build.sh",
+    "docker:run": "docker run --rm --env-file .env.local -p 3000:3000 gym-tracker",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",

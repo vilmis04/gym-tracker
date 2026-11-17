@@ -4,7 +4,7 @@ Every pull request (to any branch, so stacked PRs run too) and every push to `ma
 
 ## Jobs
 
-All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and runs the shared setup ([`.github/actions/setup`](../.github/actions/setup/action.yml): Node from `.nvmrc`, npm cache, `npm ci`). The run takes as long as the slowest job (E2E, a few minutes), well under the ~8 minute target.
+All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and (except **Docker image**, which installs inside the image) runs the shared setup ([`.github/actions/setup`](../.github/actions/setup/action.yml): Node from `.nvmrc`, npm cache, `npm ci`). The run takes as long as the slowest job (E2E, a few minutes), well under the ~8 minute target.
 
 | Check name (job)                   | What it runs                                                                                                                       | Fails when                                                    |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
@@ -12,6 +12,7 @@ All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and ru
 | **Unit tests** (`unit`)            | `npm run test:coverage` (Vitest `unit` project, coverage printed in the log)                                                       | a failing unit/component test                                 |
 | **Database tests & types** (`db`)  | `npx supabase start` on an **empty** database (applies every migration + `seed.sql`), then the types check, then `npm run test:db` | a broken migration, out-of-date `src/types/database.ts`, a failing RLS/DB test |
 | **Build** (`build`)                | `npm run build`                                                                                                                    | the production build fails                                    |
+| **Docker image** (`docker`)        | builds the [`Dockerfile`](../Dockerfile) with Buildx (no push; layers cached in the GitHub Actions cache), starts the container and waits for its `HEALTHCHECK`, checks it doesn't run as root and that `/api/health` returns the commit SHA | the image doesn't build, the container isn't healthy within ~60 s, runs as root, or `/api/health` is wrong |
 | **E2E tests** (`e2e`)              | installs Playwright Chromium + WebKit (cached per Playwright version), `CI=1 npm run e2e` — Playwright builds the app and serves it with `next start` on port 3000 | a failing spec on `chromium-desktop` or `webkit-mobile`       |
 | **CI passed** (`ci-passed`)        | waits for all jobs above                                                                                                           | any of them failed or was cancelled                           |
 
@@ -63,7 +64,7 @@ This has to be set by a repository admin in the GitHub UI; the workflow can't co
 
 **Or with classic branch protection:** Settings → **Branches → Add branch protection rule** → Branch name pattern `main` → **Require a pull request before merging** (Required approvals: 1, dismiss stale approvals) → **Require status checks to pass before merging** (Require branches to be up to date; search and add `CI passed`) → **Require conversation resolution before merging** → **Save changes**.
 
-Requiring only `CI passed` covers every job. If you prefer to see each one listed, you can also require `Lint, typecheck, format`, `Unit tests`, `Database tests & types`, `Build` and `E2E tests`, but then every new or renamed job must be updated in the rule too.
+Requiring only `CI passed` covers every job. If you prefer to see each one listed, you can also require `Lint, typecheck, format`, `Unit tests`, `Database tests & types`, `Build`, `Docker image` and `E2E tests`, but then every new or renamed job must be updated in the rule too.
 
 With a single maintainer, GitHub doesn't let you approve your own PR; add the maintainer to the ruleset's **Bypass list** (or leave approvals at 0) until a second reviewer exists.
 
@@ -74,6 +75,7 @@ npm run lint && npm run typecheck && npm run format:check
 npm test
 npm run db:start && npm run db:reset && npm run db:types && git diff --exit-code src/types/database.ts && npm run test:db
 npm run build
+npm run docker:build && docker run -d --name app -p 3000:3000 gym-tracker && sleep 3 && curl localhost:3000/api/health
 CI=1 npm run e2e      # production build, like CI
 ```
 
@@ -81,7 +83,7 @@ Workflow files are linted with [actionlint](https://github.com/rhysd/actionlint)
 
 ## Conventions for workflow changes
 
-- Third-party actions are pinned to a **major version tag** (`actions/checkout@v7`). Only GitHub's own `actions/*` are used today; pin any non-GitHub action to a full commit SHA.
+- GitHub's own `actions/*` are pinned to a **major version tag** (`actions/checkout@v7`). Any other action is pinned to a full commit SHA with the version in a comment, e.g. `docker/build-push-action@c3c9e263… # v7.4.0` (look up a tag's SHA with `git ls-remote https://github.com/docker/build-push-action refs/tags/v7.4.0`).
 - Default `permissions: contents: read`; a job that needs more (e.g. `packages: write`) asks for it on that job only.
 - Job `name`s are the check names branch protection refers to — don't rename them casually.
 - Reuse `./.github/actions/setup` (with `next-cache: true` in jobs that run `next build`) in new jobs and workflows.
