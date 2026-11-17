@@ -30,6 +30,7 @@ profiles ─┬─< buddy_connections >─┬─ profiles
 | avatar_url | text | |
 | locale | text not null default `'lt'` | `en` \| `lt` |
 | theme | text not null default `'system'` | `light` \| `dark` \| `system` |
+| invite_code | text not null unique | random URL-safe code for buddy invite links (E05-T05) |
 | created_at / updated_at | timestamptz | |
 
 ### `buddy_connections`
@@ -59,7 +60,7 @@ Helper SQL function: `are_buddies(a text, b text) returns boolean` (security def
 |---|---|---|
 | id | uuid PK | |
 | name | text not null | |
-| name_normalized | text generated, unique together with `machine_id` | |
+| name_normalized | text generated | unique together with `machine_id` (same name allowed on different machines) |
 | description | text | |
 | machine_id | uuid FK → machines, nullable | |
 | created_by | text FK → profiles, nullable | |
@@ -67,6 +68,16 @@ Helper SQL function: `are_buddies(a text, b text) returns boolean` (security def
 | created_at / updated_at | timestamptz | |
 
 Indexes: `pg_trgm` GIN on `name_normalized` for fuzzy autocomplete.
+
+### `exercise_translations` / `machine_translations`
+| Column | Type | Notes |
+|---|---|---|
+| exercise_id / machine_id | uuid FK | PK (id, locale) |
+| locale | text | `en` \| `lt` |
+| name | text | trigram-indexed for search |
+| description | text | exercises only |
+
+Used for seeded content only; user-created entries keep the name they typed (E03-T05).
 
 ### `tags`
 | Column | Type | Notes |
@@ -100,7 +111,7 @@ Indexes: `pg_trgm` GIN on `name_normalized` for fuzzy autocomplete.
 | session_id | uuid FK | PK (session_id, user_id) |
 | user_id | text FK → profiles | |
 | role | enum `owner` \| `participant` | |
-| invite_status | enum `invited` \| `accepted` \| `declined` | owner inserted as `accepted` |
+| invite_status | enum `invited` \| `accepted` \| `declined` \| `left` \| `removed` | owner inserted as `accepted` |
 | invited_by | text FK | |
 | responded_at | timestamptz | |
 

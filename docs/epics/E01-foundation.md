@@ -7,69 +7,144 @@
 ---
 
 ### E01-T01 · Bootstrap Next.js app — `S`
-Create the Next.js app (App Router, TypeScript strict, `src/` dir), Tailwind CSS, ESLint, Prettier, path aliases (`@/`), and the folder structure from [architecture.md](../architecture.md#code-structure).
+**Why:** Every other task needs a consistent codebase with the same structure, lint rules and scripts, so reviews focus on behavior rather than style.
+
+**Scope**
+- Create the app with `create-next-app`: App Router, TypeScript (`strict: true`, `noUncheckedIndexedAccess: true`), `src/` directory, Tailwind CSS.
+- ESLint (Next.js + TypeScript rules, `import/order`, no unused vars) and Prettier (with the Tailwind class-sorting plugin).
+- Path alias `@/*` → `src/*`.
+- Create the empty folder structure from [architecture.md](../architecture.md#code-structure) (`app/[locale]`, `components/ui`, `components/common`, `features/*`, `lib/*`, `types/`), each with a `.gitkeep` or short README.
+- npm scripts: `dev`, `build`, `start`, `lint`, `typecheck` (`tsc --noEmit`), `format`, `format:check`.
+- `.nvmrc` with the Node LTS version; `engines` field in `package.json`.
+- Root README: prerequisites, install, run, and a link to `docs/`.
+
+**Out of scope:** Auth, database, i18n and theming (separate tasks).
 
 **Acceptance criteria**
-- [ ] `npm run dev`, `build`, `lint`, `typecheck`, `format:check` work
-- [ ] Folder structure matches architecture doc
-- [ ] README has local setup instructions
+- [ ] A fresh clone runs with `npm ci && npm run dev` and shows a placeholder page at `http://localhost:3000`.
+- [ ] `npm run build`, `lint`, `typecheck` and `format:check` all pass with zero warnings.
+- [ ] Introducing an unused variable or wrong import order makes `lint` fail.
+- [ ] Folder structure matches the architecture doc.
+- [ ] README setup steps work for a new developer without extra help.
 
 **Depends on:** —
 
 ### E01-T02 · Supabase local setup & migrations workflow — `S`
-Initialize Supabase CLI (`supabase/`), enable extensions (`pg_trgm`, `unaccent`), add scripts for `db:start`, `db:reset`, `db:migrate`, `db:types` (generate `src/types/database.ts`).
+**Why:** The schema must be versioned and reproducible so every developer, CI run and environment has the same database.
+
+**Scope**
+- `supabase init`; commit `supabase/config.toml`.
+- First migration enables extensions `pg_trgm` and `unaccent` and creates an `immutable` wrapper function `f_unaccent(text)` (needed for generated columns and indexes).
+- npm scripts: `db:start`, `db:stop`, `db:reset` (applies migrations + `seed.sql`), `db:new <name>`, `db:types` (writes `src/types/database.ts`).
+- Empty `supabase/seed.sql` (filled in later epics).
+- `.env.example` with every variable from the architecture doc and a one-line comment each.
+
+**Out of scope:** Any application tables (they come with their feature epics).
 
 **Acceptance criteria**
-- [ ] `supabase start` runs locally and migrations apply on `db:reset`
-- [ ] Generated types are committed and used by the Supabase client
-- [ ] `.env.example` lists all variables (see architecture doc)
+- [ ] `npm run db:start` starts local Supabase (Docker) and prints the local URL and keys.
+- [ ] `npm run db:reset` drops and rebuilds the database from migrations without errors.
+- [ ] `npm run db:types` creates `src/types/database.ts`, and running it twice produces no diff.
+- [ ] `select f_unaccent('Ąžuolas')` returns `Azuolas`.
+- [ ] `.env.example` contains every variable the app reads; no real secrets are committed.
 
 **Depends on:** E01-T01
 
 ### E01-T03 · Supabase client helpers — `S`
-Server and browser Supabase client factories that accept the Clerk session token (`accessToken` callback). Typed with generated types.
+**Why:** One place to create Supabase clients keeps token handling, typing and the service-role key safe and consistent.
+
+**Scope**
+- `lib/supabase/server.ts`: `createServerClient()` for Server Components, Server Actions and Route Handlers.
+- `lib/supabase/client.ts`: `createBrowserClient()` for client components (singleton per tab).
+- Both typed with `Database` from generated types and accept an `accessToken` callback (wired to Clerk in E04-T02; until then a stub).
+- `lib/supabase/admin.ts`: service-role client, guarded with `import 'server-only'`, used only by webhooks/admin jobs.
+
+**Out of scope:** Clerk integration itself (E04-T02).
 
 **Acceptance criteria**
-- [ ] `createServerClient()` usable in RSC and Server Actions
-- [ ] `createBrowserClient()` usable in client components
-- [ ] Service-role client lives in a server-only module (`import 'server-only'`)
+- [ ] A Server Component can query a test table through `createServerClient()` with full type inference (wrong column names fail `typecheck`).
+- [ ] Importing `lib/supabase/admin.ts` from a client component fails the build.
+- [ ] The service-role key does not appear in the client bundle (checked by grepping `.next/static`).
+- [ ] Helpers have JSDoc explaining when to use each one.
 
 **Depends on:** E01-T02 (token wiring finalized in E04-T02)
 
 ### E01-T04 · Testing setup — `M`
-Vitest + Testing Library for unit/component tests; Playwright for e2e with an auth helper (Clerk testing tokens); a DB test harness for RLS tests against local Supabase.
+**Why:** RLS rules, metrics and logging flows are easy to break; automated tests at three levels (unit, database, end-to-end) catch this before release.
+
+**Scope**
+- **Unit/component:** Vitest + React Testing Library + `jsdom`; `npm test`, `npm run test:watch`, coverage report.
+- **Database/RLS:** a test helper that signs JWTs for fake user ids (`sub`) with the local Supabase JWT secret, so tests can act as user A or B against local Supabase; `npm run test:db`.
+- **E2E:** Playwright (Chromium + WebKit mobile viewport), `npm run e2e`; Clerk testing tokens plus a helper `signInAs(user)` that skips the Google UI.
+- Test data factories (`createUser`, later `createSession`, …) in `tests/factories`.
+- One passing example test of each kind.
+
+**Out of scope:** Real feature tests (written with each feature).
 
 **Acceptance criteria**
-- [ ] `npm test` runs unit tests; `npm run e2e` runs Playwright
-- [ ] Example unit, e2e and RLS test pass
-- [ ] Test users can be created and signed in without the Google UI
+- [ ] `npm test`, `npm run test:db` and `npm run e2e` each run and pass on a clean checkout with local Supabase running.
+- [ ] The example RLS test proves user B cannot read user A's row in a sample table.
+- [ ] The example e2e test signs in a test user without the Google consent screen.
+- [ ] Each test run starts from a known database state (reset or transaction rollback); tests don't depend on run order.
+- [ ] Testing approach is documented in `docs/` or `tests/README.md`.
 
 **Depends on:** E01-T02
 
 ### E01-T05 · CI pipeline — `S`
-GitHub Actions: install, lint, typecheck, unit tests, migrations apply on clean DB, RLS tests, build, e2e (on PR to `main`).
+**Why:** Every PR must prove it builds, passes tests and keeps the schema valid before merge.
+
+**Scope**
+- GitHub Actions workflow on `pull_request` and `push` to `main`.
+- Jobs: install (npm cache) → lint + typecheck + `format:check` → unit tests → start Supabase CLI, apply migrations on an empty DB, run `test:db` → `build` → Playwright e2e (upload report and traces on failure).
+- Check that generated DB types are up to date (`db:types` then `git diff --exit-code`).
+- Branch protection on `main`: required checks + 1 review.
+
+**Out of scope:** Deployment (E01-T06).
 
 **Acceptance criteria**
-- [ ] Pipeline runs on every PR and blocks merge on failure
-- [ ] Caching keeps the pipeline under ~8 min
+- [ ] A PR with a lint error, type error, failing test or broken migration is blocked from merging.
+- [ ] A PR that changes a migration without regenerating types fails with a clear message.
+- [ ] Playwright HTML report is downloadable from failed runs.
+- [ ] Typical pipeline finishes in under ~8 minutes.
 
 **Depends on:** E01-T04
 
 ### E01-T06 · Environments & deployment — `S`
-Vercel project with preview deployments per PR; Supabase staging and production projects; migrations deployed via CI on merge to `main`.
+**Why:** Product and testers need a link to every change, and production releases must be repeatable and safe.
+
+**Scope**
+- Vercel project linked to the repo: preview deployment per PR, production on `main`.
+- Supabase projects: **staging** (used by previews) and **production**.
+- GitHub Action on merge to `main`: `supabase db push` to production before the Vercel production build is promoted; staging gets migrations on every PR merge to `main` too.
+- Secrets set in Vercel/GitHub per environment.
+- Short runbook in `docs/` (how to deploy, roll back, run a migration manually).
+
+**Out of scope:** Custom domain and production Clerk instance (E10-T07).
 
 **Acceptance criteria**
-- [ ] Each PR gets a preview URL wired to staging
-- [ ] Merge to `main` deploys app and applies migrations to production
-- [ ] Secrets stored in Vercel/GitHub, none in repo
+- [ ] Every PR shows a preview URL that works against staging.
+- [ ] Merging to `main` applies new migrations to production and deploys the app without manual steps.
+- [ ] A failed migration stops the production deploy.
+- [ ] No secret values exist in the repository or build logs.
+- [ ] The runbook explains how to roll back to the previous deployment.
 
 **Depends on:** E01-T05
 
-### E01-T07 · Error tracking & app shell result type — `S`
-Add error tracking (e.g. Sentry) and a shared `Result<T, ErrorCode>` helper + `ErrorCode` enum used by all Server Actions.
+### E01-T07 · Error tracking & shared Result type — `S`
+**Why:** We need to know when something breaks in production, and every Server Action should return errors in the same shape so the UI can show translated messages.
+
+**Scope**
+- Error tracking (e.g. Sentry) for client, server and edge runtimes; release tagged with commit SHA; source maps uploaded; PII scrubbing (no emails in events).
+- `lib/result.ts`: `type Result<T> = { ok: true; data: T } | { ok: false; error: ErrorCode; fields?: Record<string, ErrorCode> }` and helpers `ok()`, `fail()`.
+- `ErrorCode` enum (`UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION`, `CONFLICT`, `LOCKED`, `UNKNOWN`) mapped to i18n keys `errors.*`.
+- `withAction()` wrapper: validates input with zod, catches errors, reports unexpected ones, returns `Result`.
+
+**Out of scope:** Alerting rules (E10-T07).
 
 **Acceptance criteria**
-- [ ] Unhandled server and client errors reported with release tag
-- [ ] `Result` type and helper documented with an example
+- [ ] A test error thrown in a Server Component and in a client component both appear in error tracking with the release tag and readable stack trace.
+- [ ] Events contain no email addresses or auth tokens.
+- [ ] An example Server Action using `withAction()` returns `{ ok: false, error: 'VALIDATION', fields }` for invalid input (unit tested).
+- [ ] Every `ErrorCode` has an `errors.*` key (checked once i18n exists).
 
 **Depends on:** E01-T01
