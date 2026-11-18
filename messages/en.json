@@ -1,0 +1,49 @@
+{
+  "common": {
+    "appName": "Gym Tracker",
+    "loading": "Loading",
+    "back": "Back",
+    "skipToContent": "Skip to content",
+    "accountMenu": "Account, language and theme",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "tryAgain": "Try again"
+  },
+  "nav": {
+    "mainLabel": "Main",
+    "home": "Home",
+    "sessions": "Sessions",
+    "progress": "Progress",
+    "buddies": "Buddies",
+    "settings": "Settings"
+  },
+  "home": {
+    "emptyState": "Your active session, upcoming sessions and invitations will appear here."
+  },
+  "sessions": {
+    "emptyState": "Your planned and past sessions will appear here."
+  },
+  "progress": {
+    "emptyState": "Your progress in each exercise will appear here."
+  },
+  "buddies": {
+    "emptyState": "Your gym buddies and buddy requests will appear here."
+  },
+  "settings": {
+    "emptyState": "Account, language and theme settings will appear here."
+  },
+  "errors": {
+    "unauthorized": "Please sign in to continue.",
+    "forbidden": "You don’t have permission to do that.",
+    "notFound": "We couldn’t find what you were looking for.",
+    "validation": "Please check the highlighted fields.",
+    "conflict": "This already exists.",
+    "locked": "This can no longer be changed.",
+    "unknown": "Something went wrong. Please try again.",
+    "pageTitle": "Something went wrong",
+    "pageDescription": "This page couldn’t be loaded. Check your connection and try again."
+  }
+}

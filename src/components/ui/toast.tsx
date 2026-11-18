@@ -27,15 +27,17 @@ export function showToast(
 /**
  * Renders the toasts (sonner), mounted once in the root layout. Styled like
  * the mock-ups: inverted (foreground fill, background text), 14 px radius,
- * bottom center; on mobile 96 px up, clear of the bottom navigation.
+ * bottom center; below 1024 px 20 px above the bottom navigation (96 px plus
+ * the iPhone home-indicator inset), 24 px up on desktop
+ * (`--toast-offset-bottom` in globals.css).
  */
 export function Toaster() {
   return (
     <Sonner
       position="bottom-center"
       duration={TOAST_DURATION_MS}
-      offset={{ bottom: 24 }}
-      mobileOffset={{ bottom: 96, left: 16, right: 16 }}
+      offset={{ bottom: TOAST_OFFSET_BOTTOM }}
+      mobileOffset={{ bottom: TOAST_OFFSET_BOTTOM, left: 16, right: 16 }}
       toastOptions={{
         unstyled: true,
         classNames: {
@@ -55,3 +57,7 @@ export function Toaster() {
     />
   );
 }
+
+// sonner's own "mobile" breakpoint is 600 px, but the bottom navigation shows
+// up to 1024 px, so the offset follows the app's breakpoint in CSS instead.
+const TOAST_OFFSET_BOTTOM = "var(--toast-offset-bottom)";

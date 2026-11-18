@@ -158,6 +158,9 @@
   /* 4 px grid: `p-1` = 4 px, `gap-4` = 16 px. */
   --spacing: 0.25rem;
 
+  /* App shell (E02-T06): `max-w-content` caps the page content at 1180 px. */
+  --container-content: 73.75rem;
+
   /* Type scale 12 / 14 / 16 / 18 / 20 / 24 / 30 px, plus 36 px for hero numbers. */
   --text-*: initial;
   --text-xs: 0.75rem;
@@ -256,7 +259,41 @@
   }
 }
 
+/*
+ * App shell (E02-T06). The mobile bottom navigation is 76 px tall plus the
+ * iPhone home-indicator inset (needs `viewport-fit=cover`, set in the root
+ * layout); the page content and toasts keep clear of `--bottom-nav-inset`.
+ * From 1024 px (`lg`) the sidebar replaces it.
+ */
+:root {
+  --bottom-nav-height: 4.75rem;
+  --bottom-nav-inset: calc(
+    var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+  );
+  --toast-offset-bottom: calc(var(--bottom-nav-inset) + 1.25rem);
+
+  @media (width >= 64rem) {
+    --toast-offset-bottom: 1.5rem;
+  }
+}
+
 @layer base {
+  /*
+   * No visible scroll bars in the app shell; it still scrolls by touch,
+   * wheel and keyboard. The page scrolls on the document, so the rule also
+   * applies to <html> while a shell is on the page.
+   */
+  html:has([data-app-shell]),
+  [data-app-shell],
+  [data-app-shell] * {
+    scrollbar-width: none;
+  }
+  html:has([data-app-shell])::-webkit-scrollbar,
+  [data-app-shell]::-webkit-scrollbar,
+  [data-app-shell] *::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Tailwind's default border color is currentColor; dividers use the token instead. */
   *,
   ::before,
