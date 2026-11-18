@@ -1,9 +1,9 @@
 # Components
 
-- `ui/` — shadcn/ui primitives, themed with design tokens (E02)
+- `ui/` — the design-system components (E02-T03): shadcn/ui-style wrappers around Radix primitives (Dialog, Sheet, Popover, DropdownMenu, Tabs, Avatar, Label) plus our own composites (Button, Input, Textarea, FormField, Card, SegmentedControl, Toast, AvatarStack, Chip, Badge, Skeleton, EmptyState). One file per component (`button.tsx`), its non-trivial types next to it (`button.types.ts`), tests next to it (`button.test.tsx`). Default accessible names of built-in controls ("Close", "Remove …") are in `ui-labels.ts` (`TODO(E03)`); every component also takes a label prop. Shared focus ring: `focus-ring.ts`. Preview: `/dev/ui`. See docs/design-system.md → Core components
 - `common/` — app-level shared components
   - `common/theme/` — light / dark / system theme (E02-T02): `ThemeProvider` (in the root layout), `ThemeToggle`, `useThemePreference()`; see docs/design-system.md → Themes
 
 Feature-specific components live in `src/features/<feature>/components/`.
 
-Style with the design-token utilities only (`bg-surface`, `text-muted-foreground`, `border-input`, `rounded-lg`, …; README → Design tokens and dev pages). Raw colors fail CI (`npm run check:colors`); when adding shadcn/ui components, replace palette classes such as `bg-black/50` with tokens (`bg-scrim`). Developer previews go under `src/app/dev/` (gated by `src/app/dev/layout.tsx`).
+Style with the design-token utilities only (`bg-surface`, `text-muted-foreground`, `border-input`, `rounded-lg`, …; README → Design tokens and dev pages). Raw colors fail CI (`npm run check:colors`); `components.json` is set up for `npx shadcn@latest add <component>` (output lands in `ui/`, `cn` from `@/lib/utils/cn`; no theme variables are added). The shadcn registry isn't reachable from every sandbox, so the current components were written by hand after shadcn's Tailwind v4 / Radix sources. When adding shadcn/ui components, replace palette classes such as `bg-black/50` with tokens (`bg-scrim`). Developer previews go under `src/app/dev/` (gated by `src/app/dev/layout.tsx`).

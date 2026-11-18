@@ -143,6 +143,36 @@ Code: [`src/components/common/theme/`](../src/components/common/theme/).
 | Skeleton | Loading states |
 | Charts | Line (progress), Bar (volume), all using `--chart-*` tokens |
 
+### Implementation (E02-T03)
+
+Code: [`src/components/ui/`](../src/components/ui/), previewed with every variant in both themes at `/dev/ui` (dev only). Built like [shadcn/ui](https://ui.shadcn.com/) (Radix primitives from the `radix-ui` package, Tailwind classes, `cn()` from `src/lib/utils/cn.ts`), but written by hand and restyled with the tokens; `components.json` makes later `npx shadcn add` output land in the same place. Components take their text through props or children; built-in default labels ("Close", "Loading", "Remove …") are in `ui-labels.ts` (`TODO(E03)`).
+
+| Component | File · exports | Notes |
+|---|---|---|
+| Button | `button.tsx` · `Button` | `variant` primary (fill) / secondary (outlined, `border-input`) / ghost / destructive; `size` sm 44 px (radius 12, 14 px) / md 48 px / lg 56 px (the mock-ups' main buttons) / `icon` 44 × 44 round. `isLoading` shows a spinner, sets `aria-busy` + `aria-disabled` and swallows clicks and submits, but keeps focus (not `disabled`); `loadingLabel` names it. `asChild` styles a `<Link>`. |
+| Input, Textarea | `input.tsx` · `Input`; `textarea.tsx` · `Textarea` | Filled like the mock-ups: `bg-surface`, no border, 56 px, radius 14, 16 px text (no iOS zoom). `aria-invalid` adds a destructive ring. |
+| Label, FormField | `label.tsx` · `Label`; `form-field.tsx` · `FormField` | `<FormField label help error><Input /></FormField>` sets `id`, `aria-describedby` (help, error) and `aria-invalid` on its single child; `isLabelHidden` for icon search fields. |
+| Card | `card.tsx` · `Card`, `CardHeader`, `CardTitle` (`as` h2–h4), `CardDescription`, `CardContent`, `CardFooter` | Fill only, no border or shadow, radius 20, padding 20; `variant="soft"` = `bg-primary-soft` (active session card). |
+| Dialog | `dialog.tsx` · `Dialog`, `DialogTrigger`, `DialogContent` (`closeLabel`), `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogClose` | Radix Dialog: focus trap, `Esc` / scrim close, focus back to the trigger. Centered, max 448 px, radius 20, `bg-popover`, border + the one shadow, × button 44 px. Footer stacks full-width buttons on mobile. |
+| Sheet | `sheet.tsx` · `Sheet`, `SheetTrigger`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetDescription`, `SheetFooter`, `SheetClose` | Same Radix Dialog behavior. **< 1024 px: bottom sheet** (radius 24 top, drag-handle bar, max 90 dvh, safe-area padding); **≥ 1024 px: full-height panel on the right** (448 px). The handle is a visual only (no drag to dismiss). |
+| Popover | `popover.tsx` · `Popover`, `PopoverTrigger`, `PopoverContent` | Radix Popover; radius 18, border + shadow. Base for the Combobox (E02-T04). |
+| DropdownMenu | `dropdown-menu.tsx` · `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` (`variant="destructive"`), `DropdownMenuLabel`, `DropdownMenuSeparator` | Radix menu: arrows, typeahead, `Esc`; 44 px items with a ring on keyboard focus. Sub-menus, checkbox/radio items and shortcuts are not wrapped yet (add when needed). |
+| Tabs | `tabs.tsx` · `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Underline tabs from the Sessions mock-up: 44 px, active = foreground underline + semibold; counts go in the label. |
+| SegmentedControl | `segmented-control.tsx` · `SegmentedControl` | Native radios in a `fieldset` (arrow keys, announced as a radio group); pill with `border-input`, checked = `bg-primary-soft`; options take an `icon` (lucide icon or small Avatar). `ThemeToggle` is now built on it. |
+| Toast | `toast.tsx` · `Toaster` (root layout), `showToast(message, { description, action })`, `TOAST_DURATION_MS` | [sonner](https://sonner.emilkowal.ski/), unstyled + token classes: inverted (foreground fill, background text) like the mock-ups, radius 14, bottom center (96 px up on mobile, clear of the bottom nav), **4 s**, polite live region, Alt+T focuses it. |
+| Avatar, AvatarStack | `avatar.tsx` · `Avatar`, `getInitials`, `getAvatarFillClassName`; `avatar-stack.tsx` · `AvatarStack` | Photo or up to two initials on one of the new `--avatar-1..5` fills (the 300 pastels, Bark 900 text, same in both themes; picked from the name). Sizes 26 / 40 / 44 px. `isDecorative` when the name is written next to it. AvatarStack: labelled list, overlap with a ring in `--avatar-ring` (set it to the surface color on cards), "+N" with screen-reader text. |
+| Chip, Badge | `chip.tsx` · `Chip`; `badge.tsx` · `Badge` | Chip: 40 px `bg-primary-soft` pill, optional `icon`, `onRemove` adds a × (32 px visual, 44 px hit area via a transparent `::after`; Enter / Space / Delete / Backspace). Badge: 20 px status label in neutral / primary / success / warning / destructive (the PR badge is `warning`). |
+| Skeleton | `skeleton.tsx` · `Skeleton` | `bg-muted` pulsing block, `aria-hidden`; mark the region `aria-busy` and say "Loading" once. |
+| EmptyState | `empty-state.tsx` · `EmptyState` | `icon` + one-sentence `message` + optional `action`, centered, no illustration. |
+
+Rules the components follow (and new ones should):
+
+- **Focus.** Every interactive element shows a 2 px `--ring` outline 2 px outside it on keyboard focus (`FOCUS_RING_CLASS_NAME` in `focus-ring.ts`); where an outline doesn't fit (segmented options, menu items) a 2 px `ring-ring` box-shadow.
+- **Touch targets.** At least 44 × 44 px at every size, desktop included (no smaller "desktop" variants); small visuals get a padded hit area. `tests/e2e/ui-components.spec.ts` measures every control on `/dev/ui` at 390 px.
+- **Elevation.** Cards, inputs and chips use fills; popovers, menus, dialogs and sheets add a border and the single shadow level `shadow-overlay` (`--overlay-shadow`, darker in the dark theme). Tailwind's other shadow sizes are removed.
+- **Motion.** Overlays fade / pop (`animate-pop-in`, scale 0.96 → 1) or slide (`animate-sheet-in-bottom` / `-right`) in 200 ms and out in 150 ms, ease-out; colors transition in 150 ms. With `prefers-reduced-motion` one rule in the base layer of `globals.css` sets every animation and transition to 0 s (the spinner and skeleton pulse stop too).
+- **Icons.** lucide at 20 px, `strokeWidth={1.5}`, `aria-hidden` when decorative; the chip × is 16 px to fit the 32 px button.
+
 ## Layout
 
 - Mobile: bottom navigation with 4 items — **Home**, **Sessions**, **Progress**, **Buddies**; settings via avatar menu. No count badges on nav items; pending invitations and requests are surfaced on Home and in tab labels.
