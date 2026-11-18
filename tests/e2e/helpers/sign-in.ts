@@ -10,7 +10,8 @@ import type { Page } from "@playwright/test";
  * and verification codes are always `424242`.
  */
 export const e2eUser: Pick<TestUser, "email"> = {
-  email: process.env.E2E_CLERK_USER_EMAIL ?? "e2e-user+clerk_test@example.com",
+  // `||`, not `??`: CI passes an unset repository variable as "".
+  email: process.env.E2E_CLERK_USER_EMAIL || "e2e-user+clerk_test@example.com",
 };
 
 /**

@@ -1,0 +1,39 @@
+# Shared job setup for every workflow: Node from .nvmrc, npm cache, `npm ci`.
+# Use after actions/checkout (a local action is read from the checkout):
+#
+#   - uses: actions/checkout@v7
+#   - uses: ./.github/actions/setup
+#     with:
+#       next-cache: true # only in jobs that run `next build`
+name: Setup
+description: Install Node (from .nvmrc) and dependencies with `npm ci`.
+
+inputs:
+  next-cache:
+    description: Restore and save the Next.js build cache (.next/cache).
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node
+      uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+
+    # Speeds up repeat `next build`s; the key changes with deps or sources,
+    # restore-keys fall back to the newest cache for the same lockfile.
+    - name: Cache Next.js build
+      if: inputs.next-cache == 'true'
+      uses: actions/cache@v6
+      with:
+        path: .next/cache
+        key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts', 'tsconfig.json') }}
+        restore-keys: |
+          nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
