@@ -154,8 +154,9 @@ Code: [`src/components/ui/`](../src/components/ui/), previewed with every varian
 | Label, FormField | `label.tsx` · `Label`; `form-field.tsx` · `FormField` | `<FormField label help error><Input /></FormField>` sets `id`, `aria-describedby` (help, error) and `aria-invalid` on its single child; `isLabelHidden` for icon search fields. |
 | Card | `card.tsx` · `Card`, `CardHeader`, `CardTitle` (`as` h2–h4), `CardDescription`, `CardContent`, `CardFooter` | Fill only, no border or shadow, radius 20, padding 20; `variant="soft"` = `bg-primary-soft` (active session card). |
 | Dialog | `dialog.tsx` · `Dialog`, `DialogTrigger`, `DialogContent` (`closeLabel`), `DialogHeader`, `DialogTitle`, `DialogDescription`, `DialogFooter`, `DialogClose` | Radix Dialog: focus trap, `Esc` / scrim close, focus back to the trigger. Centered, max 448 px, radius 20, `bg-popover`, border + the one shadow, × button 44 px. Footer stacks full-width buttons on mobile. |
-| Sheet | `sheet.tsx` · `Sheet`, `SheetTrigger`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetDescription`, `SheetFooter`, `SheetClose` | Same Radix Dialog behavior. **< 1024 px: bottom sheet** (radius 24 top, drag-handle bar, max 90 dvh, safe-area padding); **≥ 1024 px: full-height panel on the right** (448 px). The handle is a visual only (no drag to dismiss). |
-| Popover | `popover.tsx` · `Popover`, `PopoverTrigger`, `PopoverContent` | Radix Popover; radius 18, border + shadow. Base for the Combobox (E02-T04). |
+| Sheet | `sheet.tsx` · `Sheet`, `SheetTrigger`, `SheetContent` (`size` default / `full`), `SheetHeader`, `SheetTitle`, `SheetDescription`, `SheetFooter`, `SheetClose` | Same Radix Dialog behavior. **< 1024 px: bottom sheet** (radius 24 top, drag-handle bar, max 90 dvh, safe-area padding); **≥ 1024 px: full-height panel on the right** (448 px). The handle is a visual only (no drag to dismiss). `size="full"` (E02-T04): on mobile it fills the *visual* viewport (`--visual-viewport-height/-top`, set from `window.visualViewport` while open, fallback `100dvh`), so it shrinks above the iOS on-screen keyboard; square corners, no handle, top padding clears the notch. |
+| Popover | `popover.tsx` · `Popover`, `PopoverTrigger`, `PopoverAnchor`, `PopoverContent` | Radix Popover; radius 18, border + shadow. Base for the Combobox (E02-T04); `PopoverAnchor` positions it against another element than the trigger. |
+| Combobox | `combobox/combobox.tsx` · `Combobox<T>` | See **Combobox (E02-T04)** below. |
 | DropdownMenu | `dropdown-menu.tsx` · `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` (`variant="destructive"`), `DropdownMenuLabel`, `DropdownMenuSeparator` | Radix menu: arrows, typeahead, `Esc`; 44 px items with a ring on keyboard focus. Sub-menus, checkbox/radio items and shortcuts are not wrapped yet (add when needed). |
 | Tabs | `tabs.tsx` · `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Underline tabs from the Sessions mock-up: 44 px, active = foreground underline + semibold; counts go in the label. |
 | SegmentedControl | `segmented-control.tsx` · `SegmentedControl` | Native radios in a `fieldset` (arrow keys, announced as a radio group); pill with `border-input`, checked = `bg-primary-soft`; options take an `icon` (lucide icon or small Avatar). `ThemeToggle` is now built on it. |
@@ -164,6 +165,34 @@ Code: [`src/components/ui/`](../src/components/ui/), previewed with every varian
 | Chip, Badge | `chip.tsx` · `Chip`; `badge.tsx` · `Badge` | Chip: 40 px `bg-primary-soft` pill, optional `icon`, `onRemove` adds a × (32 px visual, 44 px hit area via a transparent `::after`; Enter / Space / Delete / Backspace). Badge: 20 px status label in neutral / primary / success / warning / destructive (the PR badge is `warning`). |
 | Skeleton | `skeleton.tsx` · `Skeleton` | `bg-muted` pulsing block, `aria-hidden`; mark the region `aria-busy` and say "Loading" once. |
 | EmptyState | `empty-state.tsx` · `EmptyState` | `icon` + one-sentence `message` + optional `action`, centered, no illustration. |
+
+### Combobox (E02-T04)
+
+Searchable picker for exercises, machines, tags and buddies (`src/components/ui/combobox/`), built from Popover / Sheet + [cmdk](https://cmdk.paco.me/) 1.1.1 with cmdk's filtering off (`shouldFilter={false}`): results come from `onSearch`.
+
+```tsx
+<FormField label="Machine">
+  <Combobox
+    label="Machine"                     // names trigger, input, list; sheet title on phones
+    placeholder="No machine"
+    onSearch={(query, { signal }) => searchMachines(query, { signal })}
+    getKey={(machine) => machine.id}
+    getLabel={(machine) => machine.name}
+    renderItem={(machine, { highlightedLabel, isSelected }) => highlightedLabel} // optional
+    initialItems={recentMachines}        // shown before typing
+    value={machine} onChange={setMachine} // or `multiple` with arrays
+    allowCreate onCreate={(name) => createMachine(name)}
+  />
+</FormField>
+```
+
+- **Search.** `onSearch(trimmedQuery, { signal })` runs 200 ms after the last keystroke; the previous request's `AbortSignal` is aborted and a late answer to an older query is ignored. While waiting a spinner shows in the input and the list is empty (no stale results, no create option for an older query). An empty query shows `initialItems` without searching. Rejections show `errorText`.
+- **Create.** With `allowCreate`, a sticky last option **Create “{query}”** (dashed, 52 px, as in the "Add exercise" mock-up) appears once results for the current query have arrived and none has `normalizeSearchText(getLabel(item)) === normalizeSearchText(query)` (trimmed, lowercase, accents removed). `onCreate` gets the trimmed query; adding the new item to `value` is the owner's job. Single mode closes; multiple mode clears the query and stays open.
+- **Highlight.** Matches are wrapped in `<mark>` (semibold, no fill, like the mock-up's bold match), accent- and case-insensitively: "spaudimas" marks "Špaudimas" and "spaudimas".
+- **Keyboard and screen readers.** The input is `role="combobox"` with `aria-controls` → `listbox` and `aria-activedescendant` → the highlighted `option` (`bg-primary-soft`); ↑ / ↓ / Home / End move, Enter picks, Esc closes and returns focus to the trigger. Chosen options have `aria-checked="true"` and a check icon. A polite `role="status"` says "Loading", "N results", the empty text or the error. The trigger is named "{label} {value or placeholder}" (`aria-labelledby`) so the current value is read out; FormField's `aria-describedby` is passed on; its `aria-invalid` becomes a destructive ring (`data-invalid`), since buttons can't be `aria-invalid`.
+- **Multiple.** Selected items are removable Chips in the field (a labelled list); the popover anchors to the whole field. Removing a chip moves focus to the next chip, else the previous, else the trigger.
+- **Layout.** ≥ 1024 px: popover as wide as the field, max 26 rem tall, list scrolls under the sticky create option. < 1024 px: `Sheet size="full"` titled with `label`, input focused at the top, list fills the rest above the keyboard.
+- Default strings are in `ui-labels.ts` (`comboboxCreate`, `comboboxResultCount`, `comboboxNoResults`, `comboboxSearchFailed`, `comboboxSearch`; `TODO(E03)`); each has a prop.
 
 Rules the components follow (and new ones should):
 

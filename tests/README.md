@@ -32,6 +32,8 @@ tests/
 - **Sentry:** code that reports errors (`withAction()`, `global-error.tsx`) imports `@sentry/nextjs`; stub it with `vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }))` and assert on `Sentry.captureException`. Put `// @vitest-environment node` at the top of tests for server code (Server Actions, `withAction()`).
 - **Shell scripts** (`scripts/*.sh`) are tested in `tests/unit/scripts/` by running them with `bash` against a local fake HTTP server (no real network). They need `bash`, `curl` and `jq`.
 - CSS is not processed (Tailwind runs as a Turbopack loader in the app only). Type-level tests in `src/**/__typetests__` are checked by `npm run typecheck`, not Vitest.
+- **Browser APIs jsdom lacks** are stubbed in `tests/setup/unit.ts` for jsdom files: `Element.prototype.scrollIntoView` and `ResizeObserver` (cmdk) and `window.matchMedia` (never matches, i.e. the phone layout; stub it per test with `vi.spyOn(window, "matchMedia")`, see `combobox.test.tsx`).
+- **Fake timers with user-event:** `vi.useFakeTimers()`, `userEvent.setup({ advanceTimers: vi.advanceTimersByTime })` and `vi.stubGlobal("jest", { advanceTimersByTime: vi.advanceTimersByTime })` — Testing Library only advances fake timers through a global `jest` and otherwise hangs; `vi.unstubAllGlobals()` afterwards. Advance with `await act(() => vi.advanceTimersByTimeAsync(ms))` (the Combobox debounce / stale-result tests).
 
 ## Database and RLS tests
 
