@@ -94,8 +94,58 @@ jobs:
       - name: Build
         run: npm run build
 
-  # E01-T06 adds a `docker` job ("Docker image") here that builds the image
-  # without pushing, and lists it in `ci-passed.needs`.
+  # Builds the production image (Dockerfile) without pushing it, then starts it
+  # and waits for its HEALTHCHECK, so a broken Dockerfile or an app that can't
+  # boot in the image fails the PR. Coolify builds its own image (E01-T08).
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # Third-party actions are pinned to commit SHAs (docs/ci.md).
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # No NEXT_PUBLIC_* build args: the build doesn't need them, and the
+      # image is only smoke-tested. Layers are cached in the GitHub Actions cache.
+      - name: Build image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: false
+          load: true
+          tags: gym-tracker:ci
+          build-args: |
+            APP_VERSION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Check image size
+        run: docker image ls gym-tracker:ci
+
+      - name: Start container and wait for the health check
+        env:
+          APP_VERSION: ${{ github.sha }}
+        run: |
+          docker run -d --name app -p 3000:3000 gym-tracker:ci
+          for _ in $(seq 1 30); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' app)"
+            echo "Health: $status"
+            if [ "$status" = "healthy" ]; then break; fi
+            if [ "$status" = "unhealthy" ]; then break; fi
+            sleep 2
+          done
+          docker logs app
+          if [ "$status" != "healthy" ]; then
+            echo "::error file=Dockerfile::The container did not become healthy (status: $status)."
+            exit 1
+          fi
+          test "$(docker exec app id -u)" != "0" || { echo "::error file=Dockerfile::The container runs as root."; exit 1; }
+          body="$(curl -fsS http://127.0.0.1:3000/api/health)"
+          echo "GET /api/health → $body"
+          test "$body" = "{\"status\":\"ok\",\"version\":\"$APP_VERSION\"}"
 
   e2e:
     name: E2E tests
@@ -162,7 +212,7 @@ jobs:
   ci-passed:
     name: CI passed
     if: ${{ always() }}
-    needs: [checks, unit, db, build, e2e]
+    needs: [checks, unit, db, build, docker, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -29,33 +29,52 @@ Open [http://localhost:3000](http://localhost:3000) — you should see the place
 
 ## Scripts
 
-| Script                  | What it does                                                           |
-| ----------------------- | ---------------------------------------------------------------------- |
-| `npm run dev`           | Start the Next.js dev server on port 3000                              |
-| `npm run build`         | Production build                                                       |
-| `npm start`             | Serve the production build (run `build` first)                         |
-| `npm run lint`          | ESLint; fails on any warning (`--max-warnings 0`)                      |
-| `npm run typecheck`     | Generate Next.js route types, then `tsc --noEmit`                      |
-| `npm run format`        | Format all files with Prettier (sorts Tailwind classes)                |
-| `npm run format:check`  | Check formatting without writing (used by CI)                          |
-| `npm test`              | Unit and component tests (Vitest + Testing Library, jsdom)             |
-| `npm run test:watch`    | Unit tests in watch mode                                               |
-| `npm run test:coverage` | Unit tests with a coverage report in `coverage/`                       |
-| `npm run test:db`       | Database/RLS tests against local Supabase (run `db:start` first)       |
-| `npm run e2e`           | Playwright e2e tests (desktop Chromium + WebKit iPhone 14)             |
-| `npm run e2e:ui`        | Playwright UI mode                                                     |
-| `npm run db:start`      | Start local Supabase (Docker); prints the local URLs and keys          |
-| `npm run db:stop`       | Stop local Supabase (data is kept in Docker volumes)                   |
-| `npm run db:status`     | Print the local URLs and keys again                                    |
-| `npm run db:reset`      | Drop and rebuild the local DB from migrations + `seed.sql`             |
-| `npm run db:new <name>` | Create an empty migration `supabase/migrations/<timestamp>_<name>.sql` |
-| `npm run db:types`      | Regenerate `src/types/database.ts` from the local DB                   |
+| Script                  | What it does                                                            |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `npm run dev`           | Start the Next.js dev server on port 3000                               |
+| `npm run build`         | Production build                                                        |
+| `npm start`             | Serve the production build (run `build` first)                          |
+| `npm run docker:build`  | Build the production Docker image `gym-tracker` (see [Docker](#docker)) |
+| `npm run docker:run`    | Run the image on port 3000 with `.env.local` as runtime env             |
+| `npm run lint`          | ESLint; fails on any warning (`--max-warnings 0`)                       |
+| `npm run typecheck`     | Generate Next.js route types, then `tsc --noEmit`                       |
+| `npm run format`        | Format all files with Prettier (sorts Tailwind classes)                 |
+| `npm run format:check`  | Check formatting without writing (used by CI)                           |
+| `npm test`              | Unit and component tests (Vitest + Testing Library, jsdom)              |
+| `npm run test:watch`    | Unit tests in watch mode                                                |
+| `npm run test:coverage` | Unit tests with a coverage report in `coverage/`                        |
+| `npm run test:db`       | Database/RLS tests against local Supabase (run `db:start` first)        |
+| `npm run e2e`           | Playwright e2e tests (desktop Chromium + WebKit iPhone 14)              |
+| `npm run e2e:ui`        | Playwright UI mode                                                      |
+| `npm run db:start`      | Start local Supabase (Docker); prints the local URLs and keys           |
+| `npm run db:stop`       | Stop local Supabase (data is kept in Docker volumes)                    |
+| `npm run db:status`     | Print the local URLs and keys again                                     |
+| `npm run db:reset`      | Drop and rebuild the local DB from migrations + `seed.sql`              |
+| `npm run db:new <name>` | Create an empty migration `supabase/migrations/<timestamp>_<name>.sql`  |
+| `npm run db:types`      | Regenerate `src/types/database.ts` from the local DB                    |
 
 Before opening a PR run `npm run lint && npm run typecheck && npm run format:check && npm test && npm run build` (plus `npm run test:db` and `npm run e2e` when you touched the database or a user flow).
 
 ## CI
 
-GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every pull request and on pushes to `main`: lint/typecheck/format, unit tests, database tests on a fresh Supabase with all migrations plus a check that `src/types/database.ts` is up to date, the production build, and Playwright e2e (report and traces uploaded on failure). Branch protection (a one-time manual setup) makes the **CI passed** check and one approval required to merge into `main`. See [docs/ci.md](docs/ci.md) for the jobs, how to read failures, optional secrets and the branch protection setup.
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every pull request and on pushes to `main`: lint/typecheck/format, unit tests, database tests on a fresh Supabase with all migrations plus a check that `src/types/database.ts` is up to date, the production build, the Docker image (built and health-checked, not pushed), and Playwright e2e (report and traces uploaded on failure). Branch protection (a one-time manual setup) makes the **CI passed** check and one approval required to merge into `main`. See [docs/ci.md](docs/ci.md) for the jobs, how to read failures, optional secrets and the branch protection setup.
+
+## Docker
+
+Production runs the app as a Docker container on self-hosted Coolify ([architecture → Deployment](docs/architecture.md#deployment-self-hosted-coolify)). The [`Dockerfile`](Dockerfile) is multi-stage (deps → build → runtime) on Node 22 Alpine and uses Next.js `output: 'standalone'`, so the final image (~75 MB compressed, ~210 MB unpacked) contains only `server.js`, the traced `node_modules` (including `sharp` for image optimization) and static assets. It runs as the non-root user `nextjs` (uid 1001) on port 3000.
+
+```bash
+npm run docker:build   # docker build -t gym-tracker with NEXT_PUBLIC_* from .env.local as build args
+npm run docker:run     # docker run --rm --env-file .env.local -p 3000:3000 gym-tracker
+curl http://localhost:3000/api/health   # {"status":"ok","version":"<commit sha>"}
+```
+
+- **Build arguments (public, inlined into the browser bundle):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `APP_VERSION` (the commit SHA reported by `/api/health`; defaults to the `package.json` version). `docker:build` reads the `NEXT_PUBLIC_*` lines of `.env.local` (or your shell env) and passes extra arguments through to `docker build`.
+- **Runtime only (secrets):** `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`. Pass them with `--env-file`/`-e` when the container starts; never as `--build-arg` (build arguments are visible in `docker history`).
+- **Health check:** `GET /api/health` returns `200 {"status":"ok","version":…}` without auth or database access. The image's `HEALTHCHECK` calls it; `docker inspect --format '{{.State.Health.Status}}' <container>` shows `healthy` within a few seconds.
+- **Local Supabase from the container:** `127.0.0.1` inside the container is the container itself. To use the local stack, build and run with `NEXT_PUBLIC_SUPABASE_URL=http://host.docker.internal:54321` (on Linux also add `--add-host=host.docker.internal:host-gateway` to `docker run`).
+
+CI builds the image on every PR (no push) and checks that the container becomes healthy (see [docs/ci.md](docs/ci.md)).
 
 ## Database (Supabase)
 

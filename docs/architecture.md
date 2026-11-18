@@ -45,7 +45,7 @@
 ## Authentication & authorization
 
 1. User signs in with Google through Clerk (`<SignIn />` limited to Google).
-2. Clerk middleware protects every route except `/`, `/sign-in`, and the webhook.
+2. Clerk middleware protects every route except `/`, `/sign-in`, the webhook and the health check (`/api/health`).
 3. Supabase is configured with **Clerk as a third-party auth provider**. The Supabase client is created with `accessToken: () => getToken()` so each request carries the Clerk session token.
 4. RLS policies use `auth.jwt()->>'sub'` (the Clerk user id, `text`) to identify the user.
 5. A Clerk webhook (verified with Svix signature) keeps the `profiles` table in sync (name, email, avatar). On first login the app also upserts the profile as a fallback in case the webhook is late.
@@ -69,6 +69,7 @@ src/
           session/[sessionId]/
         settings/
     api/webhooks/clerk/route.ts
+    api/health/route.ts    public liveness check (Docker HEALTHCHECK, Coolify)
   components/
     ui/                    shadcn primitives (themed)
     common/                app-level shared components
@@ -114,7 +115,7 @@ Secrets: set per environment in Coolify (runtime and build-time variables) and i
 
 ## Deployment (self-hosted Coolify)
 
-- The app is built from a multi-stage `Dockerfile` using Next.js `output: 'standalone'` (small Node image, `sharp` for image optimization, runs as non-root).
+- The app is built from a multi-stage `Dockerfile` using Next.js `output: 'standalone'` (Node 22 Alpine pinned by digest, `sharp` for image optimization, runs as non-root user `nextjs`, listens on port 3000). The commit SHA is passed as the `APP_VERSION` build argument and reported by `GET /api/health` (public, no DB), which the image's `HEALTHCHECK` and Coolify probe. See README → Docker.
 - `NEXT_PUBLIC_*` variables are inlined at build time, so they're set as **build variables** in Coolify for each environment; server secrets are **runtime variables**.
 - Coolify is connected to the GitHub repo through its GitHub App. Automatic deploys on push are **off** for production: a GitHub Action first applies Supabase migrations, then triggers the Coolify deploy through its API/webhook. A failed migration stops the deploy.
 - Pull requests get Coolify **preview deployments**, wired to the Supabase staging project and the Clerk dev instance.
