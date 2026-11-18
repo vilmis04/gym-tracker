@@ -28,6 +28,7 @@ tests/
 - Query the DOM like a user: `screen.getByRole("button", { name: … })` first, `getByText` next, test ids last. Use `@testing-library/user-event` for interactions. jest-dom matchers (`toBeInTheDocument`, `toBeVisible`, …) are loaded in `tests/setup/unit.ts`.
 - No network, no database. Mock at the module boundary with `vi.mock()`; mocks, spies and `vi.stubEnv()` are reset after every test (`restoreMocks`, `unstubEnvs` in `vitest.config.mts`).
 - `server-only` is aliased to an empty module, so server code (`@/lib/supabase/server`, Server Actions, `withAction()` later) can be imported and unit tested. Async Server Components can't be rendered by RTL; test their logic (queries, actions) directly, and cover the page in e2e.
+- **Sentry:** code that reports errors (`withAction()`, `global-error.tsx`) imports `@sentry/nextjs`; stub it with `vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }))` and assert on `Sentry.captureException`. Put `// @vitest-environment node` at the top of tests for server code (Server Actions, `withAction()`).
 - CSS is not processed (Tailwind runs as a Turbopack loader in the app only). Type-level tests in `src/**/__typetests__` are checked by `npm run typecheck`, not Vitest.
 
 ## Database and RLS tests
@@ -76,6 +77,10 @@ npm run e2e:ui                             # Playwright UI mode
 - **Server:** Playwright starts the app itself. Locally it runs `npm run dev` (and reuses a dev server already running on the port); with `CI` set it runs `npm run build && npm run start` to test the production build. `E2E_PORT` changes the port (default 3000); `E2E_BASE_URL` skips the web server and tests an already deployed URL (e.g. a Coolify preview).
 - **Reports:** `playwright-report/` (HTML, `npx playwright show-report`) and `test-results/` (traces on first retry, screenshots on failure). All git-ignored.
 - **Data:** e2e tests use the app's normal Supabase settings from `.env.local`. Specs that write data must create their own records with unique names (factories) so they don't depend on each other or on run order.
+
+### Error tracking (fake Sentry)
+
+`tests/e2e/error-tracking.spec.ts` (chromium only) checks that an error thrown in a Server Component and one thrown in a client component (`/debug/error`) both reach error tracking with the release (`APP_VERSION`), a stack trace, and the fake email in the message scrubbed. No Sentry account is involved: the app is built with `NEXT_PUBLIC_SENTRY_DSN=http://public@127.0.0.1:8999/1` and the spec starts a fake ingest server on that port (`helpers/fake-sentry.ts`) that records the envelopes. The CI e2e job sets `NEXT_PUBLIC_SENTRY_DSN`, `ENABLE_TEST_ERROR_PAGE=1` and `APP_VERSION`; without them the spec is skipped. Run it locally with the command in README → Error tracking.
 
 ### Signing in (Clerk)
 

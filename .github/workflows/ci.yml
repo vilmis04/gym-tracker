@@ -91,6 +91,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           next-cache: true
+      # No Sentry variables: proves the build needs no Sentry account/token.
       - name: Build
         run: npm run build
 
@@ -108,8 +109,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
-      # No NEXT_PUBLIC_* build args: the build doesn't need them, and the
-      # image is only smoke-tested. Layers are cached in the GitHub Actions cache.
+      # No NEXT_PUBLIC_* or Sentry build args/secrets: the build doesn't need
+      # them, and the image is only smoke-tested. Layers are cached in the
+      # GitHub Actions cache.
       - name: Build image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -157,6 +159,12 @@ jobs:
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
       E2E_CLERK_USER_EMAIL: ${{ vars.E2E_CLERK_USER_EMAIL }}
+      # E01-T07: the build sends error events to a fake Sentry ingest server
+      # that tests/e2e/error-tracking.spec.ts starts on this port (no real
+      # Sentry project or token involved); /debug/error throws test errors.
+      NEXT_PUBLIC_SENTRY_DSN: http://public@127.0.0.1:8999/1
+      ENABLE_TEST_ERROR_PAGE: "1"
+      APP_VERSION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
