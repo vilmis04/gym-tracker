@@ -1,0 +1,165 @@
+# Production deploy (E01-T08). See docs/deployment.md for the one-time setup,
+# how a deploy works, rollback and troubleshooting.
+#
+# After CI succeeds on a push to `main`:
+#   migrate-staging    → `supabase db push` to the staging project
+#   migrate-production → `supabase db push` to the production project
+#   deploy-production  → Coolify API deploy of exactly that commit, then wait
+#                        until https://<prod>/api/health reports its SHA.
+# A failing job stops the ones after it, so a failed migration never deploys
+# and production keeps running the previous version.
+#
+# Until the repository variable DEPLOY_ENABLED is `true` (set it once the
+# environments and secrets exist), every run skips with a notice instead of
+# failing.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # Re-deploys the current `main` (migrations included) by hand.
+  workflow_dispatch:
+
+# One deploy at a time; a newer one waits instead of cancelling a running one
+# (never interrupt a migration).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # The commit CI tested (workflow_run) or the dispatched `main` commit.
+  DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+jobs:
+  preflight:
+    name: Preflight
+    # Only green CI runs of pushes to `main` in this repository (not PRs that
+    # happen to come from a branch called `main`), or a manual run on `main`.
+    if: >-
+      (github.event_name == 'workflow_run'
+        && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.event == 'push'
+        && github.event.workflow_run.head_branch == 'main'
+        && github.event.workflow_run.head_repository.full_name == github.repository)
+      || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check whether deploys are enabled
+        id: check
+        env:
+          DEPLOY_ENABLED: ${{ vars.DEPLOY_ENABLED }}
+        run: |
+          if [ "$DEPLOY_ENABLED" = "true" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Deploying $DEPLOY_SHA"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deploy skipped: the repository variable DEPLOY_ENABLED is not 'true'. Finish the one-time setup in docs/deployment.md first."
+            echo "Deploy of \`$DEPLOY_SHA\` skipped: \`DEPLOY_ENABLED\` is not \`true\` (see docs/deployment.md)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  migrate-staging:
+    name: Migrate staging
+    needs: preflight
+    if: needs.preflight.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+      - uses: ./.github/actions/setup
+      - name: Check secrets
+        run: scripts/require-env.sh SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD
+      # The CLI reads SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD from the
+      # environment, so neither appears on a command line.
+      - name: Link the Supabase project
+        run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --yes
+      - name: List pending migrations
+        run: npx supabase db push --remote --dry-run
+      # Without --include-all: a migration older than the newest applied one
+      # fails the push instead of being applied out of order.
+      - name: Apply migrations
+        run: npx supabase db push --remote --yes
+
+  migrate-production:
+    name: Migrate production
+    needs: migrate-staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+      - uses: ./.github/actions/setup
+      - name: Check secrets
+        run: scripts/require-env.sh SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD
+      - name: Link the Supabase project
+        run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --yes
+      - name: List pending migrations
+        run: npx supabase db push --remote --dry-run
+      - name: Apply migrations
+        run: npx supabase db push --remote --yes
+
+  deploy-production:
+    name: Deploy production
+    needs: migrate-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    env:
+      COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+      COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+      COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+      PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+    steps:
+      # Only for the scripts; nothing is built here (Coolify builds the image).
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+      - name: Check secrets
+        run: scripts/require-env.sh COOLIFY_URL COOLIFY_API_TOKEN COOLIFY_APP_UUID PRODUCTION_URL
+      # Pins the Coolify app to DEPLOY_SHA, deploys it and waits for Coolify:
+      # a container that fails its health check fails the deployment and the
+      # old one keeps running.
+      - name: Deploy with Coolify
+        id: deploy
+        run: scripts/coolify-deploy.sh
+      - name: Wait for the new version
+        run: scripts/wait-for-health.sh "$PRODUCTION_URL" "$DEPLOY_SHA"
+      - name: Summary
+        if: always()
+        env:
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          DEPLOYMENT_UUID: ${{ steps.deploy.outputs.deployment_uuid }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "### Production deploy: ${JOB_STATUS}"
+            echo ""
+            echo "- Commit: \`${DEPLOY_SHA}\`"
+            echo "- Coolify deployment: \`${DEPLOYMENT_UUID:-none}\` (${DEPLOY_OUTCOME})"
+            echo "- URL: ${PRODUCTION_URL}"
+            echo ""
+            echo "Rollback: docs/deployment.md → Roll back."
+          } >> "$GITHUB_STEP_SUMMARY"

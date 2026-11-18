@@ -19,6 +19,7 @@ tests/
   helpers/             shared helpers: signed-JWT Supabase clients, DB reset, local stack settings
   setup/               Vitest setup files (jest-dom, DB env + reset, `server-only` stub)
   db/rls/              RLS tests, one file per table
+  unit/scripts/        tests for scripts/*.sh (deploy scripts against a local fake Coolify/health server)
   e2e/                 Playwright specs, global setup and e2e helpers (signInAs)
 ```
 
@@ -29,6 +30,7 @@ tests/
 - No network, no database. Mock at the module boundary with `vi.mock()`; mocks, spies and `vi.stubEnv()` are reset after every test (`restoreMocks`, `unstubEnvs` in `vitest.config.mts`).
 - `server-only` is aliased to an empty module, so server code (`@/lib/supabase/server`, Server Actions, `withAction()` later) can be imported and unit tested. Async Server Components can't be rendered by RTL; test their logic (queries, actions) directly, and cover the page in e2e.
 - **Sentry:** code that reports errors (`withAction()`, `global-error.tsx`) imports `@sentry/nextjs`; stub it with `vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }))` and assert on `Sentry.captureException`. Put `// @vitest-environment node` at the top of tests for server code (Server Actions, `withAction()`).
+- **Shell scripts** (`scripts/*.sh`) are tested in `tests/unit/scripts/` by running them with `bash` against a local fake HTTP server (no real network). They need `bash`, `curl` and `jq`.
 - CSS is not processed (Tailwind runs as a Turbopack loader in the app only). Type-level tests in `src/**/__typetests__` are checked by `npm run typecheck`, not Vitest.
 
 ## Database and RLS tests

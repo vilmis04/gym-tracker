@@ -2,6 +2,8 @@
 
 Every pull request (to any branch, so stacked PRs run too) and every push to `main` runs [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). It can also be started by hand (Actions → CI → Run workflow). A new push to a PR cancels that PR's previous run; runs on `main` always finish.
 
+When CI succeeds on a push to `main`, the separate **Deploy** workflow ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)) migrates Supabase staging and production and deploys to Coolify; see [deployment.md → How a deploy works](deployment.md#how-a-deploy-works). It is not a PR check.
+
 ## Jobs
 
 All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and (except **Docker image**, which installs inside the image) runs the shared setup ([`.github/actions/setup`](../.github/actions/setup/action.yml): Node from `.nvmrc`, npm cache, `npm ci`). The run takes as long as the slowest job (E2E, a few minutes), well under the ~8 minute target.
@@ -37,6 +39,10 @@ When the E2E job fails it uploads two artifacts (kept 14 days), listed at the bo
 
 Failures are also annotated inline on the PR's **Files changed** tab (Playwright's `github` reporter).
 
+### Flaky failures
+
+- **Database job: `port 54322 already in use`** (seen once while `supabase start` started Postgres). A runner-side one-off; *Re-run failed jobs* fixes it. If it repeats, check that no step starts a second Supabase stack.
+
 ## Secrets and variables
 
 None are required today. Optional, set under **Settings → Secrets and variables → Actions**:
@@ -47,7 +53,9 @@ None are required today. Optional, set under **Settings → Secrets and variable
 | `CLERK_SECRET_KEY`                  | secret   | e2e     | Clerk **dev** instance secret key (never production; `clerkSetup()` refuses it) |
 | `E2E_CLERK_USER_EMAIL`              | variable | e2e     | Override the e2e test user (default `e2e-user+clerk_test@example.com`)    |
 
-No Sentry secret is used in CI: PR builds never upload source maps (that happens in the Coolify build, E01-T08, with `SENTRY_AUTH_TOKEN` as a build secret).
+No Sentry secret is used in CI: PR builds never upload source maps (that happens in the Coolify build, with `SENTRY_AUTH_TOKEN` as a build secret; [deployment.md → Variables](deployment.md#6-variables)).
+
+The deploy workflow's secrets (Supabase, Coolify) are **environment** secrets of the `staging` and `production` GitHub environments, not repository secrets, and are never available to CI or pull requests: [deployment.md → GitHub environments](deployment.md#9-github-environments-secrets-and-variables).
 
 Without both Clerk keys the sign-in specs are skipped with a reason. They become meaningful in E04-T01 (app wired to Clerk). Secrets are not passed to PRs from forks, so there they stay skipped.
 
@@ -89,3 +97,5 @@ Workflow files are linted with [actionlint](https://github.com/rhysd/actionlint)
 - Default `permissions: contents: read`; a job that needs more (e.g. `packages: write`) asks for it on that job only.
 - Job `name`s are the check names branch protection refers to — don't rename them casually.
 - Reuse `./.github/actions/setup` (with `next-cache: true` in jobs that run `next build`) in new jobs and workflows.
+- Non-trivial shell goes into `scripts/*.sh` (bash, `set -euo pipefail`, checked with [shellcheck](https://www.shellcheck.net)) so it can be run and tested locally, like `scripts/coolify-deploy.sh` (tests in `tests/unit/scripts/`).
+- Credentials for anything outside CI (Supabase Cloud, Coolify) are **environment** secrets on the `staging` / `production` GitHub environments (restricted to `main`), never repository secrets.
