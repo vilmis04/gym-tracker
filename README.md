@@ -8,7 +8,7 @@ See [docs/](docs/README.md) for the product vision, architecture, data model, de
 
 ## Prerequisites
 
-- **Node.js 22** (LTS) — the exact major is pinned in [`.nvmrc`](.nvmrc); with nvm run `nvm use`
+- **Node.js 22** (LTS, 22.22.2 or newer) — the exact major is pinned in [`.nvmrc`](.nvmrc); with nvm run `nvm use`
 - **npm 10+** (ships with Node 22)
 - Git
 - **Docker** (Docker Desktop, OrbStack, Colima or Docker Engine) — runs the local Supabase stack
@@ -38,6 +38,12 @@ Open [http://localhost:3000](http://localhost:3000) — you should see the place
 | `npm run typecheck`     | Generate Next.js route types, then `tsc --noEmit`                      |
 | `npm run format`        | Format all files with Prettier (sorts Tailwind classes)                |
 | `npm run format:check`  | Check formatting without writing (used by CI)                          |
+| `npm test`              | Unit and component tests (Vitest + Testing Library, jsdom)             |
+| `npm run test:watch`    | Unit tests in watch mode                                               |
+| `npm run test:coverage` | Unit tests with a coverage report in `coverage/`                       |
+| `npm run test:db`       | Database/RLS tests against local Supabase (run `db:start` first)       |
+| `npm run e2e`           | Playwright e2e tests (desktop Chromium + WebKit iPhone 14)             |
+| `npm run e2e:ui`        | Playwright UI mode                                                     |
 | `npm run db:start`      | Start local Supabase (Docker); prints the local URLs and keys          |
 | `npm run db:stop`       | Stop local Supabase (data is kept in Docker volumes)                   |
 | `npm run db:status`     | Print the local URLs and keys again                                    |
@@ -45,7 +51,7 @@ Open [http://localhost:3000](http://localhost:3000) — you should see the place
 | `npm run db:new <name>` | Create an empty migration `supabase/migrations/<timestamp>_<name>.sql` |
 | `npm run db:types`      | Regenerate `src/types/database.ts` from the local DB                   |
 
-Before opening a PR run `npm run lint && npm run typecheck && npm run format:check && npm run build`.
+Before opening a PR run `npm run lint && npm run typecheck && npm run format:check && npm test && npm run build` (plus `npm run test:db` and `npm run e2e` when you touched the database or a user flow).
 
 ## Database (Supabase)
 
@@ -95,6 +101,18 @@ const { data, error } = await supabase.from("sample_notes").select("id, body");
 - **User token.** Both user-facing helpers accept `{ accessToken }`, a `() => Promise<string | null>` that returns the Clerk session token (Clerk is a Supabase third-party auth provider). Until Clerk is wired in (E04-T02) the default returns `null`, so requests use the anon key and RLS only lets through what `anon` may see.
 - **Server only.** `server.ts` and `admin.ts` start with `import "server-only"`: importing them from a `"use client"` module fails `next build`. The service-role key has no `NEXT_PUBLIC_` prefix, so it is never inlined into the browser bundle.
 - **Env vars** are read when a client is created, not at import, so `npm run build` works without them; a missing variable throws an error naming it.
+
+## Tests
+
+Unit/component tests (Vitest + React Testing Library) live next to the code as `*.test.ts(x)`; database/RLS tests in `tests/db` act as fake users with signed JWTs against local Supabase; e2e tests in `tests/e2e` run in Playwright on desktop Chromium and mobile WebKit. First time: `npx playwright install chromium webkit`.
+
+```bash
+npm test                         # unit + component
+npm run db:start && npm run test:db   # RLS tests (local Supabase only)
+npm run e2e                      # starts the dev server itself
+```
+
+See [tests/README.md](tests/README.md) for the approach, how the database is reset between tests, factories, and signing in with Clerk in e2e tests.
 
 ## Project structure
 
