@@ -7,3 +7,4 @@
 - `i18n/` — next-intl setup (E03)
 - `tags/` — auto-tag rules
 - `utils/` — small framework-agnostic helpers
+- `dev-pages.ts` — `isDevPagesEnabled()`, the gate for developer-only `/dev` pages (E02-T01)

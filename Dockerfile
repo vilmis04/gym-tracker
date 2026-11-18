@@ -18,7 +18,8 @@
 # build arguments are visible in `docker history`. The one build-time secret,
 # the Sentry auth token for source-map upload, is passed with `--secret`
 # (see the builder stage). Optional runtime vars: SENTRY_DSN,
-# ENABLE_TEST_ERROR_PAGE (README → Error tracking).
+# ENABLE_TEST_ERROR_PAGE (README → Error tracking), ENABLE_DEV_PAGES
+# (README → Design tokens and dev pages).
 
 # Node 22 LTS (matches .nvmrc / engines) on Alpine, pinned by version and digest.
 # Bump both together: docker pull node:<version>-alpine<x.y> and copy the digest.

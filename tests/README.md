@@ -19,7 +19,7 @@ tests/
   helpers/             shared helpers: signed-JWT Supabase clients, DB reset, local stack settings
   setup/               Vitest setup files (jest-dom, DB env + reset, `server-only` stub)
   db/rls/              RLS tests, one file per table
-  unit/scripts/        tests for scripts/*.sh (deploy scripts against a local fake Coolify/health server)
+  unit/scripts/        tests for scripts/ (deploy scripts against a local fake Coolify/health server, raw-color guard, token contrast check)
   e2e/                 Playwright specs, global setup and e2e helpers (signInAs)
 ```
 
@@ -81,6 +81,8 @@ npm run e2e:ui                             # Playwright UI mode
 - **Data:** e2e tests use the app's normal Supabase settings from `.env.local`. Specs that write data must create their own records with unique names (factories) so they don't depend on each other or on run order.
 
 ### Error tracking (fake Sentry)
+
+`tests/e2e/design-tokens.spec.ts` (E02-T01) opens `/dev/tokens` and checks that the Lithuanian letters are covered by a loaded Inter font face (no fallback font) and that `?theme=dark` applies the dark tokens. Against a production build it needs `ENABLE_DEV_PAGES=1` (set in the CI e2e job); with `next dev` it always runs.
 
 `tests/e2e/error-tracking.spec.ts` (chromium only) checks that an error thrown in a Server Component and one thrown in a client component (`/debug/error`) both reach error tracking with the release (`APP_VERSION`), a stack trace, and the fake email in the message scrubbed. No Sentry account is involved: the app is built with `NEXT_PUBLIC_SENTRY_DSN=http://public@127.0.0.1:8999/1` and the spec starts a fake ingest server on that port (`helpers/fake-sentry.ts`) that records the envelopes. The CI e2e job sets `NEXT_PUBLIC_SENTRY_DSN`, `ENABLE_TEST_ERROR_PAGE=1` and `APP_VERSION`; without them the spec is skipped. Run it locally with the command in README → Error tracking.
 

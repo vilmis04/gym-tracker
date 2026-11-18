@@ -40,6 +40,14 @@ jobs:
       - name: Check formatting
         if: ${{ !cancelled() }}
         run: npm run format:check
+      # E02-T01: design tokens meet WCAG AA in both themes, and no raw colors
+      # (hex, rgb(), hsl(), …) appear outside src/app/globals.css.
+      - name: Check token contrast
+        if: ${{ !cancelled() }}
+        run: npm run check:contrast
+      - name: Check for raw colors
+        if: ${{ !cancelled() }}
+        run: npm run check:colors
 
   unit:
     name: Unit tests
@@ -165,6 +173,9 @@ jobs:
       NEXT_PUBLIC_SENTRY_DSN: http://public@127.0.0.1:8999/1
       ENABLE_TEST_ERROR_PAGE: "1"
       APP_VERSION: ${{ github.sha }}
+      # E02-T01: serves /dev/tokens in the production build for
+      # tests/e2e/design-tokens.spec.ts (404 without it).
+      ENABLE_DEV_PAGES: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup

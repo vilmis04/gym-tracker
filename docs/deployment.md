@@ -157,6 +157,7 @@ Set them on the production app: *Environment Variables* has two groups, **Produc
 | `SUPABASE_SERVICE_ROLE_KEY` | — | ✓ | production service_role key | staging service_role key | **yes** |
 | `SENTRY_DSN` | — | ✓ | optional server-only DSN override | optional | no |
 | `ENABLE_TEST_ERROR_PAGE` | — | ✓ | unset (set `1` only for the smoke test) | unset | no |
+| `ENABLE_DEV_PAGES` | — | ✓ | unset | unset (set `1` to review `/dev/tokens` on a preview, then remove) | no |
 
 Notes:
 
