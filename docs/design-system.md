@@ -157,6 +157,7 @@ Code: [`src/components/ui/`](../src/components/ui/), previewed with every varian
 | Sheet | `sheet.tsx` · `Sheet`, `SheetTrigger`, `SheetContent` (`size` default / `full`), `SheetHeader`, `SheetTitle`, `SheetDescription`, `SheetFooter`, `SheetClose` | Same Radix Dialog behavior. **< 1024 px: bottom sheet** (radius 24 top, drag-handle bar, max 90 dvh, safe-area padding); **≥ 1024 px: full-height panel on the right** (448 px). The handle is a visual only (no drag to dismiss). `size="full"` (E02-T04): on mobile it fills the *visual* viewport (`--visual-viewport-height/-top`, set from `window.visualViewport` while open, fallback `100dvh`), so it shrinks above the iOS on-screen keyboard; square corners, no handle, top padding clears the notch. |
 | Popover | `popover.tsx` · `Popover`, `PopoverTrigger`, `PopoverAnchor`, `PopoverContent` | Radix Popover; radius 18, border + shadow. Base for the Combobox (E02-T04); `PopoverAnchor` positions it against another element than the trigger. |
 | Combobox | `combobox/combobox.tsx` · `Combobox<T>` | See **Combobox (E02-T04)** below. |
+| NumberStepper | `number-stepper/number-stepper.tsx` · `NumberStepper`; `number-stepper-presets.ts` · `NUMBER_STEPPER_PRESETS` | See **NumberStepper (E02-T05)** below. |
 | DropdownMenu | `dropdown-menu.tsx` · `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` (`variant="destructive"`), `DropdownMenuLabel`, `DropdownMenuSeparator` | Radix menu: arrows, typeahead, `Esc`; 44 px items with a ring on keyboard focus. Sub-menus, checkbox/radio items and shortcuts are not wrapped yet (add when needed). |
 | Tabs | `tabs.tsx` · `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Underline tabs from the Sessions mock-up: 44 px, active = foreground underline + semibold; counts go in the label. |
 | SegmentedControl | `segmented-control.tsx` · `SegmentedControl` | Native radios in a `fieldset` (arrow keys, announced as a radio group); pill with `border-input`, checked = `bg-primary-soft`; options take an `icon` (lucide icon or small Avatar). `ThemeToggle` is now built on it. |
@@ -193,6 +194,29 @@ Searchable picker for exercises, machines, tags and buddies (`src/components/ui/
 - **Multiple.** Selected items are removable Chips in the field (a labelled list); the popover anchors to the whole field. Removing a chip moves focus to the next chip, else the previous, else the trigger.
 - **Layout.** ≥ 1024 px: popover as wide as the field, max 26 rem tall, list scrolls under the sticky create option. < 1024 px: `Sheet size="full"` titled with `label`, input focused at the top, list fills the rest above the keyboard.
 - Default strings are in `ui-labels.ts` (`comboboxCreate`, `comboboxResultCount`, `comboboxNoResults`, `comboboxSearchFailed`, `comboboxSearch`; `TODO(E03)`); each has a prop.
+
+### NumberStepper (E02-T05)
+
+Weight and reps field with big − / + buttons (`src/components/ui/number-stepper/`), as in the Live session mock-up: 56 px, radius 14, `bg-surface` without a border, 48 × 56 px buttons, value 20 px semibold `tabular-nums`, "—" while empty.
+
+```tsx
+<FormField label="Weight">
+  <NumberStepper
+    {...NUMBER_STEPPER_PRESETS.weight}  // step 2.5, min 0, max 999.75, 2 decimals, unit "kg"
+    label="Weight"                      // names the spinbutton and the −/+ group
+    value={weight}                      // number | null (null shows "—")
+    onChange={setWeight}                // gets the parsed number, never the text
+    locale="lt"                         // default "lt"; TODO(E03) next-intl's active locale
+  />
+</FormField>
+```
+
+`NUMBER_STEPPER_PRESETS.reps` is step 1, min 1, max 999, 0 decimals (matching `sets.weight_kg numeric(6,2) ≥ 0` and `sets.reps 1..999`).
+
+- **Typing.** `inputmode="decimal"` when `decimals > 0`, else `numeric` (the phone keypad). `,` and `.` are both accepted and spaces ignored (`57,5`, `57.5`, ` 57,50 ` → 57.5); extra decimals are rounded half away from zero on the digits (`57,555` → 57.56, `10,5` reps → 11). A valid in-range number goes to `onChange` while typing; on blur or Enter the number is clamped to min/max and shown again with the locale's separator (`57,5` in `lt`, `57.5` in `en`, `Intl.NumberFormat`, no grouping, no trailing zeros); anything that isn't a number (or an empty field) reverts to the last valid value. Focusing selects the text so typing replaces it.
+- **Buttons.** A press steps at once; holding repeats after 400 ms at intervals shrinking by 15 % per step from 200 ms to 50 ms (about 20 steps in 2 s), and stops on release, pointer leave/cancel, blur, unmount or at a bound. The button at a bound is `aria-disabled` (stays focusable). No context menu, text selection or iOS callout on a long press. Steps are integer math scaled by 10^decimals (no drift) and are **not snapped** to multiples of the step (58.75 + 2.5 = 61.25). From empty either button sets `min`.
+- **Keyboard and screen readers.** The input is a `spinbutton` (`aria-valuenow/min/max`, `aria-valuetext` "57,5 kg"); ↑ / ↓ step, Page Up / Page Down step 10× (Home / End keep moving the caret). Buttons are named "Decrease by 2,5 kg" / "Increase by 1" (`UI_LABELS`, `decreaseLabel` / `increaseLabel` props) inside a `group` named by `label`. After a button tap, and once on release of a hold (not on every repeat), the new value is announced in a polite `role="status"`; arrow-key changes rely on the spinbutton's own value text. FormField's `id`, `aria-describedby` and `aria-invalid` go on the input (destructive ring).
+- Helpers (pure, unit-tested): `number-stepper-values.ts` (`parseDecimalInput`, `clampValue`, `isWithinRange`, `stepValue`, `createValueFormat`), `use-auto-repeat.ts` (`useAutoRepeat`, `getAutoRepeatDelay`).
 
 Rules the components follow (and new ones should):
 

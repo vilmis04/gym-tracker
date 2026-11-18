@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import { NumberStepper } from "@/components/ui/number-stepper/number-stepper";
+import { NUMBER_STEPPER_PRESETS } from "@/components/ui/number-stepper/number-stepper-presets";
 import {
   Popover,
   PopoverContent,
@@ -393,6 +395,72 @@ export function ComboboxDemo() {
           onChange={setTags}
           allowCreate
           onCreate={createTag}
+        />
+      </FormField>
+    </div>
+  );
+}
+
+export function NumberStepperDemo() {
+  const [lithuanianWeight, setLithuanianWeight] = useState<number | null>(57.5);
+  const [lithuanianReps, setLithuanianReps] = useState<number | null>(10);
+  const [englishWeight, setEnglishWeight] = useState<number | null>(57.5);
+  const [englishReps, setEnglishReps] = useState<number | null>(10);
+  const [emptyWeight, setEmptyWeight] = useState<number | null>(null);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid max-w-md grid-cols-2 gap-3">
+        <FormField label="Weight · LT">
+          <NumberStepper
+            {...NUMBER_STEPPER_PRESETS.weight}
+            label="Weight · LT"
+            locale="lt"
+            value={lithuanianWeight}
+            onChange={setLithuanianWeight}
+          />
+        </FormField>
+        <FormField label="Reps · LT">
+          <NumberStepper
+            {...NUMBER_STEPPER_PRESETS.reps}
+            label="Reps · LT"
+            locale="lt"
+            value={lithuanianReps}
+            onChange={setLithuanianReps}
+          />
+        </FormField>
+      </div>
+      <div className="grid max-w-md grid-cols-2 gap-3">
+        <FormField label="Weight · EN">
+          <NumberStepper
+            {...NUMBER_STEPPER_PRESETS.weight}
+            label="Weight · EN"
+            locale="en"
+            value={englishWeight}
+            onChange={setEnglishWeight}
+          />
+        </FormField>
+        <FormField label="Reps · EN">
+          <NumberStepper
+            {...NUMBER_STEPPER_PRESETS.reps}
+            label="Reps · EN"
+            locale="en"
+            value={englishReps}
+            onChange={setEnglishReps}
+          />
+        </FormField>
+      </div>
+      <FormField
+        label="Weight · empty"
+        help="“—” until a value is entered or + / − is pressed."
+        error={emptyWeight === null ? "Enter the weight." : null}
+        className="max-w-md"
+      >
+        <NumberStepper
+          {...NUMBER_STEPPER_PRESETS.weight}
+          label="Weight · empty"
+          value={emptyWeight}
+          onChange={setEmptyWeight}
         />
       </FormField>
     </div>

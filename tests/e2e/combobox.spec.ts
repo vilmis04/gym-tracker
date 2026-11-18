@@ -54,8 +54,12 @@ test.describe("Combobox on /dev/ui", () => {
         "PritūpimaiBarbell",
       ]);
 
+      // The popover's own live region (the NumberStepper demos have theirs).
+      const status = page
+        .locator("[data-radix-popper-content-wrapper]")
+        .getByRole("status");
       await input.pressSequentially("spaudimas");
-      await expect(page.getByRole("status")).toHaveText("Loading");
+      await expect(status).toHaveText("Loading");
       const options = page.getByRole("option");
       await expect(options).toHaveCount(3, { timeout: SEARCH_TIMEOUT_MS });
       await expect(options.locator("mark")).toHaveText([
@@ -63,7 +67,7 @@ test.describe("Combobox on /dev/ui", () => {
         "spaudimas",
         "spaudimas",
       ]);
-      await expect(page.getByRole("status")).toHaveText("3 results");
+      await expect(status).toHaveText("3 results");
       await expect(page.getByRole("option", { name: /Create/ })).toHaveCount(0);
 
       await input.press("End");

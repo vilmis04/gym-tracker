@@ -28,6 +28,7 @@ import {
   DialogDemo,
   DropdownMenuDemo,
   LoadingButtonDemo,
+  NumberStepperDemo,
   PopoverDemo,
   SegmentedControlDemo,
   SheetDemo,
@@ -108,6 +109,10 @@ export default function UiPage() {
 
       <DemoSection title="Combobox">
         <ComboboxDemo />
+      </DemoSection>
+
+      <DemoSection title="NumberStepper">
+        <NumberStepperDemo />
       </DemoSection>
 
       <DemoSection title="Card">
