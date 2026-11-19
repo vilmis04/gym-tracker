@@ -10,7 +10,7 @@ All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and (e
 
 | Check name (job)                   | What it runs                                                                                                                       | Fails when                                                    |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **Lint, typecheck, format** (`checks`) | `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run check:contrast`, `npm run check:colors` (all always run, so one push shows every problem) | any ESLint warning/error, type error, unformatted file, a design-token pair below WCAG AA, a raw color literal in `src/` outside `src/app/globals.css` (annotated inline on the PR) |
+| **Lint, typecheck, format** (`checks`) | `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run check:contrast`, `npm run check:colors`, `npm run i18n:check` (all always run, so one push shows every problem) | any ESLint warning/error, type error, unformatted file, a design-token pair below WCAG AA, a raw color literal in `src/` outside `src/app/globals.css` (annotated inline on the PR), a translation problem in `messages/*.json` (see below; annotated on the file) |
 | **Unit tests** (`unit`)            | `npm run test:coverage` (Vitest `unit` project, coverage printed in the log)                                                       | a failing unit/component test                                 |
 | **Database tests & types** (`db`)  | `npx supabase start` on an **empty** database (applies every migration + `seed.sql`), then the types check, then `npm run test:db` | a broken migration, out-of-date `src/types/database.ts`, a failing RLS/DB test |
 | **Build** (`build`)                | `npm run build` with no Sentry variables (the build must not need a Sentry account)                                                | the production build fails                                    |
@@ -29,6 +29,23 @@ All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and (e
   > src/types/database.ts is out of date with supabase/migrations. Run 'npm run db:reset && npm run db:types' locally and commit the regenerated file.
 
   `db:types` is deterministic, so an unchanged schema never produces a diff.
+
+### Translations check
+
+`npm run i18n:check` ([`scripts/check-i18n.mts`](../scripts/check-i18n.mts), E03-T04; under a second) compares every `messages/*.json` with `messages/en.json` and prints one line per problem, then exits 1:
+
+```
+messages/en.json: missing key "nav.extra"
+messages/lt.json: empty value for "common.back"
+messages/lt.json: "counts.sets": the plural {count} is missing many (this locale needs one, few, many, other)
+messages/lt.json: invalid ICU syntax in "counts.reps": EXPECT_ARGUMENT_CLOSING_BRACE at line 1, column 1
+messages/lt.json: missing key "counts.weeks"
+messages/lt.json: "ui.remove" uses the arguments {name} but messages/en.json uses {item}
+
+6 translation problems in messages/en.json, messages/lt.json. Every key needs a non-empty message in every file; see README → Adding a string.
+```
+
+In CI each line is also a `::error file=…` annotation on the messages file. A file that isn't valid JSON or isn't a tree of strings stops the check with exit code 2. How to add a string: [README → Design tokens and dev pages → Adding a string](../README.md#design-tokens-and-dev-pages).
 
 ### Reading a failed E2E run
 
@@ -81,7 +98,7 @@ With a single maintainer, GitHub doesn't let you approve your own PR; add the ma
 ## Running the same checks locally
 
 ```bash
-npm run lint && npm run typecheck && npm run format:check && npm run check:contrast && npm run check:colors
+npm run lint && npm run typecheck && npm run format:check && npm run check:contrast && npm run check:colors && npm run i18n:check
 npm test
 npm run db:start && npm run db:reset && npm run db:types && git diff --exit-code src/types/database.ts && npm run test:db
 npm run build
