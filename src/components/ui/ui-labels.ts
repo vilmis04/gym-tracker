@@ -12,4 +12,6 @@ export const UI_LABELS = {
   comboboxNoResults: "No results",
   comboboxSearchFailed: "Couldn’t load results. Try again.",
   comboboxSearch: "Search",
+  numberStepperDecrease: (stepText: string) => `Decrease by ${stepText}`,
+  numberStepperIncrease: (stepText: string) => `Increase by ${stepText}`,
 } as const;

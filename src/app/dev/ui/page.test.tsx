@@ -7,6 +7,7 @@ const SECTIONS = [
   "Button",
   "Input, Textarea, Label, FormField",
   "Combobox",
+  "NumberStepper",
   "Card",
   "Dialog, Sheet, Popover, DropdownMenu",
   "Tabs",
