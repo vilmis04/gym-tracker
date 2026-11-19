@@ -85,7 +85,7 @@ src/
       components/  actions.ts  queries.ts  schemas.ts
   lib/
     supabase/ (server.ts, client.ts, admin.ts — service role, webhook/admin jobs only)
-    i18n/   (locales, next-intl routing + request config, messages)
+    i18n/   (locales, next-intl routing + request config + navigation, messages)
     tags/   (auto-tag rules)
     utils/
   proxy.ts                 next-intl locale routing (+ Clerk from E04-T01)

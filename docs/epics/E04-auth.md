@@ -18,7 +18,7 @@
 
 **Out of scope:** Profile table (E04-T03).
 
-**Already in place (E03-T01):** the one Proxy is `src/proxy.ts` (Next.js 16's name for middleware; `middleware.ts` is deprecated). It exports `proxy()`, which calls next-intl's `handleLocaleRouting`; replace that export with `clerkMiddleware(async (auth, request) => { … return handleLocaleRouting(request); })` and add Clerk's API matcher (see the `TODO(E04-T01)` there). There are two root layouts: `app/[locale]/layout.tsx` (all localized pages; put `<ClerkProvider>` there, the locale is its `params.locale` / `getLocale()`) and `app/(developer-tools)/layout.tsx` (`/dev`, `/debug`, no Clerk needed). `auth.signIn` / `auth.signOut` messages exist.
+**Already in place (E03-T01):** the one Proxy is `src/proxy.ts` (Next.js 16's name for middleware; `middleware.ts` is deprecated). It exports `proxy()`, which calls next-intl's `handleLocaleRouting`; replace that export with `clerkMiddleware(async (auth, request) => { … return handleLocaleRouting(request); })` and add Clerk's API matcher (see the `TODO(E04-T01)` there). There are two root layouts: `app/[locale]/layout.tsx` (all localized pages; put `<ClerkProvider>` there, the locale is its `params.locale` / `getLocale()`) and `app/(developer-tools)/layout.tsx` (`/dev`, `/debug`, no Clerk needed). `auth.signIn` / `auth.signOut` messages exist. **E03-T02:** the `TODO(E04-T01)` in `app/[locale]/layout.tsx` marks where `<ClerkProvider localization>` goes (`ltLT` / `enUS` from `locale`); the language switch changes that layout's `locale` param, so Clerk's components follow it — add an e2e check that `<SignIn />` and the user menu change language with the switch (E03-T02's last acceptance criterion).
 
 **Acceptance criteria**
 - [ ] Opening `/lt/sessions` while signed out redirects to sign-in, then back to `/lt/sessions` after Google login.
@@ -81,6 +81,8 @@
   - Placeholder for "Export data" and "Delete account" (filled in E10-T05).
 - Saving preferences via a Server Action updating `profiles`; changes apply immediately.
 - On sign-in on a new device, `profiles.theme` and `profiles.locale` are applied.
+
+**Already in place (E03-T02):** switching language (avatar menu, landing page) goes through `useLocaleSwitch({ onLocaleChange })` in `src/components/common/language/`, which keeps path and query and writes the `NEXT_LOCALE` cookie; `LanguageSwitcher` takes the same `onLocaleChange`. To finish E03-T02: (1) a Server Action that validates the locale with `localeSchema` and updates `profiles.locale`, passed as `onLocaleChange` in `AccountMenu` (`TODO(E04-T04)` there; signed-in only) and to the `LanguageSwitcher` on this settings page; (2) on sign-in, if `profiles.locale` differs from the URL, set `NEXT_LOCALE` to it and redirect to the same path in the saved locale (see the `TODO(E04-T04)` in `src/proxy.ts`; the cookie then carries it on that device). Theme works the same way through `onThemePreferenceChange`. E03-T02's "after switching to EN on phone, signing in on desktop opens the app in EN" is verified here.
 
 **Out of scope:** Data export and deletion (E10-T05).
 

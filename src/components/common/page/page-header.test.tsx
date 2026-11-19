@@ -6,7 +6,9 @@ import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { PageHeader } from "./page-header";
 
-vi.mock("next/navigation", () => ({
+// The avatar menu's next-intl navigation also needs the real `redirect`.
+vi.mock(import("next/navigation"), async (importOriginal) => ({
+  ...(await importOriginal()),
   usePathname: vi.fn(),
   useRouter: vi.fn(),
 }));
