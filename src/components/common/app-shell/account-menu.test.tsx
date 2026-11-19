@@ -1,30 +1,34 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ThemeProvider } from "@/components/common/theme/theme-provider";
+import type { Locale } from "@/lib/i18n/i18n.types";
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { AccountMenu } from "./account-menu";
 
 vi.mock("next/navigation", () => ({
-  useParams: vi.fn(),
   usePathname: vi.fn(),
   useRouter: vi.fn(),
 }));
 
 const replace = vi.fn();
 
-const renderMenu = (locale = "en", pathname = `/${locale}/sessions/123`) => {
-  vi.mocked(useParams).mockReturnValue({ locale });
+const renderMenu = (
+  locale: Locale = "en",
+  pathname = `/${locale}/sessions/123`,
+) => {
   vi.mocked(usePathname).mockReturnValue(pathname);
   vi.mocked(useRouter).mockReturnValue({
     replace,
   } as unknown as ReturnType<typeof useRouter>);
-  return render(
+  return renderWithIntl(
     <ThemeProvider>
       <AccountMenu />
     </ThemeProvider>,
+    { locale },
   );
 };
 

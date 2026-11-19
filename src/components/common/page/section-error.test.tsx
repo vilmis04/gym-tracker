@@ -1,22 +1,18 @@
 import * as Sentry from "@sentry/nextjs";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { SectionError } from "./section-error";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 vi.mock("next/navigation", () => ({
-  useParams: vi.fn(),
   usePathname: vi.fn(),
   useRouter: vi.fn(),
 }));
-
-const setLocale = (locale: string) => {
-  vi.mocked(useParams).mockReturnValue({ locale });
-  vi.mocked(usePathname).mockReturnValue(`/${locale}/buddies`);
-};
 
 describe("SectionError", () => {
   beforeEach(() => {
@@ -26,10 +22,13 @@ describe("SectionError", () => {
   });
 
   it("reports the error, keeps the section header and offers a retry", async () => {
-    setLocale("en");
+    vi.mocked(usePathname).mockReturnValue("/en/buddies");
     const error = new Error("boom");
     const retry = vi.fn();
-    render(<SectionError error={error} retry={retry} titleKey="buddies" />);
+    renderWithIntl(
+      <SectionError error={error} retry={retry} titleKey="buddies" />,
+      { locale: "en" },
+    );
 
     expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(error);
     expect(
@@ -43,8 +42,11 @@ describe("SectionError", () => {
   });
 
   it("is translated into Lithuanian", () => {
-    setLocale("lt");
-    render(<SectionError error="oops" retry={vi.fn()} titleKey="sessions" />);
+    vi.mocked(usePathname).mockReturnValue("/lt/sessions");
+    renderWithIntl(
+      <SectionError error="oops" retry={vi.fn()} titleKey="sessions" />,
+      { locale: "lt" },
+    );
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Treniruotės" }),

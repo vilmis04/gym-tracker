@@ -1,6 +1,9 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { Locale } from "@/lib/i18n/i18n.types";
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { THEME_STORAGE_KEY } from "./theme-preferences";
 import { ThemeProvider } from "./theme-provider";
@@ -38,11 +41,15 @@ const stubColorScheme = (isOsDark: boolean) => {
   };
 };
 
-const renderToggle = (onThemePreferenceChange?: OnThemePreferenceChange) =>
-  render(
+const renderToggle = (
+  onThemePreferenceChange?: OnThemePreferenceChange,
+  locale: Locale = "en",
+) =>
+  renderWithIntl(
     <ThemeProvider>
       <ThemeToggle onThemePreferenceChange={onThemePreferenceChange} />
     </ThemeProvider>,
+    { locale },
   );
 
 describe("ThemeToggle", () => {
@@ -64,6 +71,17 @@ describe("ThemeToggle", () => {
     expect(screen.getByRole("radio", { name: "Light" })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: "Dark" })).not.toBeChecked();
     expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+  });
+
+  it("is translated into Lithuanian", () => {
+    stubColorScheme(false);
+    renderToggle(undefined, "lt");
+
+    expect(screen.getByRole("group", { name: "Tema" })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("radio").map((radio) => radio.getAttribute("value")),
+    ).toEqual(["light", "dark", "system"]);
+    expect(screen.getByRole("radio", { name: "Kaip sistemoje" })).toBeChecked();
   });
 
   it("applies and stores the theme picked by click and calls the save hook", async () => {

@@ -1,6 +1,7 @@
 // Default accessible names for the base components' built-in controls; every
 // component also takes its own label prop to override them.
-// TODO(E03): translate via next-intl.
+// TODO(E03-T03): translate via next-intl, together with the ICU plurals the
+// counts need ("1 result" / "2 results"; LT one / few / many / other).
 export const UI_LABELS = {
   close: "Close",
   loading: "Loading",

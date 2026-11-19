@@ -39,7 +39,7 @@ import { SAMPLE_PEOPLE } from "./ui-samples";
 /**
  * Base UI components preview (E02-T03): every component and variant, in the
  * theme picked with the toggle. Gated to development by
- * src/app/dev/layout.tsx; developer-only, so not translated.
+ * src/app/(developer-tools)/dev/layout.tsx; developer-only, so not translated.
  */
 export default function UiPage() {
   return (

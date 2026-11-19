@@ -33,7 +33,10 @@ const eslintConfig = defineConfig([
             "object",
             "type",
           ],
-          pathGroups: [{ pattern: "@/**", group: "internal" }],
+          pathGroups: [
+            { pattern: "@/**", group: "internal" },
+            { pattern: "@tests/**", group: "internal" },
+          ],
           pathGroupsExcludedImportTypes: ["builtin"],
           "newlines-between": "always",
           alphabetize: { order: "asc", caseInsensitive: true },

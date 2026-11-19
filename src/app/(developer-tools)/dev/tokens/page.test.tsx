@@ -1,12 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import TokensPage from "./page";
 import { COLOR_GROUPS, LITHUANIAN_SAMPLE } from "./token-catalog";
 
 describe("/dev/tokens (design tokens preview)", () => {
   it("shows a swatch for every color token and the Lithuanian sample", () => {
-    render(<TokensPage />);
+    renderWithIntl(<TokensPage />, { locale: "en" });
 
     const allTokens = COLOR_GROUPS.flatMap((group) => group.swatches);
     for (const swatch of allTokens) {
@@ -18,7 +20,7 @@ describe("/dev/tokens (design tokens preview)", () => {
   });
 
   it("has the theme toggle for previewing both themes", () => {
-    render(<TokensPage />);
+    renderWithIntl(<TokensPage />, { locale: "en" });
 
     expect(screen.getByRole("group", { name: "Theme" })).toBeInTheDocument();
   });

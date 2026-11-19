@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import { FOCUS_RING_CLASS_NAME } from "@/components/ui/focus-ring";
-import { useLocale, useTranslations } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils/cn";
 
 import { getAppPath, isNavItemActive, NAV_ITEMS } from "./nav-items";

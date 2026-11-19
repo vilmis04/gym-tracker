@@ -1,6 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
+import { useLocale } from "next-intl";
 import {
   type ChangeEvent,
   type FocusEvent,
@@ -55,7 +56,7 @@ export function NumberStepper({
   max = Infinity,
   decimals = 0,
   unit,
-  locale = DEFAULT_LOCALE,
+  locale,
   placeholder = EMPTY_VALUE_PLACEHOLDER,
   decreaseLabel,
   increaseLabel,
@@ -65,10 +66,12 @@ export function NumberStepper({
   "aria-describedby": describedBy,
   "aria-invalid": isInvalid,
 }: NumberStepperProps) {
+  const activeLocale = useLocale();
+  const formatLocale = locale ?? activeLocale;
   const range = { step, min, max, decimals };
   const valueFormat = useMemo(
-    () => createValueFormat(locale, decimals),
-    [locale, decimals],
+    () => createValueFormat(formatLocale, decimals),
+    [formatLocale, decimals],
   );
   // The text being edited; `null` while the field shows `value`. Mirrored in
   // a ref because a −/+ press (pointerdown) commits it before the input's
@@ -222,9 +225,6 @@ export function NumberStepper({
     </div>
   );
 }
-
-// The app's default locale (E03-T01). TODO(E03): use next-intl's `useLocale()`.
-const DEFAULT_LOCALE = "lt";
 
 // The mock-ups' "no value" mark.
 const EMPTY_VALUE_PLACEHOLDER = "—";

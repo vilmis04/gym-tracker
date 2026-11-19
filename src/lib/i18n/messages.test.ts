@@ -1,6 +1,7 @@
+import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
-import { createTranslator, getTranslations, MESSAGES } from "./messages";
+import { MESSAGES } from "./messages";
 import enMessages from "../../../messages/en.json";
 import ltMessages from "../../../messages/lt.json";
 
@@ -33,13 +34,37 @@ describe("messages", () => {
   });
 });
 
-describe("getTranslations", () => {
-  it("looks up a namespace in the requested locale", async () => {
-    const translateNavLt = await getTranslations({
+describe("next-intl with these messages", () => {
+  it("has a namespace per feature (docs/epics/E03-i18n.md)", () => {
+    for (const messages of Object.values(MESSAGES)) {
+      expect(Object.keys(messages)).toEqual(
+        expect.arrayContaining([
+          "common",
+          "nav",
+          "auth",
+          "buddies",
+          "sessions",
+          "exercises",
+          "logging",
+          "progress",
+          "settings",
+          "errors",
+        ]),
+      );
+    }
+  });
+
+  it("looks up a namespace in the requested locale", () => {
+    const translateNavLt = createTranslator({
       locale: "lt",
+      messages: MESSAGES.lt,
       namespace: "nav",
     });
-    const translateNavEn = createTranslator({ locale: "en", namespace: "nav" });
+    const translateNavEn = createTranslator({
+      locale: "en",
+      messages: MESSAGES.en,
+      namespace: "nav",
+    });
 
     expect(translateNavLt("sessions")).toBe("Treniruotės");
     expect(translateNavEn("sessions")).toBe("Sessions");

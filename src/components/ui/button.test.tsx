@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import Link from "next/link";
 import { describe, expect, it, vi } from "vitest";
 
 import { Button } from "./button";
@@ -66,7 +67,7 @@ describe("Button", () => {
   it("renders its child with the button styles when asChild", () => {
     render(
       <Button asChild variant="secondary">
-        <a href="/sessions">Sessions</a>
+        <Link href="/sessions">Sessions</Link>
       </Button>,
     );
 

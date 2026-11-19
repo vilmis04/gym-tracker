@@ -1,7 +1,9 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { FormField } from "../form-field";
 import { NumberStepper } from "./number-stepper";
@@ -49,7 +51,7 @@ describe("NumberStepper", () => {
   it("stores 57.5 for both 57,5 and 57.5 and shows the locale's separator", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    const { unmount } = render(
+    const { unmount } = renderWithIntl(
       <ControlledStepper value={20} locale="lt" onChange={handleChange} />,
     );
 
@@ -60,7 +62,7 @@ describe("NumberStepper", () => {
     expect(getInput()).toHaveValue("57,5");
     unmount();
 
-    render(
+    renderWithIntl(
       <ControlledStepper value={20} locale="en" onChange={handleChange} />,
     );
     await user.clear(getInput());
@@ -70,15 +72,21 @@ describe("NumberStepper", () => {
     expect(getInput()).toHaveValue("57.5");
   });
 
-  it("defaults to the Lithuanian separator", () => {
-    render(<ControlledStepper value={57.5} />);
+  it("defaults to the separator of next-intl's active locale", () => {
+    const { unmount } = renderWithIntl(<ControlledStepper value={57.5} />, {
+      locale: "lt",
+    });
     expect(getInput()).toHaveValue("57,5");
+    unmount();
+
+    renderWithIntl(<ControlledStepper value={57.5} />, { locale: "en" });
+    expect(getInput()).toHaveValue("57.5");
   });
 
   it("passes valid in-range numbers on while typing, clamps on blur", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper value={20} onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper value={20} onChange={handleChange} />);
 
     await user.clear(getInput());
     await user.type(getInput(), "1200");
@@ -94,7 +102,7 @@ describe("NumberStepper", () => {
   it("clamps below min on blur", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(
+    renderWithIntl(
       <ControlledStepper preset="reps" value={8} onChange={handleChange} />,
     );
 
@@ -109,7 +117,7 @@ describe("NumberStepper", () => {
   it("reverts invalid or empty input to the last valid value", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper value={60} onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper value={60} onChange={handleChange} />);
 
     await user.clear(getInput());
     await user.type(getInput(), "abc");
@@ -125,7 +133,7 @@ describe("NumberStepper", () => {
   it("rounds extra decimals and shows the rounded value", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper value={60} onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper value={60} onChange={handleChange} />);
 
     await user.clear(getInput());
     await user.type(getInput(), "57,555");
@@ -137,7 +145,7 @@ describe("NumberStepper", () => {
   it("steps by 2.5 with the buttons without drift and announces the value", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper value={0.1} onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper value={0.1} onChange={handleChange} />);
     const increase = screen.getByRole("button", { name: "Increase by 2,5 kg" });
 
     await user.click(increase);
@@ -156,7 +164,7 @@ describe("NumberStepper", () => {
   it("steps from the keyboard on a focused button", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper value={20} onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper value={20} onChange={handleChange} />);
 
     screen.getByRole("button", { name: "Increase by 2,5 kg" }).focus();
     await user.keyboard("{Enter}");
@@ -168,7 +176,7 @@ describe("NumberStepper", () => {
   it("starts an empty field at min and shows the placeholder", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper preset="reps" onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper preset="reps" onChange={handleChange} />);
     expect(getInput()).toHaveValue("");
     expect(getInput()).toHaveAttribute("placeholder", "—");
     expect(getInput()).not.toHaveAttribute("aria-valuenow");
@@ -180,7 +188,7 @@ describe("NumberStepper", () => {
   it("commits a typed value before a button press steps from it", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper value={20} onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper value={20} onChange={handleChange} />);
 
     await user.clear(getInput());
     await user.type(getInput(), "1200");
@@ -194,7 +202,7 @@ describe("NumberStepper", () => {
   it("steps with the arrow and page keys on the input", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<ControlledStepper value={50} onChange={handleChange} />);
+    renderWithIntl(<ControlledStepper value={50} onChange={handleChange} />);
 
     await user.click(getInput());
     await user.keyboard("{ArrowUp}");
@@ -212,7 +220,7 @@ describe("NumberStepper", () => {
 
   it("is a labelled spinbutton with a numeric keyboard and FormField wiring", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithIntl(
       <FormField label="Weight" help="Per side" error="Too heavy">
         <NumberStepper
           {...NUMBER_STEPPER_PRESETS.weight}
@@ -239,7 +247,7 @@ describe("NumberStepper", () => {
   });
 
   it("uses the numeric keyboard for whole numbers", () => {
-    render(
+    renderWithIntl(
       <NumberStepper
         {...NUMBER_STEPPER_PRESETS.reps}
         label="Reps"
@@ -256,7 +264,7 @@ describe("NumberStepper", () => {
   it("marks the button at a bound and ignores it", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(
+    renderWithIntl(
       <ControlledStepper preset="reps" value={1} onChange={handleChange} />,
     );
     const decrease = screen.getByRole("button", { name: "Decrease by 1" });
@@ -267,7 +275,7 @@ describe("NumberStepper", () => {
   });
 
   it("disables the input and both buttons", () => {
-    render(<ControlledStepper value={10} disabled />);
+    renderWithIntl(<ControlledStepper value={10} disabled />);
     expect(getInput()).toBeDisabled();
     for (const button of screen.getAllByRole("button")) {
       expect(button).toBeDisabled();
@@ -284,7 +292,7 @@ describe("NumberStepper", () => {
     it("repeats faster and faster while held and stops on release", async () => {
       const user = setUpFakeTimers();
       const handleChange = vi.fn();
-      render(
+      renderWithIntl(
         <ControlledStepper preset="reps" value={10} onChange={handleChange} />,
       );
 
@@ -318,7 +326,7 @@ describe("NumberStepper", () => {
     it("stops when the pointer leaves or is cancelled", async () => {
       setUpFakeTimers();
       const handleChange = vi.fn();
-      render(<ControlledStepper value={50} onChange={handleChange} />);
+      renderWithIntl(<ControlledStepper value={50} onChange={handleChange} />);
       const decrease = screen.getByRole("button", {
         name: "Decrease by 2,5 kg",
       });
@@ -338,7 +346,7 @@ describe("NumberStepper", () => {
     it("stops at the bound and on unmount", async () => {
       setUpFakeTimers();
       const handleChange = vi.fn();
-      const { unmount } = render(
+      const { unmount } = renderWithIntl(
         <ControlledStepper value={995} onChange={handleChange} />,
       );
       const increase = screen.getByRole("button", {
@@ -360,7 +368,7 @@ describe("NumberStepper", () => {
 
     it("ignores the secondary button and the context menu", () => {
       const handleChange = vi.fn();
-      render(<ControlledStepper value={50} onChange={handleChange} />);
+      renderWithIntl(<ControlledStepper value={50} onChange={handleChange} />);
       const increase = screen.getByRole("button", {
         name: "Increase by 2,5 kg",
       });
