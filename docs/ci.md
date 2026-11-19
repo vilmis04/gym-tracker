@@ -10,12 +10,12 @@ All jobs run **in parallel** on `ubuntu-latest`; each checks out the code and (e
 
 | Check name (job)                   | What it runs                                                                                                                       | Fails when                                                    |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **Lint, typecheck, format** (`checks`) | `npm run lint`, `npm run typecheck`, `npm run format:check` (all three always run, so one push shows every problem)          | any ESLint warning/error, type error, unformatted file        |
+| **Lint, typecheck, format** (`checks`) | `npm run lint`, `npm run typecheck`, `npm run format:check`, `npm run check:contrast`, `npm run check:colors` (all always run, so one push shows every problem) | any ESLint warning/error, type error, unformatted file, a design-token pair below WCAG AA, a raw color literal in `src/` outside `src/app/globals.css` (annotated inline on the PR) |
 | **Unit tests** (`unit`)            | `npm run test:coverage` (Vitest `unit` project, coverage printed in the log)                                                       | a failing unit/component test                                 |
 | **Database tests & types** (`db`)  | `npx supabase start` on an **empty** database (applies every migration + `seed.sql`), then the types check, then `npm run test:db` | a broken migration, out-of-date `src/types/database.ts`, a failing RLS/DB test |
 | **Build** (`build`)                | `npm run build` with no Sentry variables (the build must not need a Sentry account)                                                | the production build fails                                    |
 | **Docker image** (`docker`)        | builds the [`Dockerfile`](../Dockerfile) with Buildx (no push; layers cached in the GitHub Actions cache), starts the container and waits for its `HEALTHCHECK`, checks it doesn't run as root and that `/api/health` returns the commit SHA | the image doesn't build, the container isn't healthy within ~60 s, runs as root, or `/api/health` is wrong |
-| **E2E tests** (`e2e`)              | installs Playwright Chromium + WebKit (cached per Playwright version), `CI=1 npm run e2e` — Playwright builds the app and serves it with `next start` on port 3000. The build's Sentry DSN points at a fake ingest server the error-tracking spec runs (`NEXT_PUBLIC_SENTRY_DSN=http://public@127.0.0.1:8999/1`, `ENABLE_TEST_ERROR_PAGE=1`, `APP_VERSION=<sha>`; [tests/README.md](../tests/README.md#error-tracking-fake-sentry)) | a failing spec on `chromium-desktop` or `webkit-mobile`       |
+| **E2E tests** (`e2e`)              | installs Playwright Chromium + WebKit (cached per Playwright version), `CI=1 npm run e2e` — Playwright builds the app and serves it with `next start` on port 3000. The build's Sentry DSN points at a fake ingest server the error-tracking spec runs (`NEXT_PUBLIC_SENTRY_DSN=http://public@127.0.0.1:8999/1`, `ENABLE_TEST_ERROR_PAGE=1`, `APP_VERSION=<sha>`; `ENABLE_DEV_PAGES=1` serves `/dev/tokens` for the design-tokens spec; [tests/README.md](../tests/README.md#error-tracking-fake-sentry)) | a failing spec on `chromium-desktop` or `webkit-mobile`       |
 | **CI passed** (`ci-passed`)        | waits for all jobs above                                                                                                           | any of them failed or was cancelled                           |
 
 **CI passed** is the single check branch protection requires, so adding a job only means listing it in `ci-passed.needs`.
@@ -81,7 +81,7 @@ With a single maintainer, GitHub doesn't let you approve your own PR; add the ma
 ## Running the same checks locally
 
 ```bash
-npm run lint && npm run typecheck && npm run format:check
+npm run lint && npm run typecheck && npm run format:check && npm run check:contrast && npm run check:colors
 npm test
 npm run db:start && npm run db:reset && npm run db:types && git diff --exit-code src/types/database.ts && npm run test:db
 npm run build

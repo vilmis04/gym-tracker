@@ -29,31 +29,33 @@ Open [http://localhost:3000](http://localhost:3000) — you should see the place
 
 ## Scripts
 
-| Script                  | What it does                                                            |
-| ----------------------- | ----------------------------------------------------------------------- |
-| `npm run dev`           | Start the Next.js dev server on port 3000                               |
-| `npm run build`         | Production build                                                        |
-| `npm start`             | Serve the production build (run `build` first)                          |
-| `npm run docker:build`  | Build the production Docker image `gym-tracker` (see [Docker](#docker)) |
-| `npm run docker:run`    | Run the image on port 3000 with `.env.local` as runtime env             |
-| `npm run lint`          | ESLint; fails on any warning (`--max-warnings 0`)                       |
-| `npm run typecheck`     | Generate Next.js route types, then `tsc --noEmit`                       |
-| `npm run format`        | Format all files with Prettier (sorts Tailwind classes)                 |
-| `npm run format:check`  | Check formatting without writing (used by CI)                           |
-| `npm test`              | Unit and component tests (Vitest + Testing Library, jsdom)              |
-| `npm run test:watch`    | Unit tests in watch mode                                                |
-| `npm run test:coverage` | Unit tests with a coverage report in `coverage/`                        |
-| `npm run test:db`       | Database/RLS tests against local Supabase (run `db:start` first)        |
-| `npm run e2e`           | Playwright e2e tests (desktop Chromium + WebKit iPhone 14)              |
-| `npm run e2e:ui`        | Playwright UI mode                                                      |
-| `npm run db:start`      | Start local Supabase (Docker); prints the local URLs and keys           |
-| `npm run db:stop`       | Stop local Supabase (data is kept in Docker volumes)                    |
-| `npm run db:status`     | Print the local URLs and keys again                                     |
-| `npm run db:reset`      | Drop and rebuild the local DB from migrations + `seed.sql`              |
-| `npm run db:new <name>` | Create an empty migration `supabase/migrations/<timestamp>_<name>.sql`  |
-| `npm run db:types`      | Regenerate `src/types/database.ts` from the local DB                    |
+| Script                   | What it does                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `npm run dev`            | Start the Next.js dev server on port 3000                                            |
+| `npm run build`          | Production build                                                                     |
+| `npm start`              | Serve the production build (run `build` first)                                       |
+| `npm run docker:build`   | Build the production Docker image `gym-tracker` (see [Docker](#docker))              |
+| `npm run docker:run`     | Run the image on port 3000 with `.env.local` as runtime env                          |
+| `npm run lint`           | ESLint; fails on any warning (`--max-warnings 0`)                                    |
+| `npm run typecheck`      | Generate Next.js route types, then `tsc --noEmit`                                    |
+| `npm run format`         | Format all files with Prettier (sorts Tailwind classes)                              |
+| `npm run format:check`   | Check formatting without writing (used by CI)                                        |
+| `npm run check:contrast` | WCAG contrast of the key design-token pairs in both themes (used by CI)              |
+| `npm run check:colors`   | Fail on raw hex/`rgb()`/`hsl()` colors in `src/` outside the token file (used by CI) |
+| `npm test`               | Unit and component tests (Vitest + Testing Library, jsdom)                           |
+| `npm run test:watch`     | Unit tests in watch mode                                                             |
+| `npm run test:coverage`  | Unit tests with a coverage report in `coverage/`                                     |
+| `npm run test:db`        | Database/RLS tests against local Supabase (run `db:start` first)                     |
+| `npm run e2e`            | Playwright e2e tests (desktop Chromium + WebKit iPhone 14)                           |
+| `npm run e2e:ui`         | Playwright UI mode                                                                   |
+| `npm run db:start`       | Start local Supabase (Docker); prints the local URLs and keys                        |
+| `npm run db:stop`        | Stop local Supabase (data is kept in Docker volumes)                                 |
+| `npm run db:status`      | Print the local URLs and keys again                                                  |
+| `npm run db:reset`       | Drop and rebuild the local DB from migrations + `seed.sql`                           |
+| `npm run db:new <name>`  | Create an empty migration `supabase/migrations/<timestamp>_<name>.sql`               |
+| `npm run db:types`       | Regenerate `src/types/database.ts` from the local DB                                 |
 
-Before opening a PR run `npm run lint && npm run typecheck && npm run format:check && npm test && npm run build` (plus `npm run test:db` and `npm run e2e` when you touched the database or a user flow).
+Before opening a PR run `npm run lint && npm run typecheck && npm run format:check && npm run check:contrast && npm run check:colors && npm test && npm run build` (plus `npm run test:db` and `npm run e2e` when you touched the database or a user flow).
 
 ## CI
 
@@ -71,7 +73,7 @@ curl http://localhost:3000/api/health   # {"status":"ok","version":"<commit sha>
 
 - **Build arguments (public, inlined into the browser bundle):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, plus `APP_VERSION` (the commit SHA reported by `/api/health` and used as the Sentry release; defaults to the `package.json` version) and the optional Sentry settings `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT`, `SENTRY_ORG`, `SENTRY_PROJECT` ([Error tracking](#error-tracking-sentry)). `docker:build` reads the `NEXT_PUBLIC_*`, `SENTRY_ORG` and `SENTRY_PROJECT` lines of `.env.local` (or your shell env), passes `SENTRY_AUTH_TOKEN` from your shell as a BuildKit secret if set, and passes extra arguments through to `docker build`.
 - **Build secret:** `SENTRY_AUTH_TOKEN` (source-map upload) only via `--secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN`; it isn't stored in the image or its history. The build step also accepts every build argument above as an optional BuildKit secret with the variable's name (`--secret id=NEXT_PUBLIC_SUPABASE_URL,env=…`, `id=SENTRY_AUTH_TOKEN`, …), which is how Coolify passes them with build secrets on ([docs/deployment.md → Variables](docs/deployment.md#6-variables)).
-- **Runtime only (secrets):** `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (optional, not secret: `SENTRY_DSN`, `ENABLE_TEST_ERROR_PAGE`). Pass them with `--env-file`/`-e` when the container starts; never as `--build-arg` (build arguments are visible in `docker history`).
+- **Runtime only (secrets):** `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (optional, not secret: `SENTRY_DSN`, `ENABLE_TEST_ERROR_PAGE`, `ENABLE_DEV_PAGES`). Pass them with `--env-file`/`-e` when the container starts; never as `--build-arg` (build arguments are visible in `docker history`).
 - **Health check:** `GET /api/health` returns `200 {"status":"ok","version":…}` without auth or database access. The image's `HEALTHCHECK` calls it; `docker inspect --format '{{.State.Health.Status}}' <container>` shows `healthy` within a few seconds.
 - **Local Supabase from the container:** `127.0.0.1` inside the container is the container itself. To use the local stack, build and run with `NEXT_PUBLIC_SUPABASE_URL=http://host.docker.internal:54321` (on Linux also add `--add-host=host.docker.internal:host-gateway` to `docker run`).
 
@@ -201,6 +203,12 @@ npm run e2e                      # starts the dev server itself
 ```
 
 See [tests/README.md](tests/README.md) for the approach, how the database is reset between tests, factories, and signing in with Clerk in e2e tests.
+
+## Design tokens and dev pages
+
+Colors, type, radii and spacing are design tokens defined once in [`src/app/globals.css`](src/app/globals.css) and used through Tailwind utilities: `bg-background`, `bg-surface`, `text-foreground`, `text-muted-foreground`, `bg-primary text-primary-foreground`, `border-input`, `ring-ring`, `bg-chart-1`…`bg-chart-5`, `rounded-lg` (controls), `rounded-2xl` (cards). Tailwind's default palette is removed, and `npm run check:colors` (CI) fails on raw colors anywhere else in `src/`; a line that really needs one can opt out with a `raw-color-allowed: <reason>` comment. `npm run check:contrast` (CI) checks the key pairs against WCAG AA in both themes. The Inter font is downloaded from Google Fonts by `next build` and self-hosted, so builds (CI, Docker, Coolify) need access to `fonts.googleapis.com`/`fonts.gstatic.com`; browsers never contact Google. Values, decisions and how to add a token: [docs/design-system.md](docs/design-system.md#final-token-values-e02-t01).
+
+Developer-only pages live under `/dev` (`src/app/dev/`): `/dev/tokens` shows every token in the light theme, `/dev/tokens?theme=dark` in the dark one. They are served by `next dev` and are a 404 in production builds unless the runtime variable `ENABLE_DEV_PAGES=1` is set (e.g. briefly on a preview deployment for a design review; the gate is `src/app/dev/layout.tsx`).
 
 ## Project structure
 

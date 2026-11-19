@@ -12,6 +12,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check:contrast": "node scripts/check-contrast.mts",
+    "check:colors": "bash scripts/check-raw-colors.sh",
     "test": "vitest run --project unit",
     "test:watch": "vitest --project unit",
     "test:coverage": "vitest run --project unit --coverage",
