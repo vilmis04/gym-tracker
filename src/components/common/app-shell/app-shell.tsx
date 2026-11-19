@@ -1,8 +1,7 @@
+import { getTranslations } from "next-intl/server";
 import { type ReactNode } from "react";
 
 import { FOCUS_RING_CLASS_NAME } from "@/components/ui/focus-ring";
-import type { Locale } from "@/lib/i18n/i18n.types";
-import { getTranslations } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils/cn";
 
 import { BottomNav, SidebarNav } from "./main-nav";
@@ -16,18 +15,11 @@ import { BottomNav, SidebarNav } from "./main-nav";
  * safe-area insets (notch, rounded corners in landscape), since the root
  * viewport uses `viewport-fit=cover`.
  */
-export async function AppShell({
-  locale,
-  children,
-}: {
-  locale: Locale;
-  children: ReactNode;
-}) {
-  const translate = await getTranslations({ locale, namespace: "common" });
+export async function AppShell({ children }: { children: ReactNode }) {
+  const translate = await getTranslations("common");
 
   return (
-    // `lang` until E03 sets it on <html> (the root layout is not localized yet).
-    <div data-app-shell="" lang={locale} className="flex min-h-dvh flex-1">
+    <div data-app-shell="" className="flex min-h-dvh flex-1">
       <a
         href={`#${MAIN_CONTENT_ID}`}
         className={cn(

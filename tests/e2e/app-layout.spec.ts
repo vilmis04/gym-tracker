@@ -196,8 +196,10 @@ test.describe("layout", () => {
       /viewport-fit=cover/,
     );
 
+    // The proxy adds the browser's locale (`/en/de/dashboard`): no page.
     const response = await page.goto("/de/dashboard");
     expect(response?.status()).toBe(404);
+    await expect(page).toHaveURL(/\/en\/de\/dashboard$/);
   });
 
   test("the skip link moves focus to the page content", async ({ page }) => {
@@ -224,10 +226,7 @@ test.describe("translations", () => {
           page.getByRole("heading", { level: 1, name: section[locale] }),
         ).toBeVisible();
         await expect(page).toHaveTitle(`${section[locale]} · Gym Tracker`);
-        await expect(page.locator("[data-app-shell]")).toHaveAttribute(
-          "lang",
-          locale,
-        );
+        await expect(page.locator("html")).toHaveAttribute("lang", locale);
       }
       const navName = locale === "lt" ? "Pagrindinė" : "Main";
       await expect(getMainNav(page, navName).getByRole("link")).toHaveText(

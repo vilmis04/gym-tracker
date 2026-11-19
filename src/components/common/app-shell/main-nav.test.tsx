@@ -1,29 +1,23 @@
-import { render, screen, within } from "@testing-library/react";
-import { useParams, usePathname } from "next/navigation";
+import { screen, within } from "@testing-library/react";
+import { usePathname } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { BottomNav, SidebarNav } from "./main-nav";
 
-vi.mock("next/navigation", () => ({
-  useParams: vi.fn(),
-  usePathname: vi.fn(),
-}));
-
-const setRoute = (locale: string, pathname: string) => {
-  vi.mocked(useParams).mockReturnValue({ locale });
-  vi.mocked(usePathname).mockReturnValue(pathname);
-};
+vi.mock("next/navigation", () => ({ usePathname: vi.fn() }));
 
 describe.each([
   ["BottomNav", BottomNav],
   ["SidebarNav", SidebarNav],
 ])("%s", (_name, Nav) => {
   beforeEach(() => {
-    setRoute("en", "/en/sessions/123");
+    vi.mocked(usePathname).mockReturnValue("/en/sessions/123");
   });
 
   it("links the four sections in order, without count badges", () => {
-    render(<Nav />);
+    renderWithIntl(<Nav />, { locale: "en" });
     const nav = screen.getByRole("navigation", { name: "Main" });
     const links = within(nav).getAllByRole("link");
 
@@ -42,7 +36,7 @@ describe.each([
   });
 
   it("marks the section of a detail page as the current page", () => {
-    render(<Nav />);
+    renderWithIntl(<Nav />, { locale: "en" });
 
     expect(screen.getByRole("link", { name: "Sessions" })).toHaveAttribute(
       "aria-current",
@@ -56,8 +50,8 @@ describe.each([
   });
 
   it("marks nothing on a page outside the four sections", () => {
-    setRoute("en", "/en/settings");
-    render(<Nav />);
+    vi.mocked(usePathname).mockReturnValue("/en/settings");
+    renderWithIntl(<Nav />, { locale: "en" });
 
     expect(
       screen
@@ -67,8 +61,8 @@ describe.each([
   });
 
   it("is translated into Lithuanian", () => {
-    setRoute("lt", "/lt/progress");
-    render(<Nav />);
+    vi.mocked(usePathname).mockReturnValue("/lt/progress");
+    renderWithIntl(<Nav />, { locale: "lt" });
 
     const nav = screen.getByRole("navigation", { name: "Pagrindinė" });
     expect(

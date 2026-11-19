@@ -1,11 +1,16 @@
 "use client";
 
-import { Monitor, Moon, Settings, Sun, UserRound } from "lucide-react";
+import { Settings, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useMemo } from "react";
 
-import { themePreferenceSchema } from "@/components/common/theme/theme-preferences";
+import {
+  THEME_PREFERENCE_OPTIONS,
+  THEME_PREFERENCES,
+  themePreferenceSchema,
+} from "@/components/common/theme/theme-preferences";
 import { useThemePreference } from "@/components/common/theme/use-theme-preference";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +29,6 @@ import {
   LOCALES,
   localeSchema,
 } from "@/lib/i18n/locales";
-import { useLocale, useTranslations } from "@/lib/i18n/use-translations";
 
 import { getAppPath } from "./nav-items";
 
@@ -63,15 +67,10 @@ export function AccountMenu() {
 
   const themeOptions = useMemo(
     () =>
-      [
-        { value: "light", label: translateCommon("themeLight"), Icon: Sun },
-        { value: "dark", label: translateCommon("themeDark"), Icon: Moon },
-        {
-          value: "system",
-          label: translateCommon("themeSystem"),
-          Icon: Monitor,
-        },
-      ] as const,
+      THEME_PREFERENCES.map((preference) => {
+        const { labelKey, Icon } = THEME_PREFERENCE_OPTIONS[preference];
+        return { value: preference, label: translateCommon(labelKey), Icon };
+      }),
     [translateCommon],
   );
 

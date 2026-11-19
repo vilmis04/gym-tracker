@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { screen } from "@testing-library/react";
+import { usePathname, useRouter } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import BuddiesError from "./buddies/error";
 import BuddiesLoading from "./buddies/loading";
@@ -15,7 +17,6 @@ import SettingsLoading from "./settings/loading";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 vi.mock("next/navigation", () => ({
-  useParams: vi.fn(),
   usePathname: vi.fn(),
   useRouter: vi.fn(),
 }));
@@ -29,18 +30,18 @@ describe.each([
   ["settings", SettingsLoading, SettingsError, "Nustatymai"],
 ])("%s", (segment, Loading, ErrorPage, title) => {
   it("shows the page skeleton while loading", () => {
-    vi.mocked(useParams).mockReturnValue({ locale: "lt" });
-    render(<Loading />);
+    renderWithIntl(<Loading />, { locale: "lt" });
     expect(screen.getByRole("status")).toHaveTextContent("Įkeliama");
   });
 
   it("shows the section's error page", () => {
-    vi.mocked(useParams).mockReturnValue({ locale: "lt" });
     vi.mocked(usePathname).mockReturnValue(`/lt/${segment}`);
     vi.mocked(useRouter).mockReturnValue(
       {} as unknown as ReturnType<typeof useRouter>,
     );
-    render(<ErrorPage error={new Error("boom")} retry={vi.fn()} />);
+    renderWithIntl(<ErrorPage error={new Error("boom")} retry={vi.fn()} />, {
+      locale: "lt",
+    });
 
     expect(
       screen.getByRole("heading", { level: 1, name: title }),

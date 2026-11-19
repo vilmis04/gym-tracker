@@ -1,7 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslations } from "@/lib/i18n/use-translations";
 
 /**
  * Loading state of an app page (`loading.tsx`, E02-T06), shaped like a

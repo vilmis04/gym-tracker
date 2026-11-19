@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 const src = fileURLToPath(new URL("./src", import.meta.url));
+const tests = fileURLToPath(new URL("./tests", import.meta.url));
 const emptyModule = fileURLToPath(
   new URL("./tests/setup/empty-module.ts", import.meta.url),
 );
@@ -16,6 +17,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": src,
+      // Shared test helpers for tests next to the code (`@tests/helpers/…`).
+      "@tests": tests,
       // `server-only` throws outside a React Server bundle; tests run plain Node.
       "server-only": emptyModule,
     },
@@ -24,6 +27,13 @@ export default defineConfig({
     clearMocks: true,
     restoreMocks: true,
     unstubEnvs: true,
+    server: {
+      deps: {
+        // next-intl's ESM build imports `next/server` without the `.js`
+        // extension, which only a bundler resolves; let Vite process it.
+        inline: ["next-intl"],
+      },
+    },
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],

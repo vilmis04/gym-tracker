@@ -150,7 +150,7 @@
   --shadow-*: initial;
   --shadow-overlay: var(--overlay-shadow);
 
-  /* `--font-inter` is set on <html> by next/font (src/app/layout.tsx). */
+  /* `--font-inter` is set on <html> by next/font (src/app/root-document.tsx). */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
