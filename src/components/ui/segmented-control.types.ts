@@ -5,6 +5,11 @@ export interface SegmentedControlOption<Value extends string> {
   label: string;
   /** Decorative leading visual: a 20 px lucide icon or a small Avatar. */
   icon?: ReactNode;
+  /**
+   * Language of the label when it differs from the page's (BCP 47, e.g.
+   * "lt"), such as a language's native name in the LanguageSwitcher.
+   */
+  lang?: string;
 }
 
 export interface SegmentedControlProps<Value extends string> {

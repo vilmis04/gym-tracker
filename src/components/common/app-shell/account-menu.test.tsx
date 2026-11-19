@@ -1,35 +1,30 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { usePathname, useRouter } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ThemeProvider } from "@/components/common/theme/theme-provider";
 import type { Locale } from "@/lib/i18n/i18n.types";
+import { LOCALE_COOKIE_NAME } from "@/lib/i18n/locales";
 import { renderWithIntl } from "@tests/helpers/render-with-intl";
+import { stubAppRouterAt } from "@tests/helpers/stub-app-router";
 
 import { AccountMenu } from "./account-menu";
 
-vi.mock("next/navigation", () => ({
+vi.mock(import("next/navigation"), async (importOriginal) => ({
+  ...(await importOriginal()),
   usePathname: vi.fn(),
   useRouter: vi.fn(),
 }));
 
-const replace = vi.fn();
-
-const renderMenu = (
-  locale: Locale = "en",
-  pathname = `/${locale}/sessions/123`,
-) => {
-  vi.mocked(usePathname).mockReturnValue(pathname);
-  vi.mocked(useRouter).mockReturnValue({
-    replace,
-  } as unknown as ReturnType<typeof useRouter>);
-  return renderWithIntl(
+const renderMenu = (locale: Locale = "en", url = `/${locale}/sessions/123`) => {
+  const { replace } = stubAppRouterAt(url);
+  renderWithIntl(
     <ThemeProvider>
       <AccountMenu />
     </ThemeProvider>,
     { locale },
   );
+  return { replace };
 };
 
 // Plain items and radio items, in document order.
@@ -43,6 +38,7 @@ describe("AccountMenu", () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.className = "";
+    document.cookie = `${LOCALE_COOKIE_NAME}=; max-age=0; path=/`;
   });
 
   it("opens with Enter and the arrow keys reach every item in order", async () => {
@@ -121,21 +117,22 @@ describe("AccountMenu", () => {
     expect(document.documentElement).not.toHaveClass("dark");
   });
 
-  it("opens the same page in the other language and closes", async () => {
+  it("opens the same page and query in the other language, saves the cookie and closes", async () => {
     const user = userEvent.setup();
-    renderMenu("lt", "/lt/sessions/123");
+    const { replace } = renderMenu("lt", "/lt/sessions/123?tab=x");
     screen.getByRole("button", { name: "Paskyra, kalba ir tema" }).focus();
     await user.keyboard("{Enter}");
 
     await user.keyboard("{ArrowDown}{Enter}");
 
-    expect(replace).toHaveBeenCalledExactlyOnceWith("/en/sessions/123");
+    expect(replace).toHaveBeenCalledExactlyOnceWith("/en/sessions/123?tab=x");
+    expect(document.cookie).toContain(`${LOCALE_COOKIE_NAME}=en`);
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
   it("does not navigate when the current language is picked", async () => {
     const user = userEvent.setup();
-    renderMenu("lt", "/lt/dashboard");
+    const { replace } = renderMenu("lt", "/lt/dashboard");
     await user.click(
       screen.getByRole("button", { name: "Paskyra, kalba ir tema" }),
     );
@@ -143,6 +140,7 @@ describe("AccountMenu", () => {
     await user.click(screen.getByRole("menuitemradio", { name: "Lietuvių" }));
 
     expect(replace).not.toHaveBeenCalled();
+    expect(document.cookie).not.toContain(LOCALE_COOKIE_NAME);
   });
 
   it("links to the settings page in the current language", async () => {
