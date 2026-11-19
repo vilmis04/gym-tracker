@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { AppError, ErrorCode, errorMessageKey, isErrorCode } from "./errors";
+import { MESSAGES } from "./i18n/messages";
 
 describe("ErrorCode", () => {
   it("has the codes the UI translates", () => {
@@ -25,7 +26,15 @@ describe("ErrorCode", () => {
     expect(new Set(Object.values(errorMessageKey)).size).toBe(
       Object.values(ErrorCode).length,
     );
-    // TODO(E03): also assert each key exists in messages/en.json and messages/lt.json.
+  });
+
+  it("has a message for every key in both languages", () => {
+    for (const messages of Object.values(MESSAGES)) {
+      for (const messageKey of Object.values(errorMessageKey)) {
+        const key = messageKey.replace("errors.", "");
+        expect(Object.hasOwn(messages.errors, key)).toBe(true);
+      }
+    }
   });
 
   it("recognises codes", () => {

@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/common/theme/theme-provider";
 import { Toaster } from "@/components/ui/toast";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 
@@ -19,6 +19,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Gym Tracker",
   description: "Track gym sessions together with your gym buddies.",
+};
+
+// `viewport-fit=cover` lets the page draw under the iPhone notch and home
+// indicator and makes `env(safe-area-inset-*)` non-zero, which the bottom
+// navigation and the full-height Sheet pad themselves with.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

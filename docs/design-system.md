@@ -158,7 +158,7 @@ Code: [`src/components/ui/`](../src/components/ui/), previewed with every varian
 | Popover | `popover.tsx` · `Popover`, `PopoverTrigger`, `PopoverAnchor`, `PopoverContent` | Radix Popover; radius 18, border + shadow. Base for the Combobox (E02-T04); `PopoverAnchor` positions it against another element than the trigger. |
 | Combobox | `combobox/combobox.tsx` · `Combobox<T>` | See **Combobox (E02-T04)** below. |
 | NumberStepper | `number-stepper/number-stepper.tsx` · `NumberStepper`; `number-stepper-presets.ts` · `NUMBER_STEPPER_PRESETS` | See **NumberStepper (E02-T05)** below. |
-| DropdownMenu | `dropdown-menu.tsx` · `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` (`variant="destructive"`), `DropdownMenuLabel`, `DropdownMenuSeparator` | Radix menu: arrows, typeahead, `Esc`; 44 px items with a ring on keyboard focus. Sub-menus, checkbox/radio items and shortcuts are not wrapped yet (add when needed). |
+| DropdownMenu | `dropdown-menu.tsx` · `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem` (`variant="destructive"`), `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuRadioGroup` + `DropdownMenuRadioItem` (E02-T06, ✓ on the checked one) | Radix menu: arrows, typeahead, `Esc`; 44 px items with a ring on keyboard focus. Only menu items are reachable inside (Tab is kept in the menu), so pick-one choices are radio items, never a form control. Sub-menus, checkbox items and shortcuts are not wrapped yet (add when needed). |
 | Tabs | `tabs.tsx` · `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | Underline tabs from the Sessions mock-up: 44 px, active = foreground underline + semibold; counts go in the label. |
 | SegmentedControl | `segmented-control.tsx` · `SegmentedControl` | Native radios in a `fieldset` (arrow keys, announced as a radio group); pill with `border-input`, checked = `bg-primary-soft`; options take an `icon` (lucide icon or small Avatar). `ThemeToggle` is now built on it. |
 | Toast | `toast.tsx` · `Toaster` (root layout), `showToast(message, { description, action })`, `TOAST_DURATION_MS` | [sonner](https://sonner.emilkowal.ski/), unstyled + token classes: inverted (foreground fill, background text) like the mock-ups, radius 14, bottom center (96 px up on mobile, clear of the bottom nav), **4 s**, polite live region, Alt+T focuses it. |
@@ -232,6 +232,29 @@ Rules the components follow (and new ones should):
 - Desktop (≥ 1024 px): left sidebar with the same items; content max width 1180 px.
 - Header: page title, language switch and theme toggle in avatar menu.
 - Scroll bars are hidden in the app shell (`scrollbar-width: none`); content still scrolls by touch, wheel and keyboard.
+
+### App shell (E02-T06)
+
+`src/app/[locale]/(app)/layout.tsx` validates the locale and renders `AppShell` (`src/components/common/app-shell/`). Which navigation shows is pure CSS (`lg:hidden` / `hidden lg:flex`), so server and client render the same markup.
+
+- **Bottom navigation** (`BottomNav`, < 1024 px): fixed, `bg-background`, top border, 4 equal columns; 76 px (`--bottom-nav-height`) plus `env(safe-area-inset-bottom)` (`--bottom-nav-inset`), padding 6 / 8 / 14 px + the inset. Item: 24 px lucide icon (stroke 1.5) over a `text-xs` label; active `text-primary font-semibold` with `aria-current="page"`, others `text-muted-foreground font-medium`.
+- **Sidebar** (`SidebarNav`, ≥ 1024 px): 216 px, sticky, right border, app name on top, text-only items `min-h-11 rounded-sm px-3 text-sm`, active `bg-primary-soft font-semibold` with `aria-current="page"`.
+- A section stays active on its detail pages (`/lt/sessions/123` → Sessions; `isNavItemActive` in `nav-items.ts`). Settings is not a section: nothing is active there. Items and routes: `NAV_ITEMS` (Home = `dashboard`).
+- **Page area**: `max-w-content` (1180 px, `--container-content`), left-aligned next to the sidebar as in the mock-up; padding 28 px top / 16 px sides on phones (plus the notch / landscape safe-area insets) and room for the bottom navigation below; 24 px sides at `lg`, 36 × 48 px from `xl`. A "Skip to content" link is the first focusable element.
+- **Viewport**: the root layout exports `viewport` with `viewport-fit=cover`, which makes `env(safe-area-inset-*)` work (bottom navigation, page padding, full-height Sheet).
+- **Scroll bars**: hidden for `<html>` while a shell is on the page (`html:has([data-app-shell])`) and inside the shell (`globals.css`).
+- **Toasts** sit 20 px above the bottom navigation (96 px + the inset) below 1024 px, 24 px up on desktop (`--toast-offset-bottom`; sonner's own mobile breakpoint is 600 px, so the offset is set in CSS).
+
+### Page patterns (E02-T06)
+
+`src/components/common/page/`:
+
+- `PageHeader({ title, backHref? })` — the `<h1>` (24 / 30 px; 18 / 24 px on detail pages), a back link (44 px ghost icon button, "Back") when `backHref` is given, and the avatar menu on the right. The back button is a link to the parent page, not `history.back()`, so it works when the page was opened directly.
+- `AccountMenu` (in `app-shell/`) — the avatar menu: **Language** (Lietuvių / English, `menuitemradio`, opens the same path in the other locale), **Theme** (Light / Dark / System, `menuitemradio`, applies at once and keeps the menu open), **Settings** (link). It is a Radix menu: Enter / Space / ↓ open it, arrows / Home / End move, Esc closes and returns focus. The theme is offered as menu radio items rather than the `ThemeToggle` radio group because a Radix menu keeps Tab inside and moves only between menu items, so a form control inside a `role="menu"` would be unreachable by keyboard (and invalid ARIA). Sign out and the user's avatar come with E04.
+- `PageSkeleton` — `loading.tsx` of every section: header row, a card and three rows; `aria-busy` with one "Loading" status for screen readers.
+- `SectionError({ error, retry, titleKey })` — `error.tsx` of every section: keeps the page header (so navigation, language and theme still work), a `role="alert"` block with a translated title, description and **Try again** (`retry()`), and reports the error to Sentry. The error message is never shown.
+- Placeholder pages use `EmptyState` with a section icon and one sentence.
+- Titles: each page's `generateMetadata` uses `getSectionMetadata(params, "<nav key>")` → "Treniruotės · Gym Tracker" (template in the `(app)` layout).
 
 ## Iconography
 

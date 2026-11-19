@@ -25,7 +25,7 @@ npm run db:start             # start local Supabase in Docker (first run pulls i
 npm run dev    # start the dev server
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you should see the placeholder page.
+Open [http://localhost:3000](http://localhost:3000) — you should see the placeholder page. The app shell with its placeholder sections is at [/lt/dashboard](http://localhost:3000/lt/dashboard) (or `/en/…`).
 
 ## Scripts
 
@@ -211,6 +211,10 @@ Colors, type, radii and spacing are design tokens defined once in [`src/app/glob
 **Themes.** Light, dark and system (the default, follows the OS live) via [next-themes](https://github.com/pacocoursey/next-themes); the choice is kept in local storage (`theme`). `<ThemeToggle />` (`@/components/common/theme/theme-toggle`) is the switch; details, the theme-color meta and the hook for saving the choice to `profiles.theme` are in [docs/design-system.md → Themes](docs/design-system.md#themes-light--dark--system-e02-t02).
 
 **Components.** The base UI components (Button, Input, FormField, Card, Dialog, Sheet, Popover, Tabs, SegmentedControl, Toast, Avatar, Chip, Skeleton, DropdownMenu, EmptyState, …) live in [`src/components/ui/`](src/components/ui/), built on [Radix](https://www.radix-ui.com/) the way [shadcn/ui](https://ui.shadcn.com/) does it and styled with the tokens only. Import them from `@/components/ui/<name>`; merge classes with `cn()` from `@/lib/utils/cn`. Toasts: `showToast("Set saved")` (the `<Toaster />` is in the root layout). API and decisions: [docs/design-system.md → Core components](docs/design-system.md#core-components).
+
+**App layout.** The signed-in area lives under `src/app/[locale]/(app)/` (`/lt/dashboard` = Home, `/sessions`, `/progress`, `/buddies`, `/settings`; `lt` or `en`, anything else is a 404). Its layout renders `AppShell` (bottom navigation below 1024 px, sidebar from 1024 px); each page starts with `<PageHeader title="…" backHref="…" />` (title, back button on detail pages, avatar menu with language, theme and settings), and each section has a `loading.tsx` (`<PageSkeleton />`) and an `error.tsx` (`<SectionError />`, reported to Sentry). Details: [docs/design-system.md → Layout](docs/design-system.md#layout). Until E03 / E04 there is no locale redirect or middleware and no sign-in gate: the pages are public placeholders.
+
+**Translations (interim).** UI text is in `messages/en.json` and `messages/lt.json` (namespaces `common`, `nav`, `errors` and one per section). Until next-intl arrives (E03-T01) they are read with `getTranslations({ locale, namespace })` (Server Components, `@/lib/i18n/messages`) and `useTranslations(namespace)` (client components, `@/lib/i18n/use-translations`, locale from the URL), which have next-intl's call shapes. Message keys are type-checked against `en.json`; `lt.json` must have the same keys (typecheck + `src/lib/i18n/messages.test.ts`). Use `’`, not `'`, in messages (ICU quoting).
 
 Developer-only pages live under `/dev` (`src/app/dev/`): `/dev/tokens` shows every token and `/dev/ui` every component and variant, both with the theme toggle to switch between light and dark. They are served by `next dev` and are a 404 in production builds unless the runtime variable `ENABLE_DEV_PAGES=1` is set (e.g. briefly on a preview deployment for a design review; the gate is `src/app/dev/layout.tsx`).
 

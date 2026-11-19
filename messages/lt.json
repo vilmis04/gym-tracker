@@ -1,0 +1,49 @@
+{
+  "common": {
+    "appName": "Gym Tracker",
+    "loading": "Įkeliama",
+    "back": "Atgal",
+    "skipToContent": "Pereiti prie turinio",
+    "accountMenu": "Paskyra, kalba ir tema",
+    "language": "Kalba",
+    "theme": "Tema",
+    "themeLight": "Šviesi",
+    "themeDark": "Tamsi",
+    "themeSystem": "Kaip sistemoje",
+    "tryAgain": "Bandyti dar kartą"
+  },
+  "nav": {
+    "mainLabel": "Pagrindinė",
+    "home": "Pradžia",
+    "sessions": "Treniruotės",
+    "progress": "Pažanga",
+    "buddies": "Draugai",
+    "settings": "Nustatymai"
+  },
+  "home": {
+    "emptyState": "Čia matysite vykstančią treniruotę, artėjančias treniruotes ir kvietimus."
+  },
+  "sessions": {
+    "emptyState": "Čia matysite suplanuotas ir praėjusias treniruotes."
+  },
+  "progress": {
+    "emptyState": "Čia matysite kiekvieno pratimo pažangą."
+  },
+  "buddies": {
+    "emptyState": "Čia matysite savo treniruočių draugus ir draugystės kvietimus."
+  },
+  "settings": {
+    "emptyState": "Čia bus paskyros, kalbos ir temos nustatymai."
+  },
+  "errors": {
+    "unauthorized": "Prisijunkite, kad galėtumėte tęsti.",
+    "forbidden": "Neturite teisės to atlikti.",
+    "notFound": "Neradome to, ko ieškote.",
+    "validation": "Patikrinkite pažymėtus laukus.",
+    "conflict": "Toks įrašas jau yra.",
+    "locked": "To nebegalima pakeisti.",
+    "unknown": "Kažkas nepavyko. Bandykite dar kartą.",
+    "pageTitle": "Kažkas nepavyko",
+    "pageDescription": "Nepavyko įkelti šio puslapio. Patikrinkite ryšį ir bandykite dar kartą."
+  }
+}

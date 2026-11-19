@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { type ComponentProps } from "react";
 
@@ -11,7 +12,10 @@ import { OVERLAY_PANEL_CLASS_NAME } from "./popover";
  * Dropdown menu (E02-T03) on Radix DropdownMenu: Enter / Space / ↓ open it,
  * the arrow keys and typeahead move between items, `Esc` closes it and
  * returns focus to the trigger. Items are 44 px tall (touch targets). Used
- * for "⋯" menus and the avatar menu (E02-T06).
+ * for "⋯" menus and the avatar menu (E02-T06). A menu may only hold menu
+ * items: Radix keeps Tab inside it and the arrow keys move between items
+ * only, so pick-one choices go in a `DropdownMenuRadioGroup`, not a form
+ * control such as SegmentedControl.
  */
 export const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -46,16 +50,36 @@ export function DropdownMenuItem({
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        "flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-3 text-base outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-accent [&_svg]:shrink-0",
-        // Highlight follows keyboard focus; the ring makes it visible on any fill.
-        "focus-visible:ring-2 focus-visible:ring-ring",
+        ITEM_CLASS_NAME,
         variant === "destructive"
           ? "text-destructive [&_svg]:text-destructive"
-          : "text-popover-foreground [&_svg]:text-muted-foreground",
+          : DEFAULT_ITEM_CLASS_NAME,
         className,
       )}
       {...props}
     />
+  );
+}
+
+/** A pick-one group (`role="group"`); name it with `aria-labelledby` or `aria-label`. */
+export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
+
+/** `role="menuitemradio"`: Enter / Space checks it; the checked one shows a ✓. */
+export function DropdownMenuRadioItem({
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+  return (
+    <DropdownMenuPrimitive.RadioItem
+      className={cn(ITEM_CLASS_NAME, DEFAULT_ITEM_CLASS_NAME, className)}
+      {...props}
+    >
+      {children}
+      <DropdownMenuPrimitive.ItemIndicator className="ml-auto flex">
+        <Check aria-hidden="true" size={20} strokeWidth={1.5} />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </DropdownMenuPrimitive.RadioItem>
   );
 }
 
@@ -85,3 +109,12 @@ export function DropdownMenuSeparator({
     />
   );
 }
+
+const ITEM_CLASS_NAME = cn(
+  "flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-3 text-base outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-highlighted:bg-accent [&_svg]:shrink-0",
+  // Highlight follows keyboard focus; the ring makes it visible on any fill.
+  "focus-visible:ring-2 focus-visible:ring-ring",
+);
+
+const DEFAULT_ITEM_CLASS_NAME =
+  "text-popover-foreground [&_svg]:text-muted-foreground";

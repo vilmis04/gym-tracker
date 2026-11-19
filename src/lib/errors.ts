@@ -29,8 +29,6 @@ export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 /** next-intl message key (`messages/<locale>.json` → `errors.*`) per code. */
 export type ErrorMessageKey = `errors.${string}`;
 
-// TODO(E03): once messages/en.json and messages/lt.json exist, errors.test.ts
-// must also assert that each key exists in both files.
 export const errorMessageKey = {
   UNAUTHORIZED: "errors.unauthorized",
   FORBIDDEN: "errors.forbidden",
