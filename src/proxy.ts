@@ -17,9 +17,10 @@ import type { NextRequest } from "next/server";
  */
 export function proxy(request: NextRequest) {
   // TODO(E04-T04): "saved profile locale" goes between the cookie and
-  // Accept-Language. The cookie already carries it once E03-T02 / E04-T04
-  // set NEXT_LOCALE from `profiles.locale` on sign-in and on switching, so
-  // only a signed-in user without the cookie (new device) needs a lookup.
+  // Accept-Language. Switching language already writes NEXT_LOCALE (E03-T02,
+  // in the browser); once E04-T04 also saves `profiles.locale` and sets the
+  // cookie from it on sign-in, only a signed-in user without the cookie (new
+  // device) needs a lookup.
   return handleLocaleRouting(request);
 }
 

@@ -95,8 +95,14 @@ test("the stored dark theme is applied before any app JavaScript runs (no white 
   await expect(html(page)).toHaveClass(/\bdark\b/);
   await expect(body(page)).toHaveCSS("background-color", DARK_BACKGROUND);
   await expect(themeColor(page)).toHaveAttribute("content", DARK_BACKGROUND);
-  // The toggle shows no choice until hydrated (the server can't know it).
-  await expect(page.getByRole("radio", { checked: true })).toHaveCount(0);
+  // The toggle shows no choice until hydrated (the server can't know it),
+  // unlike the language switcher next to it (the URL is the language).
+  await expect(
+    page
+      .getByRole("group", { name: "Theme" })
+      .getByRole("radio", { checked: true }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("radio", { name: "English" })).toBeChecked();
 });
 
 test("every frame of a slow load in the dark theme is dark", async ({

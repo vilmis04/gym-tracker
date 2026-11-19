@@ -38,6 +38,7 @@ export function SegmentedControl<Value extends string>({
         {options.map((option) => (
           <label
             key={option.value}
+            lang={option.lang}
             className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-sm font-medium text-muted-foreground transition-colors duration-150 ease-out select-none hover:text-foreground has-checked:bg-primary-soft has-checked:font-semibold has-checked:text-foreground has-focus-visible:ring-2 has-focus-visible:ring-ring"
           >
             <input
