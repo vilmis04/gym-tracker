@@ -11,7 +11,7 @@
  * (`bg-primary/80`) work through `color-mix()`.
  */
 
-/* Themes are switched with a `dark` class (next-themes in E02-T02), not the media query. */
+/* Themes are switched with a `dark` class set by next-themes (src/components/common/theme), not the media query. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

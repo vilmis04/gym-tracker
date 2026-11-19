@@ -1,5 +1,7 @@
 import { Inter } from "next/font/google";
 
+import { ThemeProvider } from "@/components/common/theme/theme-provider";
+
 import type { Metadata } from "next";
 
 import "./globals.css";
@@ -20,8 +22,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+    // suppressHydrationWarning: the theme script sets the class (and
+    // color-scheme) on <html> before React hydrates (see ThemeProvider).
+    <html
+      lang="en"
+      className={`${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <body className="flex min-h-full flex-col">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

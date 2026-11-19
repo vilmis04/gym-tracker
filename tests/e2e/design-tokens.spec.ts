@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// E02-T01: the tokens preview renders both themes, and the Lithuanian letters
+// E02-T01: the tokens preview renders both themes (toggle from E02-T02), and the Lithuanian letters
 // are drawn with Inter itself (its latin-ext subset), not a fallback font.
 // /dev/* is a 404 in production builds unless ENABLE_DEV_PAGES=1 (set in the
 // CI e2e job); `next dev` always serves it.
@@ -49,14 +49,17 @@ test("Lithuanian letters render in Inter with no fallback font", async ({
   expect(uncoveredLetters).toEqual({ firstFamily: "Inter", letters: [] });
 });
 
-test("?theme=dark renders the page with the dark tokens", async ({ page }) => {
-  await page.goto("/dev/tokens?theme=dark");
+test("the theme toggle renders the page with the dark tokens", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/dev/tokens");
 
-  const themeRoot = page.locator(".dark").first();
+  await page.getByText("Dark", { exact: true }).click();
+
   // --background in the dark theme: hsl(36 9.8% 10%).
-  await expect(themeRoot).toHaveCSS("background-color", "rgb(28, 26, 23)");
-  await expect(page.getByRole("link", { name: "dark" })).toHaveAttribute(
-    "aria-current",
-    "page",
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(28, 26, 23)",
   );
 });

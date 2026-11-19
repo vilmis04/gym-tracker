@@ -2,6 +2,7 @@
 
 - `ui/` — shadcn/ui primitives, themed with design tokens (E02)
 - `common/` — app-level shared components
+  - `common/theme/` — light / dark / system theme (E02-T02): `ThemeProvider` (in the root layout), `ThemeToggle`, `useThemePreference()`; see docs/design-system.md → Themes
 
 Feature-specific components live in `src/features/<feature>/components/`.
 
