@@ -1,12 +1,14 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { Chip } from "./chip";
 
 describe("Chip", () => {
   it("is static text without onRemove", () => {
-    render(<Chip label="legs" />);
+    renderWithIntl(<Chip label="legs" />, { locale: "en" });
 
     expect(screen.getByText("legs")).toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
@@ -15,7 +17,7 @@ describe("Chip", () => {
   it("removable: the × button is named after the chip and removes it on click", async () => {
     const onRemove = vi.fn();
     const user = userEvent.setup();
-    render(<Chip label="legs" onRemove={onRemove} />);
+    renderWithIntl(<Chip label="legs" onRemove={onRemove} />, { locale: "en" });
 
     await user.click(screen.getByRole("button", { name: "Remove legs" }));
 
@@ -25,8 +27,9 @@ describe("Chip", () => {
   it("removable from the keyboard: Enter, Space, Delete and Backspace on the focused ×", async () => {
     const onRemove = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithIntl(
       <Chip label="quads" onRemove={onRemove} removeLabel="Remove tag quads" />,
+      { locale: "en" },
     );
 
     await user.tab();
