@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import { type ReactNode } from "react";
 
 import { ThemeProvider } from "@/components/common/theme/theme-provider";
+import { TimeZoneCookieWriter } from "@/components/common/time-zone/time-zone-cookie-writer";
 import { Toaster } from "@/components/ui/toast";
 
 import type { Viewport } from "next";
@@ -54,6 +55,7 @@ export function RootDocument({
           {children}
           {/* Once for the whole app, so any page can call showToast(). */}
           <Toaster />
+          <TimeZoneCookieWriter />
         </ThemeProvider>
       </body>
     </html>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useId, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils/cn";
@@ -21,7 +22,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../sheet";
-import { UI_LABELS } from "../ui-labels";
 import { useMediaQuery } from "../use-media-query";
 import { ComboboxPanel } from "./combobox-panel";
 
@@ -61,8 +61,8 @@ export function Combobox<T>({
   initialItems = NO_INITIAL_ITEMS,
   placeholder,
   searchPlaceholder,
-  emptyText = UI_LABELS.comboboxNoResults,
-  errorText = UI_LABELS.comboboxSearchFailed,
+  emptyText,
+  errorText,
   disabled = false,
   className,
   id,
@@ -73,8 +73,11 @@ export function Combobox<T>({
   onChange,
   allowCreate,
   onCreate,
-  createLabel = UI_LABELS.comboboxCreate,
+  createLabel,
 }: ComboboxProps<T>) {
+  const translate = useTranslations("ui");
+  const createDefaultLabel = (query: string) =>
+    translate("comboboxCreate", { query });
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = useMediaQuery(DESKTOP_MEDIA_QUERY);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -213,10 +216,10 @@ export function Combobox<T>({
       initialItems={initialItems}
       selectedKeys={selectedKeys}
       searchPlaceholder={searchPlaceholder}
-      emptyText={emptyText}
-      errorText={errorText}
+      emptyText={emptyText ?? translate("comboboxNoResults")}
+      errorText={errorText ?? translate("comboboxSearchFailed")}
       onCreate={allowCreate ? createItem : null}
-      createLabel={createLabel}
+      createLabel={createLabel ?? createDefaultLabel}
       onSelect={selectItem}
     />
   );

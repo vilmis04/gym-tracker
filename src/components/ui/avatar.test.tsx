@@ -1,5 +1,7 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { Avatar, getAvatarFillClassName, getInitials } from "./avatar";
 import { AvatarStack } from "./avatar-stack";
@@ -37,7 +39,7 @@ describe("getAvatarFillClassName", () => {
 
 describe("Avatar", () => {
   it("is an image named after the person, showing the initials", () => {
-    render(<Avatar name="Rūta Žemaitė" />);
+    renderWithIntl(<Avatar name="Rūta Žemaitė" />, { locale: "en" });
 
     expect(screen.getByRole("img", { name: "Rūta Žemaitė" })).toHaveTextContent(
       "RŽ",
@@ -45,7 +47,7 @@ describe("Avatar", () => {
   });
 
   it("is hidden from screen readers when decorative", () => {
-    render(<Avatar name="Ona" isDecorative />);
+    renderWithIntl(<Avatar name="Ona" isDecorative />, { locale: "en" });
 
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
@@ -53,7 +55,10 @@ describe("Avatar", () => {
 
 describe("AvatarStack", () => {
   it("lists the first avatars and announces how many are hidden", () => {
-    render(<AvatarStack people={PEOPLE} label="Participants" maxVisible={3} />);
+    renderWithIntl(
+      <AvatarStack people={PEOPLE} label="Participants" maxVisible={3} />,
+      { locale: "en" },
+    );
 
     const list = screen.getByRole("list", { name: "Participants" });
     expect(
@@ -65,8 +70,19 @@ describe("AvatarStack", () => {
     expect(within(list).getByText("and 2 more")).toBeInTheDocument();
   });
 
+  it("announces the hidden count in Lithuanian", () => {
+    renderWithIntl(
+      <AvatarStack people={PEOPLE} label="Dalyviai" maxVisible={3} />,
+    );
+
+    expect(screen.getByText("ir dar 2")).toBeInTheDocument();
+  });
+
   it("has no counter when everyone fits", () => {
-    render(<AvatarStack people={PEOPLE.slice(0, 2)} label="Participants" />);
+    renderWithIntl(
+      <AvatarStack people={PEOPLE.slice(0, 2)} label="Participants" />,
+      { locale: "en" },
+    );
 
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });

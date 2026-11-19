@@ -25,7 +25,7 @@ export interface AvatarStackProps {
   /** Avatars shown before the "+N" counter. */
   maxVisible?: number;
   size?: AvatarSize;
-  /** Screen-reader text of the "+N" counter. */
+  /** Screen-reader text of the "+N" counter; defaults to "and N more" (`ui.hiddenAvatars`). */
   getHiddenCountLabel?: (hiddenCount: number) => string;
   /**
    * Set `[--avatar-ring:var(--color-card)]` (or another fill) when the stack

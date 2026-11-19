@@ -60,5 +60,30 @@
     "pageTitle": "Kažkas nepavyko",
     "pageDescription": "Nepavyko įkelti šio puslapio. Patikrinkite ryšį ir bandykite dar kartą.",
     "pageNotFoundTitle": "Puslapis nerastas"
+  },
+  "format": {
+    "durationMinutes": "{minutes} min.",
+    "durationHours": "{hours} val.",
+    "durationHoursMinutes": "{hours} val. {minutes} min."
+  },
+  "counts": {
+    "sets": "{count, plural, one {# serija} few {# serijos} many {# serijos} other {# serijų}}",
+    "reps": "{count, plural, one {# kartojimas} few {# kartojimai} many {# kartojimo} other {# kartojimų}}",
+    "sessions": "{count, plural, one {# treniruotė} few {# treniruotės} many {# treniruotės} other {# treniruočių}}",
+    "exercises": "{count, plural, one {# pratimas} few {# pratimai} many {# pratimo} other {# pratimų}}",
+    "buddies": "{count, plural, one {# draugas} few {# draugai} many {# draugo} other {# draugų}}"
+  },
+  "ui": {
+    "close": "Uždaryti",
+    "loading": "Įkeliama",
+    "remove": "Pašalinti: {item}",
+    "hiddenAvatars": "ir dar {count}",
+    "comboboxCreate": "Sukurti „{query}“",
+    "comboboxResultCount": "{count, plural, one {# rezultatas} few {# rezultatai} many {# rezultato} other {# rezultatų}}",
+    "comboboxNoResults": "Rezultatų nėra",
+    "comboboxSearchFailed": "Nepavyko įkelti rezultatų. Bandykite dar kartą.",
+    "comboboxSearch": "Ieškoti",
+    "numberStepperDecrease": "Sumažinti {step}",
+    "numberStepperIncrease": "Padidinti {step}"
   }
 }

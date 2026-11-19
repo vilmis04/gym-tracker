@@ -1,9 +1,10 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { FormField } from "../form-field";
 import { Combobox } from "./combobox";
@@ -147,7 +148,7 @@ describe("Combobox", () => {
 
   it("shows the initial items before typing, without searching", async () => {
     const onSearch = createSearch();
-    render(<SingleCombobox onSearch={onSearch} />);
+    renderWithIntl(<SingleCombobox onSearch={onSearch} />, { locale: "en" });
 
     const trigger = screen.getByRole("button", {
       name: "Exercise Choose an exercise",
@@ -162,7 +163,7 @@ describe("Combobox", () => {
 
   it("searches 200 ms after the last keystroke with the trimmed query", async () => {
     const onSearch = createSearch();
-    render(<SingleCombobox onSearch={onSearch} />);
+    renderWithIntl(<SingleCombobox onSearch={onSearch} />, { locale: "en" });
     await openCombobox();
 
     await user.keyboard(" spaud ");
@@ -187,12 +188,26 @@ describe("Combobox", () => {
     );
   });
 
+  it("announces in Lithuanian with its plural forms", async () => {
+    renderWithIntl(<SingleCombobox onSearch={createSearch()} />);
+    await openCombobox();
+
+    await user.keyboard("spaud");
+    expect(screen.getByRole("status")).toHaveTextContent("Įkeliama");
+    await waitForDebounce();
+    expect(screen.getByRole("status")).toHaveTextContent("2 rezultatai");
+
+    await user.keyboard("imas gulint");
+    await waitForDebounce();
+    expect(screen.getByRole("status")).toHaveTextContent("1 rezultatas");
+  });
+
   it("never shows a stale response that arrives after a newer one", async () => {
     // "pri" answers slowly, "pritu" quickly: the old answer lands last.
     const onSearch = createDelayedSearch((query) =>
       query === "pri" ? 1000 : 50,
     );
-    render(<SingleCombobox onSearch={onSearch} />);
+    renderWithIntl(<SingleCombobox onSearch={onSearch} />, { locale: "en" });
     await openCombobox();
 
     await user.keyboard("pri");
@@ -213,7 +228,7 @@ describe("Combobox", () => {
 
   it("does not search for typing that is replaced within 200 ms", async () => {
     const onSearch = createSearch();
-    render(<SingleCombobox onSearch={onSearch} />);
+    renderWithIntl(<SingleCombobox onSearch={onSearch} />, { locale: "en" });
     await openCombobox();
 
     await user.keyboard("s");
@@ -229,11 +244,12 @@ describe("Combobox", () => {
 
   it("moves the highlight with ↑ / ↓, selects with Enter and closes", async () => {
     const onValueChange = vi.fn();
-    render(
+    renderWithIntl(
       <SingleCombobox
         onSearch={createSearch()}
         onValueChange={onValueChange}
       />,
+      { locale: "en" },
     );
     await openCombobox();
     const input = screen.getByRole("combobox", { name: "Exercise" });
@@ -258,7 +274,9 @@ describe("Combobox", () => {
   });
 
   it("closes on Esc and returns focus to the trigger", async () => {
-    render(<SingleCombobox onSearch={createSearch()} />);
+    renderWithIntl(<SingleCombobox onSearch={createSearch()} />, {
+      locale: "en",
+    });
     await openCombobox();
 
     await user.keyboard("{Escape}");
@@ -269,7 +287,10 @@ describe("Combobox", () => {
 
   it("marks accent-insensitive matches and hides Create on an exact normalized match", async () => {
     const onCreate = vi.fn();
-    render(<SingleCombobox onSearch={createSearch()} onCreate={onCreate} />);
+    renderWithIntl(
+      <SingleCombobox onSearch={createSearch()} onCreate={onCreate} />,
+      { locale: "en" },
+    );
     await openCombobox();
 
     await user.keyboard("spaudimas");
@@ -286,7 +307,10 @@ describe("Combobox", () => {
 
   it("shows Create while there is no exact match, reachable by keyboard, and passes the trimmed query", async () => {
     const onCreate = vi.fn();
-    render(<SingleCombobox onSearch={createSearch()} onCreate={onCreate} />);
+    renderWithIntl(
+      <SingleCombobox onSearch={createSearch()} onCreate={onCreate} />,
+      { locale: "en" },
+    );
     await openCombobox();
 
     await user.keyboard("  spaud  ");
@@ -310,7 +334,10 @@ describe("Combobox", () => {
 
   it("offers Create (only) when nothing is found, and announces it", async () => {
     const onCreate = vi.fn();
-    render(<SingleCombobox onSearch={createSearch()} onCreate={onCreate} />);
+    renderWithIntl(
+      <SingleCombobox onSearch={createSearch()} onCreate={onCreate} />,
+      { locale: "en" },
+    );
     await openCombobox();
 
     await user.keyboard("Atsispaudimai");
@@ -330,7 +357,7 @@ describe("Combobox", () => {
     const onSearch = vi.fn<ComboboxSearch<Exercise>>(() =>
       Promise.reject(new Error("offline")),
     );
-    render(<SingleCombobox onSearch={onSearch} />);
+    renderWithIntl(<SingleCombobox onSearch={onSearch} />, { locale: "en" });
     await openCombobox();
 
     await user.keyboard("squ");
@@ -342,7 +369,9 @@ describe("Combobox", () => {
   });
 
   it("opens as a full-height sheet named after the label on a phone", async () => {
-    render(<SingleCombobox onSearch={createSearch()} />);
+    renderWithIntl(<SingleCombobox onSearch={createSearch()} />, {
+      locale: "en",
+    });
     await openCombobox();
 
     const sheet = screen.getByRole("dialog", { name: "Exercise" });
@@ -356,7 +385,9 @@ describe("Combobox", () => {
 
   it("opens as a popover (not a modal dialog) on a desktop", async () => {
     stubIsDesktop(true);
-    render(<SingleCombobox onSearch={createSearch()} />);
+    renderWithIntl(<SingleCombobox onSearch={createSearch()} />, {
+      locale: "en",
+    });
     await openCombobox();
 
     expect(screen.queryByRole("dialog", { name: "Exercise" })).toBeNull();
@@ -366,7 +397,7 @@ describe("Combobox", () => {
 
   describe("multiple", () => {
     it("toggles items, keeps the list open and shows them as chips", async () => {
-      render(<MultipleCombobox initialValue={[]} />);
+      renderWithIntl(<MultipleCombobox initialValue={[]} />, { locale: "en" });
       await user.click(screen.getByRole("button", { name: /Add exercise/ }));
 
       await user.click(screen.getByRole("option", { name: "Squat" }));
@@ -395,8 +426,9 @@ describe("Combobox", () => {
     });
 
     it("moves focus to the next chip, the previous one, then the trigger as chips are removed", async () => {
-      render(
+      renderWithIntl(
         <MultipleCombobox initialValue={[SPAUDIMAS, PRITUPIMAI, SQUAT]} />,
+        { locale: "en" },
       );
 
       await user.click(

@@ -1,7 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Link from "next/link";
 import { describe, expect, it, vi } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { Button } from "./button";
 
@@ -9,7 +11,7 @@ describe("Button", () => {
   it("is a plain button (type=button) that runs onClick", async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();
-    render(<Button onClick={onClick}>Save</Button>);
+    renderWithIntl(<Button onClick={onClick}>Save</Button>, { locale: "en" });
 
     const button = screen.getByRole("button", { name: "Save" });
     expect(button).toHaveAttribute("type", "button");
@@ -21,10 +23,11 @@ describe("Button", () => {
   it("while loading: shows the spinner, is busy, stays focusable and ignores clicks", async () => {
     const onClick = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithIntl(
       <Button isLoading onClick={onClick}>
         Save
       </Button>,
+      { locale: "en" },
     );
 
     const button = screen.getByRole("button", { name: "Loading Save" });
@@ -43,10 +46,11 @@ describe("Button", () => {
   it("does not submit its form again while loading", async () => {
     const onSubmit = vi.fn((event: SubmitEvent) => event.preventDefault());
     const user = userEvent.setup();
-    const { rerender } = render(
+    const { rerender } = renderWithIntl(
       <form onSubmit={(event) => onSubmit(event.nativeEvent as SubmitEvent)}>
         <Button type="submit">Save</Button>
       </form>,
+      { locale: "en" },
     );
 
     await user.click(screen.getByRole("button", { name: "Save" }));
@@ -65,10 +69,11 @@ describe("Button", () => {
   });
 
   it("renders its child with the button styles when asChild", () => {
-    render(
+    renderWithIntl(
       <Button asChild variant="secondary">
         <Link href="/sessions">Sessions</Link>
       </Button>,
+      { locale: "en" },
     );
 
     const link = screen.getByRole("link", { name: "Sessions" });

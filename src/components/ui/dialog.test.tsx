@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { Button } from "./button";
 import {
@@ -23,7 +25,7 @@ import {
 } from "./sheet";
 
 const renderDialog = () =>
-  render(
+  renderWithIntl(
     <>
       <button type="button">Before</button>
       <Dialog>
@@ -45,10 +47,11 @@ const renderDialog = () =>
       </Dialog>
       <button type="button">After</button>
     </>,
+    { locale: "en" },
   );
 
 const renderSheet = () =>
-  render(
+  renderWithIntl(
     <>
       <button type="button">Before</button>
       <Sheet>
@@ -65,6 +68,7 @@ const renderSheet = () =>
       </Sheet>
       <button type="button">After</button>
     </>,
+    { locale: "en" },
   );
 
 describe("Dialog", () => {
