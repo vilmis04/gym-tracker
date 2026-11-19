@@ -41,6 +41,19 @@
   --chart-3: hsl(345.7 15.1% 55%);
   --chart-4: hsl(40.7 52.5% 42%);
   --chart-5: hsl(30 34.9% 48%);
+  --overlay-shadow: 0 12px 32px -12px hsl(33.3 10.8% 16.3% / 0.24);
+
+  /*
+   * Avatar fills (E02-T03): the 300 pastels with Bark 900 initials in both
+   * themes, as in the mock-ups. Declared on :root only, so `.dark` inherits
+   * the same values.
+   */
+  --avatar-1: hsl(87.9 19.2% 71.4%);
+  --avatar-2: hsl(204 17% 71.2%);
+  --avatar-3: hsl(345.7 15.1% 72.7%);
+  --avatar-4: hsl(40.7 52.5% 68.6%);
+  --avatar-5: hsl(30 34.9% 66.3%);
+  --avatar-foreground: hsl(33.3 10.8% 16.3%);
 }
 
 .dark {
@@ -71,6 +84,8 @@
   --chart-3: hsl(345.7 15.1% 72.7%);
   --chart-4: hsl(40.7 52.5% 68.6%);
   --chart-5: hsl(30 34.9% 66.3%);
+  /* Darker and wider: dark popovers are told apart mainly by surface + border. */
+  --overlay-shadow: 0 16px 40px -12px hsl(0 0% 0% / 0.5);
 }
 
 /*
@@ -124,6 +139,16 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-avatar-1: var(--avatar-1);
+  --color-avatar-2: var(--avatar-2);
+  --color-avatar-3: var(--avatar-3);
+  --color-avatar-4: var(--avatar-4);
+  --color-avatar-5: var(--avatar-5);
+  --color-avatar-foreground: var(--avatar-foreground);
+
+  /* Elevation: borders over shadows; one soft level for popovers, menus, dialogs and sheets. */
+  --shadow-*: initial;
+  --shadow-overlay: var(--overlay-shadow);
 
   /* `--font-inter` is set on <html> by next/font (src/app/layout.tsx). */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -170,6 +195,65 @@
   --radius-xl: 1.125rem;
   --radius-2xl: 1.25rem;
   --radius-3xl: 1.5rem;
+
+  /*
+   * Motion (E02-T03): 150-200 ms ease-out enter / exit animations for
+   * overlays (Radix sets data-state="open" / "closed" and waits for the exit
+   * animation). `prefers-reduced-motion` is handled once, in the base layer below.
+   * Tailwind's built-in `animate-spin` and `animate-pulse` stay available.
+   */
+  --animate-fade-in: fade-in 200ms ease-out;
+  --animate-fade-out: fade-out 150ms ease-out;
+  --animate-pop-in: pop-in 200ms ease-out;
+  --animate-pop-out: pop-out 150ms ease-out;
+  --animate-sheet-in-bottom: sheet-in-bottom 200ms ease-out;
+  --animate-sheet-out-bottom: sheet-out-bottom 150ms ease-out;
+  --animate-sheet-in-right: sheet-in-right 200ms ease-out;
+  --animate-sheet-out-right: sheet-out-right 150ms ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  /* `scale`, not `transform`, so a centering `translate` is kept. */
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+  @keyframes pop-out {
+    to {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+  @keyframes sheet-in-bottom {
+    from {
+      translate: 0 100%;
+    }
+  }
+  @keyframes sheet-out-bottom {
+    to {
+      translate: 0 100%;
+    }
+  }
+  @keyframes sheet-in-right {
+    from {
+      translate: 100% 0;
+    }
+  }
+  @keyframes sheet-out-right {
+    to {
+      translate: 100% 0;
+    }
+  }
 }
 
 @layer base {
@@ -182,5 +266,22 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /*
+   * Respect the OS "reduce motion" setting everywhere (E02-T03): animations
+   * and transitions jump to their end state. A zero duration (not
+   * `animation: none`) still fires `animationend`, which Radix waits for
+   * before unmounting a closed overlay.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0s !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0s !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

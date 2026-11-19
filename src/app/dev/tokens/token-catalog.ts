@@ -105,6 +105,46 @@ export const COLOR_GROUPS: ColorGroup[] = [
         className: "bg-scrim text-foreground",
         usage: "Overlay behind dialogs and sheets",
       },
+      {
+        token: "overlay-shadow",
+        className: "bg-popover text-popover-foreground shadow-overlay",
+        usage: "The one shadow level (popovers, dialogs)",
+      },
+    ],
+  },
+  {
+    title: "Avatars",
+    swatches: [
+      {
+        token: "avatar-1",
+        className: "bg-avatar-1 text-avatar-foreground",
+        usage: "Avatar fill (sage)",
+      },
+      {
+        token: "avatar-2",
+        className: "bg-avatar-2 text-avatar-foreground",
+        usage: "Avatar fill (dusty blue)",
+      },
+      {
+        token: "avatar-3",
+        className: "bg-avatar-3 text-avatar-foreground",
+        usage: "Avatar fill (mauve)",
+      },
+      {
+        token: "avatar-4",
+        className: "bg-avatar-4 text-avatar-foreground",
+        usage: "Avatar fill (ochre)",
+      },
+      {
+        token: "avatar-5",
+        className: "bg-avatar-5 text-avatar-foreground",
+        usage: "Avatar fill (clay)",
+      },
+      {
+        token: "avatar-foreground",
+        className: "bg-avatar-foreground text-avatar-1",
+        usage: "Avatar initials, same in both themes",
+      },
     ],
   },
   {

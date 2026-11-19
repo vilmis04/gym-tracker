@@ -210,7 +210,9 @@ Colors, type, radii and spacing are design tokens defined once in [`src/app/glob
 
 **Themes.** Light, dark and system (the default, follows the OS live) via [next-themes](https://github.com/pacocoursey/next-themes); the choice is kept in local storage (`theme`). `<ThemeToggle />` (`@/components/common/theme/theme-toggle`) is the switch; details, the theme-color meta and the hook for saving the choice to `profiles.theme` are in [docs/design-system.md → Themes](docs/design-system.md#themes-light--dark--system-e02-t02).
 
-Developer-only pages live under `/dev` (`src/app/dev/`): `/dev/tokens` shows every token, with the theme toggle to switch between light and dark. They are served by `next dev` and are a 404 in production builds unless the runtime variable `ENABLE_DEV_PAGES=1` is set (e.g. briefly on a preview deployment for a design review; the gate is `src/app/dev/layout.tsx`).
+**Components.** The base UI components (Button, Input, FormField, Card, Dialog, Sheet, Popover, Tabs, SegmentedControl, Toast, Avatar, Chip, Skeleton, DropdownMenu, EmptyState, …) live in [`src/components/ui/`](src/components/ui/), built on [Radix](https://www.radix-ui.com/) the way [shadcn/ui](https://ui.shadcn.com/) does it and styled with the tokens only. Import them from `@/components/ui/<name>`; merge classes with `cn()` from `@/lib/utils/cn`. Toasts: `showToast("Set saved")` (the `<Toaster />` is in the root layout). API and decisions: [docs/design-system.md → Core components](docs/design-system.md#core-components).
+
+Developer-only pages live under `/dev` (`src/app/dev/`): `/dev/tokens` shows every token and `/dev/ui` every component and variant, both with the theme toggle to switch between light and dark. They are served by `next dev` and are a 404 in production builds unless the runtime variable `ENABLE_DEV_PAGES=1` is set (e.g. briefly on a preview deployment for a design review; the gate is `src/app/dev/layout.tsx`).
 
 ## Project structure
 

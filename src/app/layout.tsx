@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 
 import { ThemeProvider } from "@/components/common/theme/theme-provider";
+import { Toaster } from "@/components/ui/toast";
 
 import type { Metadata } from "next";
 
@@ -30,7 +31,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          {/* Once for the whole app, so any page can call showToast(). */}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

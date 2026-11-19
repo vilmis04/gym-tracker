@@ -37,6 +37,14 @@ const nonTextPair = (
 
 const CHART_TOKENS = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
 
+const AVATAR_TOKENS = [
+  "avatar-1",
+  "avatar-2",
+  "avatar-3",
+  "avatar-4",
+  "avatar-5",
+];
+
 /**
  * The key token pairs, checked in both themes. Every text pair is held to
  * 4.5:1, so large text (3:1) passes too. `--border` is not listed: it only
@@ -69,6 +77,9 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     nonTextPair(chartToken, "background", "chart series"),
     nonTextPair(chartToken, "card", "chart series on cards"),
   ]),
+  ...AVATAR_TOKENS.map((avatarToken) =>
+    textPair("avatar-foreground", avatarToken, "avatar initials"),
+  ),
 ];
 
 /** Checks every pair in every theme; never throws, problems are results. */

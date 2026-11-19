@@ -173,8 +173,9 @@ jobs:
       NEXT_PUBLIC_SENTRY_DSN: http://public@127.0.0.1:8999/1
       ENABLE_TEST_ERROR_PAGE: "1"
       APP_VERSION: ${{ github.sha }}
-      # E02-T01: serves /dev/tokens in the production build for
-      # tests/e2e/design-tokens.spec.ts (404 without it).
+      # E02-T01/T03: serves /dev/tokens and /dev/ui in the production build
+      # for tests/e2e/design-tokens.spec.ts and ui-components.spec.ts (404
+      # without it; ui-components.spec.ts checks that on a second server).
       ENABLE_DEV_PAGES: "1"
     steps:
       - uses: actions/checkout@v7
