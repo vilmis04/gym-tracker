@@ -19,7 +19,7 @@ tests/
   helpers/             shared helpers: signed-JWT Supabase clients, DB reset, local stack settings, renderWithIntl() (next-intl provider for component tests), stubAppRouterAt() (App Router hooks at a URL)
   setup/               Vitest setup files (jest-dom, DB env + reset, `server-only` stub)
   db/rls/              RLS tests, one file per table
-  unit/scripts/        tests for scripts/ (deploy scripts against a local fake Coolify/health server, raw-color guard, token contrast check)
+  unit/scripts/        tests for scripts/ (deploy scripts against a local fake Coolify/health server, raw-color guard, token contrast check, translations check)
   e2e/                 Playwright specs, global setup and e2e helpers (signInAs)
 ```
 
