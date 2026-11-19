@@ -1,13 +1,13 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Slot } from "radix-ui";
 import { type MouseEvent } from "react";
 
 import { cn } from "@/lib/utils/cn";
 
 import { FOCUS_RING_CLASS_NAME } from "./focus-ring";
-import { UI_LABELS } from "./ui-labels";
 
 import type { ButtonProps, ButtonSize, ButtonVariant } from "./button.types";
 
@@ -21,7 +21,7 @@ export function Button({
   variant = "primary",
   size = "md",
   isLoading = false,
-  loadingLabel = UI_LABELS.loading,
+  loadingLabel,
   asChild = false,
   className,
   children,
@@ -29,6 +29,7 @@ export function Button({
   type = "button",
   ...props
 }: ButtonProps) {
+  const translate = useTranslations("ui");
   const Component = asChild ? Slot.Root : "button";
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -62,7 +63,9 @@ export function Button({
             strokeWidth={1.5}
             className="animate-spin"
           />
-          <span className="sr-only">{loadingLabel}</span>{" "}
+          <span className="sr-only">
+            {loadingLabel ?? translate("loading")}
+          </span>{" "}
         </>
       )}
       <Slot.Slottable>{children}</Slot.Slottable>

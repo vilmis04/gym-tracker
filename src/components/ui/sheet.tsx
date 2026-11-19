@@ -12,7 +12,6 @@ import {
   DialogOverlay,
   DialogTitle,
 } from "./dialog";
-import { UI_LABELS } from "./ui-labels";
 import { useVisualViewportVariables } from "./use-visual-viewport-variables";
 
 import type { SheetContentProps } from "./sheet.types";
@@ -41,7 +40,7 @@ export const SheetFooter = DialogFooter;
 export function SheetContent({
   className,
   children,
-  closeLabel = UI_LABELS.close,
+  closeLabel,
   size = "default",
   ...props
 }: SheetContentProps) {

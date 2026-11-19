@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   type ChangeEvent,
   type FocusEvent,
@@ -14,7 +14,6 @@ import {
 import { cn } from "@/lib/utils/cn";
 
 import { FIELD_CLASS_NAME } from "../input";
-import { UI_LABELS } from "../ui-labels";
 import {
   clampValue,
   createValueFormat,
@@ -67,6 +66,7 @@ export function NumberStepper({
   "aria-invalid": isInvalid,
 }: NumberStepperProps) {
   const activeLocale = useLocale();
+  const translate = useTranslations("ui");
   const formatLocale = locale ?? activeLocale;
   const range = { step, min, max, decimals };
   const valueFormat = useMemo(
@@ -198,7 +198,10 @@ export function NumberStepper({
         )}
       />
       <StepperButton
-        label={decreaseLabel ?? UI_LABELS.numberStepperDecrease(stepText)}
+        label={
+          decreaseLabel ??
+          translate("numberStepperDecrease", { step: stepText })
+        }
         isAtBound={isAtMin}
         disabled={disabled}
         className="left-0"
@@ -209,7 +212,10 @@ export function NumberStepper({
         <Minus aria-hidden="true" size={20} strokeWidth={1.5} />
       </StepperButton>
       <StepperButton
-        label={increaseLabel ?? UI_LABELS.numberStepperIncrease(stepText)}
+        label={
+          increaseLabel ??
+          translate("numberStepperIncrease", { step: stepText })
+        }
         isAtBound={isAtMax}
         disabled={disabled}
         className="right-0"

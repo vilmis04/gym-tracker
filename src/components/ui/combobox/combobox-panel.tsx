@@ -2,12 +2,12 @@
 
 import { Command } from "cmdk";
 import { Check, LoaderCircle, Plus, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils/cn";
 import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
 
-import { UI_LABELS } from "../ui-labels";
 import { HighlightedText } from "./highlighted-text";
 import { useActiveDescendantFix } from "./use-active-descendant-fix";
 import { useComboboxSearch } from "./use-combobox-search";
@@ -30,7 +30,7 @@ export function ComboboxPanel<T>({
   renderItem,
   initialItems,
   selectedKeys,
-  searchPlaceholder = UI_LABELS.comboboxSearch,
+  searchPlaceholder,
   emptyText,
   errorText,
   onCreate,
@@ -38,6 +38,7 @@ export function ComboboxPanel<T>({
   onSelect,
   className,
 }: ComboboxPanelProps<T>) {
+  const translate = useTranslations("ui");
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -63,11 +64,11 @@ export function ComboboxPanel<T>({
   const isEmpty = status === "success" && items.length === 0;
 
   const announcement = useMemo(() => {
-    if (isLoading) return UI_LABELS.loading;
+    if (isLoading) return translate("loading");
     if (status === "error") return errorText;
     if (items.length === 0) return status === "idle" ? "" : emptyText;
-    return UI_LABELS.comboboxResultCount(items.length);
-  }, [isLoading, status, items.length, errorText, emptyText]);
+    return translate("comboboxResultCount", { count: items.length });
+  }, [isLoading, status, items.length, errorText, emptyText, translate]);
 
   const createItem = () => {
     onCreate?.(trimmedQuery);
@@ -86,7 +87,7 @@ export function ComboboxPanel<T>({
           ref={inputRef}
           value={query}
           onValueChange={setQuery}
-          placeholder={searchPlaceholder}
+          placeholder={searchPlaceholder ?? translate("comboboxSearch")}
           aria-busy={isLoading}
           className="h-full min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
         />

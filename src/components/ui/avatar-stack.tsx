@@ -1,7 +1,8 @@
+import { useTranslations } from "next-intl";
+
 import { cn } from "@/lib/utils/cn";
 
 import { Avatar } from "./avatar";
-import { UI_LABELS } from "./ui-labels";
 
 import type { AvatarSize, AvatarStackProps } from "./avatar.types";
 
@@ -15,9 +16,10 @@ export function AvatarStack({
   label,
   maxVisible = 3,
   size = "sm",
-  getHiddenCountLabel = UI_LABELS.hiddenAvatars,
+  getHiddenCountLabel,
   className,
 }: AvatarStackProps) {
+  const translate = useTranslations("ui");
   const visiblePeople = people.slice(0, maxVisible);
   const hiddenCount = people.length - visiblePeople.length;
   const ringClassName = "ring-2 ring-(color:--avatar-ring)";
@@ -49,7 +51,10 @@ export function AvatarStack({
           )}
         >
           <span aria-hidden="true">+{hiddenCount}</span>
-          <span className="sr-only">{getHiddenCountLabel(hiddenCount)}</span>
+          <span className="sr-only">
+            {getHiddenCountLabel?.(hiddenCount) ??
+              translate("hiddenAvatars", { count: hiddenCount })}
+          </span>
         </li>
       )}
     </ul>
