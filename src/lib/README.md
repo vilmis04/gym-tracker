@@ -6,5 +6,5 @@
 - `sentry/` — shared Sentry options and PII scrubbing (`beforeSend`); README → Error tracking
 - `i18n/` — next-intl setup (E03)
 - `tags/` — auto-tag rules
-- `utils/` — small framework-agnostic helpers: `cn.ts` (`cn()`, merges Tailwind class names; E02-T03)
+- `utils/` — small framework-agnostic helpers: `cn.ts` (`cn()`, merges Tailwind class names; E02-T03); `normalize-search-text.ts` (E02-T04): `normalizeSearchText()` — the canonical trimmed, lowercase, accent-free form for exact-match comparisons (mirrors the database's `lower(f_unaccent(trim(name)))` for Lithuanian/Latin letters) — and `findMatchRanges()` for accent-insensitive match highlighting
 - `dev-pages.ts` — `isDevPagesEnabled()`, the gate for developer-only `/dev` pages (E02-T01)

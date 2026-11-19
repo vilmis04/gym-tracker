@@ -10,11 +10,13 @@ import {
   Settings,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { Combobox } from "@/components/ui/combobox/combobox";
+import type { ComboboxSearchOptions } from "@/components/ui/combobox/combobox.types";
 import {
   Dialog,
   DialogClose,
@@ -51,8 +53,17 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { showToast } from "@/components/ui/toast";
+import { normalizeSearchText } from "@/lib/utils/normalize-search-text";
 
-import { SAMPLE_PEOPLE, SAMPLE_TAGS } from "./ui-samples";
+import {
+  SAMPLE_EXERCISES,
+  SAMPLE_MACHINES,
+  SAMPLE_PEOPLE,
+  SAMPLE_TAG_OPTIONS,
+  SAMPLE_TAGS,
+} from "./ui-samples";
+
+import type { SampleExercise } from "./ui-samples.types";
 
 // Interactive demos for /dev/ui (developer-only, so not translated).
 
@@ -263,6 +274,127 @@ export function ChipDemo() {
           Reset tags
         </Button>
       )}
+    </div>
+  );
+}
+
+// A slow fake server: answers after 600 ms, so the spinner, the debounce and
+// the cancellation of older requests can be seen.
+const SIMULATED_SEARCH_MS = 600;
+
+const searchSamples =
+  <T,>(getItems: () => readonly T[], getLabel: (item: T) => string) =>
+  (query: string, { signal }: ComboboxSearchOptions) =>
+    new Promise<readonly T[]>((resolve, reject) => {
+      const normalizedQuery = normalizeSearchText(query);
+      const timeoutId = setTimeout(() => {
+        resolve(
+          getItems().filter((item) =>
+            normalizeSearchText(getLabel(item)).includes(normalizedQuery),
+          ),
+        );
+      }, SIMULATED_SEARCH_MS);
+      signal.addEventListener("abort", () => {
+        clearTimeout(timeoutId);
+        reject(signal.reason);
+      });
+    });
+
+const getSampleExerciseKey = (exercise: SampleExercise) => exercise.id;
+const getSampleExerciseName = (exercise: SampleExercise) => exercise.name;
+const searchSampleExercises = searchSamples(
+  () => SAMPLE_EXERCISES,
+  getSampleExerciseName,
+);
+const RECENT_SAMPLE_EXERCISES = SAMPLE_EXERCISES.slice(0, 3);
+
+const getText = (text: string) => text;
+const searchSampleMachines = searchSamples(() => SAMPLE_MACHINES, getText);
+
+export function ComboboxDemo() {
+  const [exercise, setExercise] = useState<SampleExercise | null>(null);
+  const [machine, setMachine] = useState<string | null>(null);
+  const [tags, setTags] = useState<readonly string[]>(["chest"]);
+  const [tagOptions, setTagOptions] =
+    useState<readonly string[]>(SAMPLE_TAG_OPTIONS);
+  const searchTags = useMemo(
+    () => searchSamples(() => tagOptions, getText),
+    [tagOptions],
+  );
+
+  const createExercise = (name: string) => {
+    setExercise({ id: `new-${name}`, name, machine: null });
+    showToast(`Would open “New exercise” with “${name}”`);
+  };
+
+  const createTag = (tag: string) => {
+    setTagOptions((currentOptions) => [...currentOptions, tag]);
+    setTags((currentTags) => [...currentTags, tag]);
+  };
+
+  return (
+    <div className="grid gap-6 sm:grid-cols-2">
+      <FormField
+        label="Exercise"
+        help="Single, with “Create”. Try “spaudimas”, “squ” or “pritu”."
+      >
+        <Combobox
+          label="Exercise"
+          placeholder="Choose an exercise"
+          searchPlaceholder="Search exercises"
+          onSearch={searchSampleExercises}
+          getKey={getSampleExerciseKey}
+          getLabel={getSampleExerciseName}
+          renderItem={(item, { highlightedLabel }) => (
+            <>
+              {highlightedLabel}
+              {item.machine && (
+                <span className="text-sm text-muted-foreground">
+                  {item.machine}
+                </span>
+              )}
+            </>
+          )}
+          initialItems={RECENT_SAMPLE_EXERCISES}
+          value={exercise}
+          onChange={setExercise}
+          allowCreate
+          onCreate={createExercise}
+        />
+      </FormField>
+      <FormField label="Machine" help="Single, without “Create”.">
+        <Combobox
+          label="Machine"
+          placeholder="No machine"
+          searchPlaceholder="Search machines"
+          emptyText="No machine with that name."
+          onSearch={searchSampleMachines}
+          getKey={getText}
+          getLabel={getText}
+          value={machine}
+          onChange={setMachine}
+        />
+      </FormField>
+      <FormField
+        label="Tags"
+        help="Multiple, with “Create”."
+        className="sm:col-span-2"
+      >
+        <Combobox
+          label="Tags"
+          placeholder="Add tag"
+          searchPlaceholder="Search tags"
+          onSearch={searchTags}
+          getKey={getText}
+          getLabel={getText}
+          initialItems={tagOptions}
+          multiple
+          value={tags}
+          onChange={setTags}
+          allowCreate
+          onCreate={createTag}
+        />
+      </FormField>
     </div>
   );
 }

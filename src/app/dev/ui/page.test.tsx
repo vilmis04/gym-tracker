@@ -6,6 +6,7 @@ import UiPage from "./page";
 const SECTIONS = [
   "Button",
   "Input, Textarea, Label, FormField",
+  "Combobox",
   "Card",
   "Dialog, Sheet, Popover, DropdownMenu",
   "Tabs",

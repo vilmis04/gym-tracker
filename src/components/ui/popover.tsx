@@ -14,6 +14,9 @@ export const Popover = PopoverPrimitive.Root;
 
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 
+/** Positions the popover against another element than the trigger (the Combobox's chip field). */
+export const PopoverAnchor = PopoverPrimitive.Anchor;
+
 export function PopoverContent({
   className,
   align = "center",

@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import {
   ChipDemo,
+  ComboboxDemo,
   DialogDemo,
   DropdownMenuDemo,
   LoadingButtonDemo,
@@ -103,6 +104,10 @@ export default function UiPage() {
             <Input disabled defaultValue="Can’t change this" />
           </FormField>
         </div>
+      </DemoSection>
+
+      <DemoSection title="Combobox">
+        <ComboboxDemo />
       </DemoSection>
 
       <DemoSection title="Card">
