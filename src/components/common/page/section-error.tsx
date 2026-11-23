@@ -2,10 +2,10 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "@/lib/i18n/use-translations";
 
 import { PageHeader } from "./page-header";
 

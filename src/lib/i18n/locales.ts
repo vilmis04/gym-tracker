@@ -7,7 +7,16 @@ export const LOCALES = ["lt", "en"] as const;
 
 export const DEFAULT_LOCALE = "lt";
 
-/** Validates the `[locale]` route segment (untrusted URL input). */
+/**
+ * Remembers the language between visits (next-intl's default name). Read and
+ * written by the proxy (`src/proxy.ts`); E03-T02 writes it when switching.
+ */
+export const LOCALE_COOKIE_NAME = "NEXT_LOCALE";
+
+/** One year, so the choice survives closing the browser. */
+export const LOCALE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+
+/** Validates a locale from untrusted input (URL segment, menu value). */
 export const localeSchema = z.enum(LOCALES);
 
 /** Language names as their speakers write them; never translated. */

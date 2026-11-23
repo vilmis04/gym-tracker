@@ -19,8 +19,10 @@ export default function GlobalError({
     Sentry.captureException(error);
   }, [error]);
 
-  // TODO(E03): translate. next-intl's provider lives in the layout this
-  // replaces, so this fallback copy is hard-coded until then.
+  // TODO(E03): translate. This replaces the root layouts, so there is no
+  // NextIntlClientProvider here (and it also covers the unlocalized /dev and
+  // /debug pages); it would have to pick the messages from the URL's first
+  // segment itself. Hard-coded English fallback copy until then.
   return (
     <html lang="en">
       <body

@@ -1,25 +1,20 @@
 import { House } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { PageHeader } from "@/components/common/page/page-header";
 import { getSectionMetadata } from "@/components/common/page/section-metadata";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getLocaleParam } from "@/lib/i18n/locale-param";
-import { getTranslations } from "@/lib/i18n/messages";
 
-export function generateMetadata({ params }: PageProps<"/[locale]/dashboard">) {
-  return getSectionMetadata(params, "home");
+export function generateMetadata() {
+  return getSectionMetadata("home");
 }
 
 // Placeholder (E02-T06); the section's content comes with its epic.
-export default async function HomePage({
-  params,
-}: PageProps<"/[locale]/dashboard">) {
-  const locale = await getLocaleParam(params);
-  const translateNav = await getTranslations({ locale, namespace: "nav" });
-  const translateSection = await getTranslations({
-    locale,
-    namespace: "home",
-  });
+export default async function HomePage() {
+  const [translateNav, translateSection] = await Promise.all([
+    getTranslations("nav"),
+    getTranslations("home"),
+  ]);
 
   return (
     <>

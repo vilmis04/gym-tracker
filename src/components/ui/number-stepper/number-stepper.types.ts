@@ -25,7 +25,7 @@ export interface NumberStepperProps extends Partial<NumberStepperRange> {
   unit?: string;
   /**
    * BCP 47 locale for the decimal separator ("lt" → "57,5", "en" → "57.5").
-   * TODO(E03): default to next-intl's active locale.
+   * Defaults to next-intl's active locale.
    */
   locale?: string;
   /** Shown while `value` is `null`. */

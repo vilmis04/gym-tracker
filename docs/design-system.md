@@ -97,7 +97,7 @@ Decisions behind the values:
 - **Colors as `hsl()` values** (not bare `H S% L%` channels): Tailwind v4 builds opacity modifiers with `color-mix()`, so full values work everywhere and the contrast script can parse them directly.
 - **Themes switch on a `.dark` class** (`@custom-variant dark`), set on `<html>` by next-themes (see [Themes](#themes-light--dark--system-e02-t02)).
 
-**Adding or changing a token:** declare it under both `:root` and `.dark` in `src/app/globals.css` (aliases that point at other tokens go in the shared `:root, .dark` block), map it in `@theme inline` as `--color-<name>: var(--<name>)`, add a swatch to `src/app/dev/tokens/token-catalog.ts`, add any text/UI pair it forms to `scripts/contrast/contrast-pairs.mts`, run `npm run check:contrast`, and update the table above.
+**Adding or changing a token:** declare it under both `:root` and `.dark` in `src/app/globals.css` (aliases that point at other tokens go in the shared `:root, .dark` block), map it in `@theme inline` as `--color-<name>: var(--<name>)`, add a swatch to `src/app/(developer-tools)/dev/tokens/token-catalog.ts`, add any text/UI pair it forms to `scripts/contrast/contrast-pairs.mts`, run `npm run check:contrast`, and update the table above.
 
 Preview every token in both themes at `/dev/tokens` (dev only, see README → Dev pages).
 
@@ -108,14 +108,14 @@ Code: [`src/components/common/theme/`](../src/components/common/theme/).
 - **Provider.** `ThemeProvider` wraps the app in the root layout: [next-themes](https://github.com/pacocoursey/next-themes) with `attribute="class"`, themes `light` / `dark` / `system`, default `system`, stored in local storage under `theme` (survives reloads and browser restarts, synced across tabs). `system` follows the OS setting live. Transitions are disabled for the moment of the switch, so the whole UI changes in one frame.
 - **No flash.** next-themes renders an inline script that sets the `light`/`dark` class and `color-scheme` on `<html>` while the HTML is parsed, before the first paint and long before React hydrates. `<html>` has `suppressHydrationWarning` because of it (only that element's attributes are exempt). If a Content Security Policy is added later, the inline scripts need a nonce (next-themes takes a `nonce` prop).
 - **Browser UI color.** `ThemeColorSync` keeps `<meta name="theme-color">` equal to the rendered page background. It reads the color from the page (`getComputedStyle(body).backgroundColor`, i.e. `--background`) instead of repeating the hex values, so `globals.css` stays the only place colors are defined and no `raw-color-allowed` exemption is needed. An inline script sets it before the first paint; afterwards a `MutationObserver` on the `<html>` class follows every change. Next's static `viewport.themeColor` was not used: it can only follow the OS (`media="(prefers-color-scheme: …)"`), not an explicit choice, and would duplicate the colors.
-- **Toggle.** `ThemeToggle` is a segmented radio group (Light / Dark / System with lucide `Sun` / `Moon` / `Monitor`, 20 px, 1.5 stroke) inside a `fieldset` with the legend "Theme": Tab enters the group, the arrow keys change the theme, and screen readers announce the legend and the checked option. Pill shaped like the mock-ups' segmented person chips (`rounded-full`, 44 px targets, `border-input` because the border shows the control's boundary); the checked option is `bg-primary-soft` + semibold, like the active desktop nav item. The mock-ups have no theme switch design, so this follows those patterns. Labels live in `theme-preferences.ts` (`TODO(E03)`: translate). The server can't know the stored theme, so no option is checked until hydration; the page itself is already in the right theme.
-- **Where.** Landing page (now the placeholder `src/app/page.tsx`, later E04-T05) and `/dev/tokens`; the avatar menu (E02-T06) and the settings page (E04-T04) add it too.
+- **Toggle.** `ThemeToggle` is a segmented radio group (Light / Dark / System with lucide `Sun` / `Moon` / `Monitor`, 20 px, 1.5 stroke) inside a `fieldset` with the legend "Theme": Tab enters the group, the arrow keys change the theme, and screen readers announce the legend and the checked option. Pill shaped like the mock-ups' segmented person chips (`rounded-full`, 44 px targets, `border-input` because the border shows the control's boundary); the checked option is `bg-primary-soft` + semibold, like the active desktop nav item. The mock-ups have no theme switch design, so this follows those patterns. Labels are the `common.theme` / `themeLight` / `themeDark` / `themeSystem` messages (next-intl, E03-T01); `THEME_PREFERENCE_OPTIONS` in `theme-preferences.ts` maps each choice to its message key and icon for the toggle and the avatar menu. The server can't know the stored theme, so no option is checked until hydration; the page itself is already in the right theme.
+- **Where.** Landing page (now the placeholder `src/app/[locale]/(public)/page.tsx`, later E04-T05) and `/dev/tokens`; the avatar menu (E02-T06) and the settings page (E04-T04) add it too.
 - **Saving to `profiles.theme` (E04-T04).** `ThemeToggle` and `useThemePreference()` take an optional `onThemePreferenceChange(preference)` callback, called after the theme is applied locally. E04-T04 passes a Server Action that updates `profiles.theme` for the signed-in user (validate with `themePreferenceSchema`), and on sign-in on a new device applies `profiles.theme` with `setThemePreference()` / next-themes' `setTheme()`. Values are the same strings as the `profiles.theme` column (`light` | `dark` | `system`, see [data model](data-model.md)).
 - **Styling.** Components never check the theme in JS for colors: tokens switch with the class, and `dark:` utilities exist for the rare exception.
 
 ## Typography
 
-- Font: **Inter** (variable) via `next/font/google` with the `latin` and `latin-ext` subsets, self-hosted at build time (`src/app/layout.tsx`, CSS variable `--font-inter` → `font-sans`, the default). `latin-ext` carries the Lithuanian letters (ą, č, ę, ė, į, š, ų, ū, ž); `tests/e2e/design-tokens.spec.ts` checks they render in Inter, not a fallback.
+- Font: **Inter** (variable) via `next/font/google` with the `latin` and `latin-ext` subsets, self-hosted at build time (`src/app/root-document.tsx`, shared by both root layouts; CSS variable `--font-inter` → `font-sans`, the default). `latin-ext` carries the Lithuanian letters (ą, č, ę, ė, į, š, ų, ū, ž); `tests/e2e/design-tokens.spec.ts` checks they render in Inter, not a fallback.
 - Scale: 12 / 14 / 16 (body) / 18 / 20 / 24 / 30 px = `text-xs` / `text-sm` / `text-base` / `text-lg` / `text-xl` / `text-2xl` / `text-3xl`, plus `text-4xl` (36 px) for hero numbers (best lift on Progress). Other Tailwind sizes are removed. The mock-ups use in-between sizes (11, 13, 15, 17, 22, 26, 32, 40 px); implementations snap them to the nearest step.
 - Weights: 400 body, 500 labels, 600 headings = `font-normal` / `font-medium` / `font-semibold`; the other weights (`font-bold`, …) are removed. No bold-heavy UI.
 - Numbers in logging and charts use `font-variant-numeric: tabular-nums` (Tailwind's built-in `tabular-nums` utility).
@@ -145,7 +145,7 @@ Code: [`src/components/common/theme/`](../src/components/common/theme/).
 
 ### Implementation (E02-T03)
 
-Code: [`src/components/ui/`](../src/components/ui/), previewed with every variant in both themes at `/dev/ui` (dev only). Built like [shadcn/ui](https://ui.shadcn.com/) (Radix primitives from the `radix-ui` package, Tailwind classes, `cn()` from `src/lib/utils/cn.ts`), but written by hand and restyled with the tokens; `components.json` makes later `npx shadcn add` output land in the same place. Components take their text through props or children; built-in default labels ("Close", "Loading", "Remove …") are in `ui-labels.ts` (`TODO(E03)`).
+Code: [`src/components/ui/`](../src/components/ui/), previewed with every variant in both themes at `/dev/ui` (dev only). Built like [shadcn/ui](https://ui.shadcn.com/) (Radix primitives from the `radix-ui` package, Tailwind classes, `cn()` from `src/lib/utils/cn.ts`), but written by hand and restyled with the tokens; `components.json` makes later `npx shadcn add` output land in the same place. Components take their text through props or children; built-in default labels ("Close", "Loading", "Remove …") are in `ui-labels.ts` (still English: `TODO(E03-T03)`, with the ICU plurals).
 
 | Component | File · exports | Notes |
 |---|---|---|
@@ -193,7 +193,7 @@ Searchable picker for exercises, machines, tags and buddies (`src/components/ui/
 - **Keyboard and screen readers.** The input is `role="combobox"` with `aria-controls` → `listbox` and `aria-activedescendant` → the highlighted `option` (`bg-primary-soft`); ↑ / ↓ / Home / End move, Enter picks, Esc closes and returns focus to the trigger. Chosen options have `aria-checked="true"` and a check icon. A polite `role="status"` says "Loading", "N results", the empty text or the error. The trigger is named "{label} {value or placeholder}" (`aria-labelledby`) so the current value is read out; FormField's `aria-describedby` is passed on; its `aria-invalid` becomes a destructive ring (`data-invalid`), since buttons can't be `aria-invalid`.
 - **Multiple.** Selected items are removable Chips in the field (a labelled list); the popover anchors to the whole field. Removing a chip moves focus to the next chip, else the previous, else the trigger.
 - **Layout.** ≥ 1024 px: popover as wide as the field, max 26 rem tall, list scrolls under the sticky create option. < 1024 px: `Sheet size="full"` titled with `label`, input focused at the top, list fills the rest above the keyboard.
-- Default strings are in `ui-labels.ts` (`comboboxCreate`, `comboboxResultCount`, `comboboxNoResults`, `comboboxSearchFailed`, `comboboxSearch`; `TODO(E03)`); each has a prop.
+- Default strings are in `ui-labels.ts` (`comboboxCreate`, `comboboxResultCount`, `comboboxNoResults`, `comboboxSearchFailed`, `comboboxSearch`; `TODO(E03-T03)`); each has a prop.
 
 ### NumberStepper (E02-T05)
 
@@ -206,7 +206,7 @@ Weight and reps field with big − / + buttons (`src/components/ui/number-steppe
     label="Weight"                      // names the spinbutton and the −/+ group
     value={weight}                      // number | null (null shows "—")
     onChange={setWeight}                // gets the parsed number, never the text
-    locale="lt"                         // default "lt"; TODO(E03) next-intl's active locale
+    locale="lt"                         // optional; defaults to next-intl's active locale
   />
 </FormField>
 ```

@@ -14,7 +14,7 @@ test("switching the theme updates the whole page at once, without a reload", asy
   page,
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
+  await page.goto("/en");
   await expect(page.getByRole("radio", { name: "System" })).toBeChecked();
   // Lost on a reload, so it proves the switch happened in place.
   await page.evaluate(() => {
@@ -39,7 +39,7 @@ test("the choice survives a reload and a browser restart", async ({
   browser,
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
+  await page.goto("/en");
   await page.getByText("Dark", { exact: true }).click();
   await expect(html(page)).toHaveClass(/\bdark\b/);
 
@@ -53,7 +53,7 @@ test("the choice survives a reload and a browser restart", async ({
     colorScheme: "light",
   });
   const restartedPage = await restartedContext.newPage();
-  await restartedPage.goto("/");
+  await restartedPage.goto("/en");
   await expect(html(restartedPage)).toHaveClass(/\bdark\b/);
   await expect(
     restartedPage.getByRole("radio", { name: "Dark" }),
@@ -65,7 +65,7 @@ test("with System, changing the OS theme updates the page live", async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
+  await page.goto("/en");
   await expect(page.getByRole("radio", { name: "System" })).toBeChecked();
   await expect(body(page)).toHaveCSS("background-color", LIGHT_BACKGROUND);
 
@@ -90,7 +90,7 @@ test("the stored dark theme is applied before any app JavaScript runs (no white 
   // connection.
   await page.route("**/_next/static/**/*.js", (route) => route.abort());
 
-  await page.goto("/");
+  await page.goto("/en");
 
   await expect(html(page)).toHaveClass(/\bdark\b/);
   await expect(body(page)).toHaveCSS("background-color", DARK_BACKGROUND);
@@ -122,7 +122,7 @@ test("every frame of a slow load in the dark theme is dark", async ({
     await route.continue();
   });
 
-  await page.goto("/");
+  await page.goto("/en");
   await expect(page.getByRole("radio", { name: "Dark" })).toBeChecked({
     timeout: 15_000,
   });
@@ -136,7 +136,7 @@ test("every frame of a slow load in the dark theme is dark", async ({
 
 test("the toggle works with the keyboard", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
+  await page.goto("/en");
   const systemOption = page.getByRole("radio", { name: "System" });
   await expect(systemOption).toBeChecked();
 

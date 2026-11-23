@@ -2,10 +2,10 @@
 
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { AccountMenu } from "@/components/common/app-shell/account-menu";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils/cn";
 
 import type { PageHeaderProps } from "./page-header.types";

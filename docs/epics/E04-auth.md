@@ -18,6 +18,8 @@
 
 **Out of scope:** Profile table (E04-T03).
 
+**Already in place (E03-T01):** the one Proxy is `src/proxy.ts` (Next.js 16's name for middleware; `middleware.ts` is deprecated). It exports `proxy()`, which calls next-intl's `handleLocaleRouting`; replace that export with `clerkMiddleware(async (auth, request) => { … return handleLocaleRouting(request); })` and add Clerk's API matcher (see the `TODO(E04-T01)` there). There are two root layouts: `app/[locale]/layout.tsx` (all localized pages; put `<ClerkProvider>` there, the locale is its `params.locale` / `getLocale()`) and `app/(developer-tools)/layout.tsx` (`/dev`, `/debug`, no Clerk needed). `auth.signIn` / `auth.signOut` messages exist.
+
 **Acceptance criteria**
 - [ ] Opening `/lt/sessions` while signed out redirects to sign-in, then back to `/lt/sessions` after Google login.
 - [ ] Only the "Continue with Google" option is visible.

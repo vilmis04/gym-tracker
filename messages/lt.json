@@ -1,6 +1,7 @@
 {
   "common": {
     "appName": "Gym Tracker",
+    "metaDescription": "Registruokite treniruotes kartu su savo treniruočių draugais.",
     "loading": "Įkeliama",
     "back": "Atgal",
     "skipToContent": "Pereiti prie turinio",
@@ -20,11 +21,24 @@
     "buddies": "Draugai",
     "settings": "Nustatymai"
   },
+  "landing": {
+    "comingSoon": "Jau greitai."
+  },
+  "auth": {
+    "signIn": "Prisijungti",
+    "signOut": "Atsijungti"
+  },
   "home": {
     "emptyState": "Čia matysite vykstančią treniruotę, artėjančias treniruotes ir kvietimus."
   },
   "sessions": {
     "emptyState": "Čia matysite suplanuotas ir praėjusias treniruotes."
+  },
+  "exercises": {
+    "emptyState": "Čia matysite savo pratimus ir treniruoklius."
+  },
+  "logging": {
+    "addSet": "Pridėti seriją"
   },
   "progress": {
     "emptyState": "Čia matysite kiekvieno pratimo pažangą."
@@ -44,6 +58,7 @@
     "locked": "To nebegalima pakeisti.",
     "unknown": "Kažkas nepavyko. Bandykite dar kartą.",
     "pageTitle": "Kažkas nepavyko",
-    "pageDescription": "Nepavyko įkelti šio puslapio. Patikrinkite ryšį ir bandykite dar kartą."
+    "pageDescription": "Nepavyko įkelti šio puslapio. Patikrinkite ryšį ir bandykite dar kartą.",
+    "pageNotFoundTitle": "Puslapis nerastas"
   }
 }

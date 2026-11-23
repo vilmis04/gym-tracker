@@ -1,9 +1,10 @@
 import { Inter } from "next/font/google";
+import { type ReactNode } from "react";
 
 import { ThemeProvider } from "@/components/common/theme/theme-provider";
 import { Toaster } from "@/components/ui/toast";
 
-import type { Metadata, Viewport } from "next";
+import type { Viewport } from "next";
 
 import "./globals.css";
 
@@ -15,27 +16,36 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-// TODO(E03): move under app/[locale]/ and translate via next-intl.
-export const metadata: Metadata = {
-  title: "Gym Tracker",
-  description: "Track gym sessions together with your gym buddies.",
-};
-
-// `viewport-fit=cover` lets the page draw under the iPhone notch and home
-// indicator and makes `env(safe-area-inset-*)` non-zero, which the bottom
-// navigation and the full-height Sheet pad themselves with.
-export const viewport: Viewport = {
+/**
+ * `viewport` of every root layout. `viewport-fit=cover` lets the page draw
+ * under the iPhone notch and home indicator and makes
+ * `env(safe-area-inset-*)` non-zero, which the bottom navigation and the
+ * full-height Sheet pad themselves with.
+ */
+export const ROOT_VIEWPORT: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+/**
+ * The `<html>` / `<body>` shared by the app's two root layouts (E03-T01):
+ * `app/[locale]/layout.tsx` (every localized page) and
+ * `app/(developer-tools)/layout.tsx` (`/dev`, `/debug`). There is no
+ * `app/layout.tsx`, because the locale must be a root param.
+ */
+export function RootDocument({
+  lang,
+  children,
+}: {
+  lang: string;
+  children: ReactNode;
+}) {
   return (
     // suppressHydrationWarning: the theme script sets the class (and
     // color-scheme) on <html> before React hydrates (see ThemeProvider).
     <html
-      lang="en"
+      lang={lang}
       className={`${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >

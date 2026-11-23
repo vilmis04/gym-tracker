@@ -16,7 +16,7 @@ import type { ColorSwatch, ScaleStep } from "./token-catalog.types";
  * Design tokens preview (E02-T01) for the palette review: every color token,
  * the type, radius and spacing scales, and the Lithuanian sample in Inter.
  * The theme toggle switches the real app theme (E02-T02). Gated to
- * development by src/app/dev/layout.tsx.
+ * development by src/app/(developer-tools)/dev/layout.tsx.
  */
 export default function TokensPage() {
   return (

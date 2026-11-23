@@ -1,6 +1,7 @@
 {
   "common": {
     "appName": "Gym Tracker",
+    "metaDescription": "Track gym sessions together with your gym buddies.",
     "loading": "Loading",
     "back": "Back",
     "skipToContent": "Skip to content",
@@ -20,11 +21,24 @@
     "buddies": "Buddies",
     "settings": "Settings"
   },
+  "landing": {
+    "comingSoon": "Coming soon."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
   "home": {
     "emptyState": "Your active session, upcoming sessions and invitations will appear here."
   },
   "sessions": {
     "emptyState": "Your planned and past sessions will appear here."
+  },
+  "exercises": {
+    "emptyState": "Your exercises and machines will appear here."
+  },
+  "logging": {
+    "addSet": "Add set"
   },
   "progress": {
     "emptyState": "Your progress in each exercise will appear here."
@@ -44,6 +58,7 @@
     "locked": "This can no longer be changed.",
     "unknown": "Something went wrong. Please try again.",
     "pageTitle": "Something went wrong",
-    "pageDescription": "This page couldn’t be loaded. Check your connection and try again."
+    "pageDescription": "This page couldn’t be loaded. Check your connection and try again.",
+    "pageNotFoundTitle": "Page not found"
   }
 }
