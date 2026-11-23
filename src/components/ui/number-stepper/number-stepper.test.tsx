@@ -83,6 +83,25 @@ describe("NumberStepper", () => {
     expect(getInput()).toHaveValue("57.5");
   });
 
+  it("names the buttons in the active language", () => {
+    const { unmount } = renderWithIntl(<ControlledStepper value={20} />);
+    expect(
+      screen.getByRole("button", { name: "Sumažinti 2,5 kg" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Padidinti 2,5 kg" }),
+    ).toBeInTheDocument();
+    unmount();
+
+    renderWithIntl(<ControlledStepper value={20} />, { locale: "en" });
+    expect(
+      screen.getByRole("button", { name: "Decrease by 2.5 kg" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Increase by 2.5 kg" }),
+    ).toBeInTheDocument();
+  });
+
   it("passes valid in-range numbers on while typing, clamps on blur", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
@@ -146,7 +165,7 @@ describe("NumberStepper", () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
     renderWithIntl(<ControlledStepper value={0.1} onChange={handleChange} />);
-    const increase = screen.getByRole("button", { name: "Increase by 2,5 kg" });
+    const increase = screen.getByRole("button", { name: "Padidinti 2,5 kg" });
 
     await user.click(increase);
     await user.click(increase);
@@ -154,9 +173,7 @@ describe("NumberStepper", () => {
     expect(getInput()).toHaveValue("5,1");
     expect(screen.getByRole("status")).toHaveTextContent("5,1 kg");
 
-    await user.click(
-      screen.getByRole("button", { name: "Decrease by 2,5 kg" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Sumažinti 2,5 kg" }));
     expect(handleChange).toHaveBeenLastCalledWith(2.6);
     expect(screen.getByRole("status")).toHaveTextContent("2,6 kg");
   });
@@ -166,7 +183,7 @@ describe("NumberStepper", () => {
     const handleChange = vi.fn();
     renderWithIntl(<ControlledStepper value={20} onChange={handleChange} />);
 
-    screen.getByRole("button", { name: "Increase by 2,5 kg" }).focus();
+    screen.getByRole("button", { name: "Padidinti 2,5 kg" }).focus();
     await user.keyboard("{Enter}");
     await user.keyboard(" ");
     expect(handleChange.mock.calls).toEqual([[22.5], [25]]);
@@ -181,7 +198,7 @@ describe("NumberStepper", () => {
     expect(getInput()).toHaveAttribute("placeholder", "—");
     expect(getInput()).not.toHaveAttribute("aria-valuenow");
 
-    await user.click(screen.getByRole("button", { name: "Increase by 1" }));
+    await user.click(screen.getByRole("button", { name: "Padidinti 1" }));
     expect(handleChange).toHaveBeenLastCalledWith(1);
   });
 
@@ -192,9 +209,7 @@ describe("NumberStepper", () => {
 
     await user.clear(getInput());
     await user.type(getInput(), "1200");
-    await user.click(
-      screen.getByRole("button", { name: "Decrease by 2,5 kg" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Sumažinti 2,5 kg" }));
     expect(handleChange).toHaveBeenLastCalledWith(997.25);
     expect(getInput()).toHaveValue("997,25");
   });
@@ -267,7 +282,7 @@ describe("NumberStepper", () => {
     renderWithIntl(
       <ControlledStepper preset="reps" value={1} onChange={handleChange} />,
     );
-    const decrease = screen.getByRole("button", { name: "Decrease by 1" });
+    const decrease = screen.getByRole("button", { name: "Sumažinti 1" });
 
     expect(decrease).toHaveAttribute("aria-disabled", "true");
     await user.click(decrease);
@@ -298,7 +313,7 @@ describe("NumberStepper", () => {
 
       await user.pointer({
         keys: "[MouseLeft>]",
-        target: screen.getByRole("button", { name: "Increase by 1" }),
+        target: screen.getByRole("button", { name: "Padidinti 1" }),
       });
       expect(handleChange).toHaveBeenCalledTimes(1);
 
@@ -328,7 +343,7 @@ describe("NumberStepper", () => {
       const handleChange = vi.fn();
       renderWithIntl(<ControlledStepper value={50} onChange={handleChange} />);
       const decrease = screen.getByRole("button", {
-        name: "Decrease by 2,5 kg",
+        name: "Sumažinti 2,5 kg",
       });
 
       fireEvent.pointerDown(decrease, { button: 0 });
@@ -350,7 +365,7 @@ describe("NumberStepper", () => {
         <ControlledStepper value={995} onChange={handleChange} />,
       );
       const increase = screen.getByRole("button", {
-        name: "Increase by 2,5 kg",
+        name: "Padidinti 2,5 kg",
       });
 
       fireEvent.pointerDown(increase, { button: 0 });
@@ -358,7 +373,7 @@ describe("NumberStepper", () => {
       expect(handleChange.mock.calls).toEqual([[997.5], [999.75]]);
 
       fireEvent.pointerDown(
-        screen.getByRole("button", { name: "Decrease by 2,5 kg" }),
+        screen.getByRole("button", { name: "Sumažinti 2,5 kg" }),
         { button: 0 },
       );
       unmount();
@@ -370,7 +385,7 @@ describe("NumberStepper", () => {
       const handleChange = vi.fn();
       renderWithIntl(<ControlledStepper value={50} onChange={handleChange} />);
       const increase = screen.getByRole("button", {
-        name: "Increase by 2,5 kg",
+        name: "Padidinti 2,5 kg",
       });
 
       fireEvent.pointerDown(increase, { button: 2 });

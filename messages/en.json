@@ -60,5 +60,30 @@
     "pageTitle": "Something went wrong",
     "pageDescription": "This page couldn’t be loaded. Check your connection and try again.",
     "pageNotFoundTitle": "Page not found"
+  },
+  "format": {
+    "durationMinutes": "{minutes} min",
+    "durationHours": "{hours} h",
+    "durationHoursMinutes": "{hours} h {minutes} min"
+  },
+  "counts": {
+    "sets": "{count, plural, one {# set} other {# sets}}",
+    "reps": "{count, plural, one {# rep} other {# reps}}",
+    "sessions": "{count, plural, one {# session} other {# sessions}}",
+    "exercises": "{count, plural, one {# exercise} other {# exercises}}",
+    "buddies": "{count, plural, one {# buddy} other {# buddies}}"
+  },
+  "ui": {
+    "close": "Close",
+    "loading": "Loading",
+    "remove": "Remove {item}",
+    "hiddenAvatars": "and {count} more",
+    "comboboxCreate": "Create “{query}”",
+    "comboboxResultCount": "{count, plural, one {# result} other {# results}}",
+    "comboboxNoResults": "No results",
+    "comboboxSearchFailed": "Couldn’t load results. Try again.",
+    "comboboxSearch": "Search",
+    "numberStepperDecrease": "Decrease by {step}",
+    "numberStepperIncrease": "Increase by {step}"
   }
 }

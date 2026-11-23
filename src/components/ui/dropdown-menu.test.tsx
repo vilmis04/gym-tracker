@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+
+import { renderWithIntl } from "@tests/helpers/render-with-intl";
 
 import { Button } from "./button";
 import {
@@ -13,7 +15,7 @@ import {
 } from "./dropdown-menu";
 
 const renderMenu = (onRename = vi.fn(), onLeave = vi.fn()) =>
-  render(
+  renderWithIntl(
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Session actions">
@@ -30,6 +32,7 @@ const renderMenu = (onRename = vi.fn(), onLeave = vi.fn()) =>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>,
+    { locale: "en" },
   );
 
 describe("DropdownMenu", () => {

@@ -9,7 +9,7 @@ export interface ChipProps {
    * it has focus). Without it the chip is static text.
    */
   onRemove?: () => void;
-  /** Accessible name of the × button; defaults to "Remove <label>". */
+  /** Accessible name of the × button; defaults to "Remove <label>" (`ui.remove`). */
   removeLabel?: string;
   className?: string;
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { type ComponentProps } from "react";
 
 import { cn } from "@/lib/utils/cn";
 
 import { Button } from "./button";
-import { UI_LABELS } from "./ui-labels";
 
 import type { DialogContentProps } from "./dialog.types";
 
@@ -26,7 +26,7 @@ export const DialogClose = DialogPrimitive.Close;
 export function DialogContent({
   className,
   children,
-  closeLabel = UI_LABELS.close,
+  closeLabel,
   ...props
 }: DialogContentProps) {
   return (
@@ -115,15 +115,17 @@ export function DialogCloseButton({
   label,
   className,
 }: {
-  label: string;
+  /** Defaults to "Close" (`ui.close`). */
+  label?: string;
   className?: string;
 }) {
+  const translate = useTranslations("ui");
   return (
     <DialogPrimitive.Close asChild>
       <Button
         variant="ghost"
         size="icon"
-        aria-label={label}
+        aria-label={label ?? translate("close")}
         className={className}
       >
         <X aria-hidden="true" size={20} strokeWidth={1.5} />

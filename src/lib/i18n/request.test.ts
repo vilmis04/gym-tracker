@@ -2,6 +2,7 @@
 import { locale as getLocaleRootParam } from "next/root-params";
 import { describe, expect, it, vi } from "vitest";
 
+import { FORMATS } from "./format/formats";
 import { MESSAGES } from "./messages";
 import getRequestConfig from "./request";
 
@@ -28,6 +29,8 @@ describe("next-intl request config", () => {
     await expect(getConfig()).resolves.toEqual({
       locale: "en",
       messages: MESSAGES.en,
+      timeZone: "Europe/Vilnius",
+      formats: FORMATS,
     });
   });
 
@@ -43,7 +46,7 @@ describe("next-intl request config", () => {
     async (rootParam) => {
       vi.mocked(getLocaleRootParam).mockResolvedValue(rootParam);
 
-      await expect(getConfig()).resolves.toEqual({
+      await expect(getConfig()).resolves.toMatchObject({
         locale: "lt",
         messages: MESSAGES.lt,
       });

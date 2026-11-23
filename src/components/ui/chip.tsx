@@ -1,12 +1,12 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type KeyboardEvent } from "react";
 
 import { cn } from "@/lib/utils/cn";
 
 import { FOCUS_RING_CLASS_NAME } from "./focus-ring";
-import { UI_LABELS } from "./ui-labels";
 
 import type { ChipProps } from "./chip.types";
 
@@ -19,9 +19,10 @@ export function Chip({
   label,
   icon,
   onRemove,
-  removeLabel = UI_LABELS.remove(label),
+  removeLabel,
   className,
 }: ChipProps) {
+  const translate = useTranslations("ui");
   const handleRemoveKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
@@ -43,7 +44,7 @@ export function Chip({
       {onRemove && (
         <button
           type="button"
-          aria-label={removeLabel}
+          aria-label={removeLabel ?? translate("remove", { item: label })}
           onClick={onRemove}
           onKeyDown={handleRemoveKeyDown}
           className={cn(
