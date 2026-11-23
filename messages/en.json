@@ -24,12 +24,27 @@
     "settings": "Settings"
   },
   "landing": {
-    "comingSoon": "Coming soon."
+    "metaTitle": "Gym Tracker: train together, track together",
+    "metaDescription": "Log shared gym sessions with your buddies, start every set from your last attempt and see how each of you gets stronger.",
+    "valueProposition": "Log your gym sessions together with your buddies and see how each of you gets stronger.",
+    "benefitsTitle": "Why Gym Tracker",
+    "benefitBuddiesTitle": "Train with buddies",
+    "benefitBuddiesDescription": "Plan a session, invite friends and log everyone’s sets on one phone or many.",
+    "benefitLastAttemptTitle": "Last attempt pre-filled",
+    "benefitLastAttemptDescription": "Your previous weight and reps are already there, so a set takes a few taps.",
+    "benefitProgressTitle": "See your progress",
+    "benefitProgressDescription": "Charts show how every exercise improves over time.",
+    "preferencesTitle": "Language and theme",
+    "ogImageAlt": "Gym Tracker: train together, track together. Earth-toned card with the app name.",
+    "ogTagline": "Train together, track together."
   },
   "auth": {
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "signInUnavailable": "Sign-in isn’t available right now. Please try again later."
+    "signInUnavailable": "Sign-in isn’t available right now. Please try again later.",
+    "continueWithGoogle": "Continue with Google",
+    "openingGoogle": "Opening Google sign-in",
+    "googleSignInFailed": "Couldn’t open Google sign-in. Please try again."
   },
   "home": {
     "emptyState": "Your active session, upcoming sessions and invitations will appear here."

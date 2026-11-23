@@ -1,7 +1,10 @@
 import { ClerkProvider } from "@clerk/nextjs";
 
-import { getAppPath } from "@/components/common/app-shell/nav-items";
-import { getLandingPath, getSignInPath } from "@/lib/auth/auth-routes";
+import {
+  getHomePath,
+  getLandingPath,
+  getSignInPath,
+} from "@/lib/auth/auth-routes";
 import { CLERK_APPEARANCE } from "@/lib/auth/clerk-appearance";
 import { isClerkConfigured } from "@/lib/auth/clerk-env";
 import { CLERK_LOCALIZATIONS } from "@/lib/auth/clerk-localizations";
@@ -28,7 +31,7 @@ export function AuthProvider({ locale, children }: AuthProviderProps) {
   if (!isClerkConfigured()) return children;
 
   const signInPath = getSignInPath(locale);
-  const homePath = getAppPath(locale, "dashboard");
+  const homePath = getHomePath(locale);
 
   return (
     <ClerkProvider

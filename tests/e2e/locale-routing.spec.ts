@@ -102,22 +102,25 @@ test("keeps the path and query when adding the locale", async ({ page }) => {
 test("localizes the title, meta description and client components", async ({
   page,
 }) => {
-  for (const { locale, description, themeLegend } of [
+  for (const { locale, title, description, themeLegend } of [
     {
       locale: "lt",
+      title: "Gym Tracker: treniruokitės kartu, matykite pažangą",
       description:
-        "Registruokite treniruotes kartu su savo treniruočių draugais.",
+        "Registruokite bendras treniruotes su draugais, kiekvieną seriją pradėkite nuo paskutinio rezultato ir matykite, kaip kiekvienas stiprėjate.",
       themeLegend: "Tema",
     },
     {
       locale: "en",
-      description: "Track gym sessions together with your gym buddies.",
+      title: "Gym Tracker: train together, track together",
+      description:
+        "Log shared gym sessions with your buddies, start every set from your last attempt and see how each of you gets stronger.",
       themeLegend: "Theme",
     },
   ]) {
     await page.goto(`/${locale}`);
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
-    await expect(page).toHaveTitle("Gym Tracker");
+    await expect(page).toHaveTitle(title);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       "content",
       description,

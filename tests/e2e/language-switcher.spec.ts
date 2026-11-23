@@ -66,10 +66,11 @@ test.describe("in a Lithuanian browser, signed in", () => {
     await expect(page).toHaveURL(/\/en\/sessions\?tab=x$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
 
+    // Signed in, the landing page sends to Home (E04-T05).
     await page.goto("/");
-    await expect(page).toHaveURL(/\/en$/);
-    await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/en\/dashboard$/);
+    await page.goto("/sessions");
+    await expect(page).toHaveURL(/\/en\/sessions$/);
   });
 });
 

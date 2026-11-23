@@ -2,7 +2,11 @@ import { type ReactNode } from "react";
 import { vi } from "vitest";
 
 import type { TestUser } from "../factories";
-import type { MockClerk, MockUserState } from "./clerk-mock.types";
+import type {
+  MockClerk,
+  MockSignInState,
+  MockUserState,
+} from "./clerk-mock.types";
 
 /**
  * Stand-in for `@clerk/nextjs` in unit tests (E04-T01): Clerk's hooks need
@@ -12,7 +16,10 @@ import type { MockClerk, MockUserState } from "./clerk-mock.types";
  * tested with `<AccountContext value={…}>` instead. Signed out by default;
  * sign a user in for one test with `mockSignedInUser()`, check sign-out
  * with the `signOut` spy (account management: `openUserProfile`). The signed-in session's `getToken` spy returns
- * {@link MOCK_SESSION_TOKEN} (E04-T02).
+ * {@link MOCK_SESSION_TOKEN} (E04-T02). `useSignIn()` hands out the `sso`
+ * spy (E04-T05), which resolves without an error unless a test says
+ * otherwise. The spies are not reset between tests: reset them in the test
+ * file (`vi.clearAllMocks()` / `mockReset()`).
  *
  * @example
  * vi.mock("@clerk/nextjs", () => import("@tests/helpers/clerk-mock"));
@@ -28,6 +35,14 @@ export const MOCK_SESSION_TOKEN = "mock-clerk-session-token";
 export const getToken = vi.fn(
   async (): Promise<string | null> => MOCK_SESSION_TOKEN,
 );
+
+export const sso = vi.fn<MockSignInState["signIn"]["sso"]>(async () => ({
+  error: null,
+}));
+
+export const useSignIn = vi.fn<() => MockSignInState>(() => ({
+  signIn: { sso },
+}));
 
 /** Renders its children; tests check the props it was given. */
 export const ClerkProvider = ({ children }: { children: ReactNode }) =>

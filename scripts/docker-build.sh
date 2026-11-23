@@ -23,6 +23,7 @@ exec docker build \
   --build-arg NEXT_PUBLIC_SUPABASE_URL \
   --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY \
   --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
+  --build-arg NEXT_PUBLIC_SITE_URL \
   --build-arg NEXT_PUBLIC_SENTRY_DSN \
   --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT \
   --build-arg SENTRY_ORG \

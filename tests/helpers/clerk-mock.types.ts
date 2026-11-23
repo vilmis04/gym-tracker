@@ -17,6 +17,17 @@ export interface MockClerk {
   session: { getToken: () => Promise<string | null> } | null;
 }
 
+/** The part of Clerk's `useSignIn()` (Core 3 signal API) the app reads. */
+export interface MockSignInState {
+  signIn: {
+    sso: (params: {
+      strategy: string;
+      redirectUrl: string;
+      redirectCallbackUrl: string;
+    }) => Promise<{ error: Error | null }>;
+  };
+}
+
 /**
  * What a test's `@clerk/nextjs/server` mock answers: `auth()` gives
  * `userId` and `getToken()`, `currentUser()` gives `user` (the fields

@@ -37,3 +37,8 @@ export interface Account {
    */
   getToken: AccessTokenProvider;
 }
+
+export interface GoogleSignInButtonProps {
+  /** Layout classes for the button, e.g. its width on the landing page. */
+  className?: string;
+}
