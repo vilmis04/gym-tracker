@@ -1,6 +1,6 @@
 # lib
 
-- `supabase/` — Supabase client helpers: `server.ts` (`createServerClient`), `client.ts` (`createBrowserClient`), `admin.ts` (`createAdminClient`, service role, server only); see README → Supabase clients (E01-T03)
+- `supabase/` — Supabase client helpers: `server.ts` (`createServerClient`, sends the Clerk session token from `auth()`, E04-T02), `client.ts` (`createBrowserClient`, the tab's client; components use `useSupabaseBrowserClient()` from `components/common/auth/`), `admin.ts` (`createAdminClient`, service role, server only); see README → Supabase clients (E01-T03)
 - `result.ts`, `errors.ts` — `Result<T>`, `ok()`/`fail()`, `ErrorCode`, `errorMessageKey`, `AppError` (E01-T07)
 - `actions/` — `withAction()` Server Action wrapper (zod validation, error mapping, reporting); README → Server Actions and errors
 - `sentry/` — shared Sentry options and PII scrubbing (`beforeSend`); README → Error tracking

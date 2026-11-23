@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Client, type QueryResultRow } from "pg";
 
 /**
  * Tables that hold reference data from `supabase/seed.sql` (tags, common
@@ -44,6 +44,20 @@ export async function resetDatabase(): Promise<void> {
   await db.query(
     `truncate ${rows.map((row) => row.name).join(", ")} restart identity cascade`,
   );
+}
+
+/**
+ * Runs SQL as the `postgres` superuser, e.g. to create a test-only fixture
+ * table (tests/db/rls/third-party-auth.test.ts) or to inspect the catalog.
+ * Never use it as the actor under test: it bypasses RLS.
+ */
+export async function queryAsSuperuser<Row extends QueryResultRow>(
+  statement: string,
+  values: unknown[] = [],
+): Promise<Row[]> {
+  const db = await getClient();
+  const { rows } = await db.query<Row>(statement, values);
+  return rows;
 }
 
 /** Closes the connection opened by {@link resetDatabase}. */

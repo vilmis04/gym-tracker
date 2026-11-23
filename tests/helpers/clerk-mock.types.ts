@@ -9,3 +9,9 @@ export interface MockUserState {
     imageUrl: string;
   } | null;
 }
+
+/** The part of Clerk's `useClerk()` result the app reads. */
+export interface MockClerk {
+  signOut: (options: { redirectUrl: string }) => Promise<void>;
+  session: { getToken: () => Promise<string | null> } | null;
+}

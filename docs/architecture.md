@@ -47,8 +47,8 @@
 
 1. User signs in with Google through Clerk (`<SignIn withSignUp />` on `/{locale}/sign-in`, Google is the only method enabled in the Clerk dashboard; the first sign-in creates the account).
 2. Clerk middleware protects the signed-in area — every section of `app/[locale]/(app)/` (`/{locale}/dashboard`, `/sessions`, …) — and every API route except the webhooks (`/api/webhooks/*`) and the health check (`/api/health`); the landing page `/{locale}`, sign-in and the 404 page are public (`isProtectedPath()` in `src/lib/auth/auth-routes.ts`). Signed-out page requests go to `/{locale}/sign-in?redirect_url=…` and return there after sign-in; API routes answer 404. It runs in the app's one Proxy, `src/proxy.ts` (Next.js 16 renamed `middleware.ts` to `proxy.ts`): `clerkMiddleware` around next-intl's locale routing (E03-T01, E04-T01). Without Clerk keys (CI) the proxy refuses the same requests the same way, without Clerk. `<ClerkProvider>` (`components/common/auth/auth-provider.tsx`) follows the URL's locale and the design tokens.
-3. Supabase is configured with **Clerk as a third-party auth provider**. The Supabase client is created with `accessToken: () => getToken()` so each request carries the Clerk session token.
-4. RLS policies use `auth.jwt()->>'sub'` (the Clerk user id, `text`) to identify the user.
+3. Supabase is configured with **Clerk as a third-party auth provider** (E04-T02: local `supabase/config.toml` `[auth.third_party.clerk]`, opt-in via env; staging and production in the Supabase dashboard), and the Clerk instances have the Supabase integration activated, which adds `role: authenticated` to the session token. Supabase verifies the token with the Clerk instance's public keys (JWKS); a forged, expired or other-issuer token gets 401. The Supabase clients pass the Clerk session token as `accessToken`: on the server `createServerClient()` uses `(await auth()).getToken()`; in the browser `useSupabaseBrowserClient()` passes `useAccount()?.getToken` (Clerk's `session.getToken()`) to the tab's one client. No token (signed out, Clerk loading, no Clerk keys) = the `anon` role, which no policy lets read user data (fail closed).
+4. RLS policies use `uid()` (`public.uid()`, `auth.jwt()->>'sub'`, `stable`: the Clerk user id, `text`) as `(select uid())` to identify the user. Supabase's `auth.uid()` casts to uuid and must not be used.
 5. A Clerk webhook (verified with Svix signature) keeps the `profiles` table in sync (name, email, avatar). On first login the app also upserts the profile as a fallback in case the webhook is late.
 6. The service-role key is used **only** in the webhook handler, never in user-facing code paths.
 
@@ -80,7 +80,8 @@ src/
   components/
     ui/                    shadcn primitives (themed)
     common/                app-level shared components (auth/: AuthProvider = ClerkProvider,
-                           useAccount(); app-shell/, page/, language/, theme/)
+                           useAccount(), useSupabaseBrowserClient(); app-shell/, page/,
+                           language/, theme/)
   features/
     buddies/  sessions/  exercises/  logging/  progress/
       components/  actions.ts  queries.ts  schemas.ts

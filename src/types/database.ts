@@ -37,6 +37,7 @@ export type Database = {
     };
     Functions: {
       f_unaccent: { Args: { value: string }; Returns: string };
+      uid: { Args: Record<PropertyKey, never>; Returns: string };
     };
     Enums: {
       [_ in never]: never;

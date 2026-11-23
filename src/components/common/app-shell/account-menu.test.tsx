@@ -42,6 +42,7 @@ const createSignedInAccount = (): Account => ({
     imageUrl: null,
   },
   signOut: vi.fn(async () => {}),
+  getToken: vi.fn(async () => null),
 });
 
 // Plain items and radio items, in document order.

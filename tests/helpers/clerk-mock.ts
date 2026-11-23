@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 import { vi } from "vitest";
 
 import type { TestUser } from "../factories";
-import type { MockUserState } from "./clerk-mock.types";
+import type { MockClerk, MockUserState } from "./clerk-mock.types";
 
 /**
  * Stand-in for `@clerk/nextjs` in unit tests (E04-T01): Clerk's hooks need
@@ -11,7 +11,8 @@ import type { MockUserState } from "./clerk-mock.types";
  * `ClerkAccountProvider`); app components read `useAccount()` and are
  * tested with `<AccountContext value={…}>` instead. Signed out by default;
  * sign a user in for one test with `mockSignedInUser()`, check sign-out
- * with the `signOut` spy.
+ * with the `signOut` spy. The signed-in session's `getToken` spy returns
+ * {@link MOCK_SESSION_TOKEN} (E04-T02).
  *
  * @example
  * vi.mock("@clerk/nextjs", () => import("@tests/helpers/clerk-mock"));
@@ -20,11 +21,20 @@ import type { MockUserState } from "./clerk-mock.types";
  */
 export const signOut = vi.fn(async () => {});
 
+export const MOCK_SESSION_TOKEN = "mock-clerk-session-token";
+
+export const getToken = vi.fn(
+  async (): Promise<string | null> => MOCK_SESSION_TOKEN,
+);
+
 /** Renders its children; tests check the props it was given. */
 export const ClerkProvider = ({ children }: { children: ReactNode }) =>
   children;
 
-export const useClerk = vi.fn(() => ({ signOut }));
+export const useClerk = vi.fn<() => MockClerk>(() => ({
+  signOut,
+  session: null,
+}));
 
 export const useUser = vi.fn<() => MockUserState>(() => SIGNED_OUT_STATE);
 
@@ -36,6 +46,7 @@ export function mockSignedInUser({
 }: Partial<Pick<TestUser, "displayName" | "email">> & {
   imageUrl?: string | null;
 } = {}) {
+  useClerk.mockReturnValue({ signOut, session: { getToken } });
   useUser.mockReturnValue({
     isLoaded: true,
     isSignedIn: true,
