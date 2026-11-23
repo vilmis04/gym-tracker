@@ -19,13 +19,17 @@ describe("Landing placeholder page", () => {
     stubAppRouterAt("/lt");
   });
 
-  it("shows the app name as the main heading and both switches", () => {
+  it("shows the app name as the main heading, sign-in and both switches", () => {
     renderWithIntl(<LandingPage />, { locale: "en" });
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Gym Tracker" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Coming soon.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
+      "href",
+      "/en/sign-in",
+    );
     expect(screen.getByRole("group", { name: "Language" })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Theme" })).toBeInTheDocument();
   });
@@ -34,6 +38,10 @@ describe("Landing placeholder page", () => {
     renderWithIntl(<LandingPage />, { locale: "lt" });
 
     expect(screen.getByText("Jau greitai.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Prisijungti" })).toHaveAttribute(
+      "href",
+      "/lt/sign-in",
+    );
     expect(screen.getByRole("group", { name: "Kalba" })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Tema" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Šviesi" })).toBeInTheDocument();

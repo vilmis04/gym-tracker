@@ -4,10 +4,14 @@ import {
   openAccountMenuWithKey,
   pressAndExpectFocus,
 } from "./helpers/account-menu";
+import { signInBeforeEachTest } from "./helpers/sign-in";
+import { getTokenColor } from "./helpers/tokens";
 
 // App layout and navigation (E02-T06): bottom navigation below 1024 px,
 // sidebar from 1024 px, the avatar menu, translations and safe-area padding.
-// Needs no Clerk or Supabase: the (app) pages are placeholders until E04.
+// The (app) pages are behind sign-in (E04-T01), so every test signs in first
+// and the file is skipped without Clerk keys. No Supabase needed.
+signInBeforeEachTest();
 
 const SECTIONS = [
   { path: "dashboard", en: "Home", lt: "Pradžia" },
@@ -25,17 +29,6 @@ const BOTTOM_NAV_HEIGHT = 76;
 /** The visible `<nav>`: the bottom navigation or the sidebar, never both. */
 const getMainNav = (page: Page, name = "Main") =>
   page.getByRole("navigation", { name });
-
-/** Resolves a design token to the computed `rgb()` value the browser uses. */
-const getTokenColor = (page: Page, token: string) =>
-  page.evaluate((cssVariable) => {
-    const probe = document.createElement("span");
-    probe.style.color = `var(${cssVariable})`;
-    document.body.append(probe);
-    const color = getComputedStyle(probe).color;
-    probe.remove();
-    return color;
-  }, token);
 
 test.describe("bottom navigation (< 1024 px)", () => {
   test.use({ viewport: PHONE });
@@ -162,20 +155,14 @@ test.describe("layout", () => {
     });
   }
 
-  test("hides scroll bars, draws under the notch and answers 404 for unknown locales", async ({
-    page,
-  }) => {
+  // The 404 for an unknown locale is in locale-routing.spec.ts (public).
+  test("hides scroll bars and draws under the notch", async ({ page }) => {
     await page.goto("/en/dashboard");
     await expect(page.locator("html")).toHaveCSS("scrollbar-width", "none");
     await expect(page.locator('meta[name="viewport"]')).toHaveAttribute(
       "content",
       /viewport-fit=cover/,
     );
-
-    // The proxy adds the browser's locale (`/en/de/dashboard`): no page.
-    const response = await page.goto("/de/dashboard");
-    expect(response?.status()).toBe(404);
-    await expect(page).toHaveURL(/\/en\/de\/dashboard$/);
   });
 
   test("the skip link moves focus to the page content", async ({ page }) => {
@@ -215,7 +202,7 @@ test.describe("translations", () => {
 test.describe("avatar menu", () => {
   test.use({ viewport: DESKTOP });
 
-  test("works with the keyboard: language, theme and settings", async ({
+  test("works with the keyboard: language, theme, settings and sign out", async ({
     page,
   }) => {
     await page.goto("/lt/sessions");
@@ -248,12 +235,14 @@ test.describe("avatar menu", () => {
       page.getByRole("button", { name: "Account, language and theme" }),
     ).toBeFocused();
 
-    // Settings: a detail page whose back button leads Home.
+    // Settings: a detail page whose back button leads Home. Sign out is the
+    // last item, Settings the one above it.
     await openAccountMenuWithKey(page, "Enter");
     await page.keyboard.press("End");
     await expect(
-      page.getByRole("menuitem", { name: "Settings" }),
+      page.getByRole("menuitem", { name: "Sign out" }),
     ).toBeFocused();
+    await pressAndExpectFocus(page, "ArrowUp", "Settings");
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL("/en/settings");
     await expect(getMainNav(page).locator('[aria-current="page"]')).toHaveCount(

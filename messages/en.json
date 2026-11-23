@@ -26,7 +26,8 @@
   },
   "auth": {
     "signIn": "Sign in",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "signInUnavailable": "Sign-in isn’t available right now. Please try again later."
   },
   "home": {
     "emptyState": "Your active session, upcoming sessions and invitations will appear here."

@@ -11,4 +11,4 @@ export function hasClerkTestKeys(): boolean {
 }
 
 export const MISSING_CLERK_KEYS_REASON =
-  "Clerk sign-in e2e tests need CLERK_SECRET_KEY and NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (Clerk dev instance) and the app wired to Clerk (E04-T01).";
+  "Needs a signed-in user: set CLERK_SECRET_KEY and NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY of the Clerk dev instance (tests/README.md → Signing in).";
