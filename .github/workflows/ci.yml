@@ -48,6 +48,11 @@ jobs:
       - name: Check for raw colors
         if: ${{ !cancelled() }}
         run: npm run check:colors
+      # E03-T04: messages/*.json have the same keys, no empty values, valid ICU
+      # syntax, every plural category per locale and the same arguments as EN.
+      - name: Check translations
+        if: ${{ !cancelled() }}
+        run: npm run i18n:check
 
   unit:
     name: Unit tests

@@ -1,36 +1,30 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
+import { LOCALES } from "./locales";
 import { MESSAGES } from "./messages";
-import enMessages from "../../../messages/en.json";
-import ltMessages from "../../../messages/lt.json";
+import { checkMessageCatalogs } from "../../../scripts/i18n/check-message-catalogs.mts";
 
-const getKeyPaths = (messages: Record<string, Record<string, string>>) =>
-  Object.entries(messages)
-    .flatMap(([namespace, namespaceMessages]) =>
-      Object.keys(namespaceMessages).map((key) => `${namespace}.${key}`),
-    )
-    .sort();
+/** EN first: like the script, arguments are compared against `en.json`, which `MESSAGES` is typed against. */
+const REFERENCE_FIRST_LOCALES = [
+  "en",
+  ...LOCALES.filter((locale) => locale !== "en"),
+] as const;
 
 describe("messages", () => {
-  it("has the same keys in English and Lithuanian", () => {
-    expect(getKeyPaths(ltMessages)).toEqual(getKeyPaths(enMessages));
-  });
-
-  it("has no empty messages", () => {
-    for (const messages of Object.values(MESSAGES)) {
-      for (const namespaceMessages of Object.values(messages)) {
-        for (const text of Object.values(namespaceMessages)) {
-          expect(text.trim()).not.toBe("");
-        }
-      }
-    }
-  });
-
-  it("uses typographic apostrophes, which ICU (next-intl) does not treat as quotes", () => {
-    for (const messages of Object.values(MESSAGES)) {
-      expect(JSON.stringify(messages)).not.toContain("'");
-    }
+  // The same check as `npm run i18n:check` (scripts/check-i18n.mts): same keys
+  // in every locale, no empty values or ASCII apostrophes (ICU quoting), valid
+  // ICU, every plural category the locale needs, the same arguments as EN.
+  it("pass the translation check", () => {
+    expect(
+      checkMessageCatalogs({
+        catalogs: REFERENCE_FIRST_LOCALES.map((locale) => ({
+          fileName: `messages/${locale}.json`,
+          locale,
+          messages: MESSAGES[locale],
+        })),
+      }),
+    ).toEqual([]);
   });
 });
 
