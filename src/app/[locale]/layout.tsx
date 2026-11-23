@@ -38,6 +38,9 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!hasLocale(LOCALES, locale)) notFound();
 
+  // TODO(E04-T01): wrap in <ClerkProvider localization={…}> (ltLT / enUS
+  // from `locale`). Switching language changes this layout's `locale`
+  // param, so Clerk's components follow the LanguageSwitcher.
   return (
     <RootDocument lang={locale}>
       <NextIntlClientProvider>{children}</NextIntlClientProvider>

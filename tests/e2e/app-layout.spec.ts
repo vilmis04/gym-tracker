@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import {
+  openAccountMenuWithKey,
+  pressAndExpectFocus,
+} from "./helpers/account-menu";
+
 // App layout and navigation (E02-T06): bottom navigation below 1024 px,
 // sidebar from 1024 px, the avatar menu, translations and safe-area padding.
 // Needs no Clerk or Supabase: the (app) pages are placeholders until E04.
@@ -31,35 +36,6 @@ const getTokenColor = (page: Page, token: string) =>
     probe.remove();
     return color;
   }, token);
-
-/** Opens the avatar menu with the keyboard, retrying until React has hydrated. */
-const openAccountMenuWithKey = async (
-  page: Page,
-  key: "Enter" | " ",
-  name = "Account, language and theme",
-) => {
-  const trigger = page.getByRole("button", { name });
-  await expect(async () => {
-    await trigger.focus();
-    await page.keyboard.press(key);
-    await expect(page.getByRole("menu")).toBeVisible({ timeout: 1000 });
-  }).toPass();
-};
-
-/**
- * Radix moves menu focus in a timeout after the key press, so wait for it
- * before the next key (a real user can't type that fast).
- */
-const pressAndExpectFocus = async (
-  page: Page,
-  key: string,
-  itemName: string,
-) => {
-  await page.keyboard.press(key);
-  await expect(
-    page.getByRole("menu").getByText(itemName, { exact: true }),
-  ).toBeFocused();
-};
 
 test.describe("bottom navigation (< 1024 px)", () => {
   test.use({ viewport: PHONE });

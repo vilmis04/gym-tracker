@@ -2,10 +2,10 @@
 
 import { Settings, UserRound } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useId, useMemo } from "react";
 
+import { useLocaleSwitch } from "@/components/common/language/use-locale-switch";
 import {
   THEME_PREFERENCE_OPTIONS,
   THEME_PREFERENCES,
@@ -23,12 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  getLocalizedPathname,
-  LOCALE_NATIVE_NAMES,
-  LOCALES,
-  localeSchema,
-} from "@/lib/i18n/locales";
+import { LOCALE_NATIVE_NAMES, LOCALES, localeSchema } from "@/lib/i18n/locales";
 
 import { getAppPath } from "./nav-items";
 
@@ -38,13 +33,14 @@ import { getAppPath } from "./nav-items";
  * through every item (the language and theme choices are menu radio items),
  * Esc closes it and focus returns to the button.
  *
- * Picking a language opens the same page in that language; picking a theme
- * applies it at once and keeps the menu open, so the user can compare.
+ * Picking a language opens the same page (query included) in that language
+ * and remembers it in the `NEXT_LOCALE` cookie, like the `LanguageSwitcher`
+ * on the landing page; picking a theme applies it at once and keeps the menu
+ * open, so the user can compare.
  */
 export function AccountMenu() {
-  const locale = useLocale();
-  const pathname = usePathname();
-  const router = useRouter();
+  // TODO(E04-T04): pass `onLocaleChange` to save it to profiles.locale.
+  const { locale, switchLocale } = useLocaleSwitch();
   const translateCommon = useTranslations("common");
   const translateNav = useTranslations("nav");
   // TODO(E04-T04): pass `onThemePreferenceChange` to save it to profiles.theme.
@@ -54,10 +50,7 @@ export function AccountMenu() {
 
   const handleLocaleChange = (value: string) => {
     const parsedLocale = localeSchema.safeParse(value);
-    if (!parsedLocale.success || parsedLocale.data === locale) return;
-    // TODO(E03-T02): keep the query string and save the NEXT_LOCALE cookie
-    // (and profiles.locale) through the LanguageSwitcher.
-    router.replace(getLocalizedPathname(pathname, parsedLocale.data));
+    if (parsedLocale.success) switchLocale(parsedLocale.data);
   };
 
   const handleThemeChange = (value: string) => {
