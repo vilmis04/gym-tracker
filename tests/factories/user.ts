@@ -14,8 +14,8 @@ export type TestUser = {
 
 /**
  * Builds a unique fake user. Nothing is written anywhere: the DB tests only
- * need an id to put in a signed JWT (see `createClientAs`), and once
- * `profiles` exists (E04-T03) a `createProfile(user)` factory can insert it.
+ * need an id to put in a signed JWT (see `createClientAs`); `createProfile(user)`
+ * inserts its `profiles` row (E04-T03).
  *
  * @example
  * const alice = createUser({ displayName: "Alice" });

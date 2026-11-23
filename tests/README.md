@@ -15,10 +15,11 @@ Coverage for unit tests: `npm run test:coverage` (V8; text summary in the termin
 ```
 tests/
   README.md            this file
-  factories/           test data builders: createUser(), later createSession(), …
-  helpers/             shared helpers: signed-JWT Supabase clients, DB reset and superuser queries, stubSupabaseFetch() (captures the token a Supabase client sends, unit tests), local stack settings, renderWithIntl() (next-intl provider for component tests), stubAppRouterAt() (App Router hooks at a URL), clerk-mock.ts (`@clerk/nextjs` stand-in)
+  factories/           test data builders: createUser(), createProfile() (E04-T03), later createSession(), …
+  helpers/             shared helpers: signed-JWT Supabase clients, DB reset and superuser queries, stubSupabaseFetch() (captures the token a Supabase client sends, unit tests), local stack settings, renderWithIntl() (next-intl provider for component tests), stubAppRouterAt() (App Router hooks at a URL), clerk-mock.ts (`@clerk/nextjs` stand-in), clerk-webhook.ts (Clerk events signed like Svix: buildClerkUserEvent(), createSignedClerkWebhookRequest())
   setup/               Vitest setup files (jest-dom, DB env + reset, `server-only` stub)
   db/rls/              RLS tests, one file per table
+  db/profiles/         Clerk → profiles sync against the real database (webhook route, getCurrentProfile() fallback)
   unit/scripts/        tests for scripts/ (deploy scripts against a local fake Coolify/health server, raw-color guard, token contrast check, translations check)
   e2e/                 Playwright specs, global setup and e2e helpers (signInAs, signInBeforeEachTest, createSignInTicket, getTokenColor)
 ```
@@ -51,17 +52,18 @@ npm run test:db
 ```ts
 const alice = createUser();
 const bob = createUser();
-const asAlice = await createClientAs(alice);
-await asAlice.from("sample_notes").insert({ body: "mine" });
+await createProfile(alice); // service role, as the Clerk webhook would
 
 const asBob = await createClientAs(bob);
-const { data } = await asBob.from("sample_notes").select("id");
+const { data } = await asBob.from("profiles").select("id").eq("id", alice.id);
 expect(data).toEqual([]); // RLS hides Alice's row
 ```
 
-The example is `tests/db/rls/sample-notes.test.ts` (owner reads own row; user B can't read, update or delete user A's row; inserting for someone else fails with `42501`; anon sees nothing). Every new table gets a file like it (Definition of Done: "RLS policies + RLS tests included"); policies identify the user with `(select uid())` (E04-T02, [data-model.md](../docs/data-model.md)).
+The example is `tests/db/rls/profiles.test.ts` (E04-T03; it replaced the `sample_notes` fixture's test): the owner reads their row; user B can't read or update user A's row; updating a column without a column grant (`email`, `display_name`, …) fails with `42501`; users can't insert or delete; anon gets nothing; the service-role-only functions answer `42501` to users. `createProfile(user, overrides)` (`tests/factories`) inserts a profile with the service role to arrange data. Every new table gets a file like it (Definition of Done: "RLS policies + RLS tests included"); policies identify the user with `(select uid())` (E04-T02, [data-model.md](../docs/data-model.md)).
 
 **Tokens and test-only tables (E04-T02).** `tests/db/rls/third-party-auth.test.ts` covers the Clerk ↔ Supabase integration: `uid()` returns the token's `sub`, a test table with `owner_id = (select uid())` shows each user only their rows and `anon` none, and forged (wrong secret, unknown RS256 key, `alg: none`) or expired tokens get 401 (`PGRST301` / `PGRST303`). Send any raw token with `createClientWithToken(token)`; `signSupabaseJwt(user, { expiresIn })` makes expired ones. A table that only a test needs is created in that file's `beforeAll` with `queryAsSuperuser()` (`tests/helpers/db.ts`), followed by `notify pgrst, 'reload schema'` and a wait until PostgREST sees it, and dropped in `afterAll`; it isn't in the generated types, so query it with an untyped `createClient(url, anonKey, { accessToken })` (the only place outside `src/lib/supabase` that calls `createClient`). `createAnonClient()` passes the signed-out provider explicitly, because the server client's default asks Clerk.
+
+**Clerk webhook and profile sync (E04-T03).** `tests/db/profiles/clerk-webhook.test.ts` calls the real `POST` of `/api/webhooks/clerk` with events signed by `createSignedClerkWebhookRequest(event, { secret, messageId, timestamp })` (`tests/helpers/clerk-webhook.ts`: HMAC-SHA256 the way Svix signs, so the real `verifyWebhook` checks it; no `svix` package needed) under `CLERK_WEBHOOK_SIGNING_SECRET = TEST_CLERK_WEBHOOK_SIGNING_SECRET`; events come from `buildClerkUserEvent(type, user, { updatedAt, firstName, lastName, imageUrl, email })`. `tests/db/profiles/get-current-profile.test.ts` mocks `@clerk/nextjs/server` (`auth()` with a signed JWT, `currentUser()`) and checks the first-request fallback. The route's own decisions (401 cases, ignored events, missing secret) are unit-tested with the database mocked in `src/app/api/webhooks/clerk/route.test.ts`.
 
 **Known state, any order.** Before **each** test, `resetDatabase()` (`tests/helpers/db.ts`, wired in `tests/setup/db.ts`) truncates every table in `public` (`truncate … restart identity cascade`, as the `postgres` superuser) except the seeded reference tables listed in `SEEDED_TABLES` — add tables filled by `supabase/seed.sql` there when they appear. New tables are picked up automatically. Because all files share one database, DB test files run one at a time (`fileParallelism: false`); tests also use fresh random user ids, so nothing depends on run order. Schema changes still need `npm run db:reset` (rebuild from migrations) before running the tests.
 

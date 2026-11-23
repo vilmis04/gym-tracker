@@ -43,7 +43,7 @@ describe("useSupabaseBrowserClient", () => {
         <AccountContext value={account}>{children}</AccountContext>
       ),
     });
-    await result.current.from("sample_notes").select("id");
+    await result.current.from("profiles").select("id");
 
     expect(getAuthorizationHeaders()).toEqual(["Bearer clerk-session-token"]);
   });
@@ -53,7 +53,7 @@ describe("useSupabaseBrowserClient", () => {
     const { useSupabaseBrowserClient } = await importModules();
 
     const { result } = renderHook(() => useSupabaseBrowserClient());
-    await result.current.from("sample_notes").select("id");
+    await result.current.from("profiles").select("id");
 
     expect(getAuthorizationHeaders()).toEqual([
       `Bearer ${TEST_SUPABASE_ANON_KEY}`,
@@ -73,7 +73,7 @@ describe("useSupabaseBrowserClient", () => {
     const signedOutClient = result.current;
     account = createAccount("clerk-session-token");
     rerender();
-    await signedOutClient.from("sample_notes").select("id");
+    await signedOutClient.from("profiles").select("id");
 
     expect(result.current).toBe(signedOutClient);
     expect(getAuthorizationHeaders()).toEqual(["Bearer clerk-session-token"]);

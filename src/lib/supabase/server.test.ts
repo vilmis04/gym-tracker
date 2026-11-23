@@ -21,8 +21,8 @@ vi.mock("@clerk/nextjs/server", () => ({
 const CLERK_PUBLISHABLE_KEY =
   "pk_test_Z3ltLXRyYWNrZXIuY2xlcmsuYWNjb3VudHMuZGV2JA";
 
-const selectNotes = async () => {
-  await createServerClient().from("sample_notes").select("id");
+const selectProfiles = async () => {
+  await createServerClient().from("profiles").select("id");
 };
 
 afterEach(() => {
@@ -35,7 +35,7 @@ describe("createServerClient", () => {
     const getAuthorizationHeaders = stubSupabaseFetch();
     getToken.mockResolvedValue("clerk-session-token");
 
-    await selectNotes();
+    await selectProfiles();
 
     expect(getAuthorizationHeaders()).toEqual(["Bearer clerk-session-token"]);
     expect(getToken).toHaveBeenCalledWith();
@@ -46,7 +46,7 @@ describe("createServerClient", () => {
     const getAuthorizationHeaders = stubSupabaseFetch();
     getToken.mockResolvedValue(null);
 
-    await selectNotes();
+    await selectProfiles();
 
     expect(getAuthorizationHeaders()).toEqual([
       `Bearer ${TEST_SUPABASE_ANON_KEY}`,
@@ -57,7 +57,7 @@ describe("createServerClient", () => {
     vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
     const getAuthorizationHeaders = stubSupabaseFetch();
 
-    await selectNotes();
+    await selectProfiles();
 
     expect(getAuthorizationHeaders()).toEqual([
       `Bearer ${TEST_SUPABASE_ANON_KEY}`,
@@ -70,7 +70,7 @@ describe("createServerClient", () => {
     const getAuthorizationHeaders = stubSupabaseFetch();
 
     await createServerClient({ accessToken: async () => "signed-test-jwt" })
-      .from("sample_notes")
+      .from("profiles")
       .select("id");
 
     expect(getAuthorizationHeaders()).toEqual(["Bearer signed-test-jwt"]);

@@ -9,25 +9,59 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      sample_notes: {
+      deleted_users: {
         Row: {
-          body: string;
-          created_at: string;
+          deleted_at: string;
           id: string;
-          owner_id: string;
         };
         ComputedFields: never;
         Insert: {
-          body: string;
-          created_at?: string;
-          id?: string;
-          owner_id?: string;
+          deleted_at?: string;
+          id: string;
         };
         Update: {
-          body?: string;
-          created_at?: string;
+          deleted_at?: string;
           id?: string;
-          owner_id?: string;
+        };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          avatar_url: string | null;
+          clerk_updated_at: string;
+          created_at: string;
+          display_name: string;
+          email: string;
+          id: string;
+          invite_code: string;
+          locale: string;
+          theme: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          avatar_url?: string | null;
+          clerk_updated_at: string;
+          created_at?: string;
+          display_name: string;
+          email: string;
+          id: string;
+          invite_code?: string;
+          locale?: string;
+          theme?: string;
+          updated_at?: string;
+        };
+        Update: {
+          avatar_url?: string | null;
+          clerk_updated_at?: string;
+          created_at?: string;
+          display_name?: string;
+          email?: string;
+          id?: string;
+          invite_code?: string;
+          locale?: string;
+          theme?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -36,7 +70,21 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      delete_profile_from_clerk: {
+        Args: { incoming_id: string };
+        Returns: undefined;
+      };
       f_unaccent: { Args: { value: string }; Returns: string };
+      sync_profile_from_clerk: {
+        Args: {
+          incoming_avatar_url?: string;
+          incoming_clerk_updated_at: string;
+          incoming_display_name: string;
+          incoming_email: string;
+          incoming_id: string;
+        };
+        Returns: string;
+      };
       uid: { Args: Record<PropertyKey, never>; Returns: string };
     };
     Enums: {
