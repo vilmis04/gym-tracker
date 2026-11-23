@@ -24,12 +24,27 @@
     "settings": "Nustatymai"
   },
   "landing": {
-    "comingSoon": "Jau greitai."
+    "metaTitle": "Gym Tracker: treniruokitės kartu, matykite pažangą",
+    "metaDescription": "Registruokite bendras treniruotes su draugais, kiekvieną seriją pradėkite nuo paskutinio rezultato ir matykite, kaip kiekvienas stiprėjate.",
+    "valueProposition": "Registruokite treniruotes kartu su draugais ir matykite, kaip kiekvienas iš jūsų stiprėja.",
+    "benefitsTitle": "Kodėl Gym Tracker",
+    "benefitBuddiesTitle": "Treniruokitės su draugais",
+    "benefitBuddiesDescription": "Suplanuokite treniruotę, pakvieskite draugus ir registruokite visų serijas viename ar keliuose telefonuose.",
+    "benefitLastAttemptTitle": "Paskutinis rezultatas jau įrašytas",
+    "benefitLastAttemptDescription": "Ankstesnis svoris ir pakartojimai jau užpildyti, tad serijai užtenka kelių paspaudimų.",
+    "benefitProgressTitle": "Matykite savo pažangą",
+    "benefitProgressDescription": "Grafikai rodo, kaip gerėja kiekvieno pratimo rezultatai.",
+    "preferencesTitle": "Kalba ir tema",
+    "ogImageAlt": "Gym Tracker: treniruokitės kartu, matykite pažangą. Žemės spalvų kortelė su programėlės pavadinimu.",
+    "ogTagline": "Treniruokitės kartu, matykite pažangą."
   },
   "auth": {
     "signIn": "Prisijungti",
     "signOut": "Atsijungti",
-    "signInUnavailable": "Prisijungti šiuo metu negalima. Bandykite vėliau."
+    "signInUnavailable": "Prisijungti šiuo metu negalima. Bandykite vėliau.",
+    "continueWithGoogle": "Tęsti su Google",
+    "openingGoogle": "Atidaromas prisijungimas su Google",
+    "googleSignInFailed": "Nepavyko atidaryti prisijungimo su Google. Bandykite dar kartą."
   },
   "home": {
     "emptyState": "Čia matysite vykstančią treniruotę, artėjančias treniruotes ir kvietimus."

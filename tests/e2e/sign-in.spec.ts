@@ -34,14 +34,6 @@ test.describe("signed out", () => {
     expect(getReturnPath(page)).toBe("/en/settings");
   });
 
-  test("the landing page links to sign-in", async ({ page }) => {
-    await page.goto("/en");
-
-    await page.getByRole("link", { name: "Sign in" }).click();
-
-    await expect(page).toHaveURL("/en/sign-in");
-  });
-
   test("without Clerk keys, sign-in says it isn't available", async ({
     page,
   }) => {

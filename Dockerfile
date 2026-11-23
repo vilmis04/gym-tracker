@@ -7,6 +7,7 @@
 #     --build-arg NEXT_PUBLIC_SUPABASE_URL=... \
 #     --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=... \
 #     --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=... \
+#     --build-arg NEXT_PUBLIC_SITE_URL=https://... \
 #     --build-arg NEXT_PUBLIC_SENTRY_DSN=... \
 #     --build-arg APP_VERSION="$(git rev-parse --short HEAD)" .
 #   docker run --env-file .env.local -p 3000:3000 gym-tracker
@@ -44,6 +45,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+# The public origin for link previews (E04-T05); optional.
+ARG NEXT_PUBLIC_SITE_URL
 # Error tracking (E01-T07), all optional and non-secret: the DSN is public (it
 # only allows sending events), SENTRY_ORG/SENTRY_PROJECT name where source maps
 # go. APP_VERSION becomes the Sentry release (same value as /api/health).
@@ -60,6 +63,7 @@ ARG COOLIFY_BUILD_SECRETS_HASH=""
 ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY} \
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY} \
+    NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL} \
     NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN} \
     NEXT_PUBLIC_SENTRY_ENVIRONMENT=${NEXT_PUBLIC_SENTRY_ENVIRONMENT} \
     SENTRY_ORG=${SENTRY_ORG} \
@@ -87,6 +91,7 @@ RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
     --mount=type=secret,id=NEXT_PUBLIC_SUPABASE_URL \
     --mount=type=secret,id=NEXT_PUBLIC_SUPABASE_ANON_KEY \
     --mount=type=secret,id=NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
+    --mount=type=secret,id=NEXT_PUBLIC_SITE_URL \
     --mount=type=secret,id=NEXT_PUBLIC_SENTRY_DSN \
     --mount=type=secret,id=NEXT_PUBLIC_SENTRY_ENVIRONMENT \
     --mount=type=secret,id=SENTRY_ORG \

@@ -157,6 +157,7 @@ Set them on the production app: *Environment Variables* has two groups, **Produc
 | `NEXT_PUBLIC_SUPABASE_URL` | ✓ | ✓ | production project URL | staging project URL | no (public) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✓ | ✓ | production anon key | staging anon key | no (public, RLS) |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | ✓ | ✓ | `pk_live_…` (production instance) | `pk_test_…` (dev instance) | no (public) |
+| `NEXT_PUBLIC_SITE_URL` | ✓ | — | `https://<prod-domain>` (no path; link previews: Open Graph image, `og:url`, canonical / hreflang links of the landing page, E04-T05) | unset (previews then point at `http://localhost:3000`; or the preview's own URL) | no (public) |
 | `NEXT_PUBLIC_SENTRY_DSN` | ✓ | ✓ | Sentry DSN (optional) | same DSN (optional) | no (public) |
 | `NEXT_PUBLIC_SENTRY_ENVIRONMENT` | ✓ | ✓ | `production` | `preview` | no |
 | `SENTRY_ORG`, `SENTRY_PROJECT` | ✓ | — | Sentry slugs (optional) | same | no |
@@ -171,6 +172,7 @@ Set them on the production app: *Environment Variables* has two groups, **Produc
 
 Notes:
 
+- `NEXT_PUBLIC_SITE_URL` (E04-T05) is read while the landing page is prerendered, so it is build time only. A value that isn't an `http(s)` URL fails the build. Unset, the build only warns (`metadataBase … not set`) and link previews point at `localhost`, which is fine for previews of pull requests (they aren't shared outside the team).
 - `NEXT_PUBLIC_*` values are inlined into the browser bundle at build time, so they must be build-time variables; changing one needs a **redeploy**, not a restart. Runtime-only changes need only *Restart*.
 - `APP_VERSION=$SOURCE_COMMIT` is both build time (Sentry release in the bundle) and runtime (what `/api/health` reports, which the deploy workflow checks). With build secrets on, no build arg reaches the Dockerfile's runtime stage, so the runtime value is what `/api/health` shows.
 - **Build secrets.** With *Docker BuildKit secrets* on, Coolify passes **every** build-time variable as `docker build --secret id=<NAME>,env=<NAME>` and no `--build-arg`s. The Dockerfile's `npm run build` step mounts each of the variables above as an optional secret (`/run/secrets/<NAME>`) and exports it for that one step, so `SENTRY_AUTH_TOKEN` is never stored in a layer, in `docker history` or in the deploy log (verified locally with both modes; Coolify leaves a `RUN` that already mounts secrets unchanged). Locally and in CI the same Dockerfile still takes build args, and the token as `--secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN` (README → Docker).

@@ -5,10 +5,13 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  getHomePath,
   getLandingPath,
   getPathLocale,
   getSignInPath,
+  getSsoCallbackPath,
   isApiPath,
+  isLandingPath,
   isProtectedPath,
 } from "./auth-routes";
 
@@ -71,6 +74,22 @@ describe("isApiPath", () => {
   });
 });
 
+describe("isLandingPath", () => {
+  it.each([
+    ["/lt", true],
+    ["/en/", true],
+    ["/%6Ct", true],
+    ["/", false],
+    ["/de", false],
+    ["/lt/sign-in", false],
+    ["/en/dashboard", false],
+    ["/api", false],
+    ["/%E0%A4%A", false],
+  ])("%s → %s", (pathname, isLanding) => {
+    expect(isLandingPath(pathname)).toBe(isLanding);
+  });
+});
+
 describe("paths", () => {
   it("reads the locale of a localized path", () => {
     expect(getPathLocale("/en/sessions")).toBe("en");
@@ -83,6 +102,8 @@ describe("paths", () => {
     expect(getSignInPath("lt")).toBe("/lt/sign-in");
     expect(getSignInPath("en")).toBe("/en/sign-in");
     expect(getLandingPath("en")).toBe("/en");
+    expect(getHomePath("lt")).toBe("/lt/dashboard");
+    expect(getSsoCallbackPath("en")).toBe("/en/sign-in/sso-callback");
   });
 });
 

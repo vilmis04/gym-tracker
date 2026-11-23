@@ -46,6 +46,38 @@ export function getSignInPath(locale: Locale): string {
   return `/${locale}/sign-in`;
 }
 
+/**
+ * Where Google sends the browser back to during a sign-in started outside
+ * `<SignIn />` (the landing page's "Continue with Google", E04-T05). The
+ * sign-in page's catch-all route renders Clerk's callback step there, which
+ * finishes the sign-in (or the sign-up of a new user).
+ */
+export function getSsoCallbackPath(locale: Locale): string {
+  return `${getSignInPath(locale)}/sso-callback`;
+}
+
+/**
+ * Whether the path is a landing page ("/lt", "/en/"), which the proxy shows
+ * only to signed-out visitors (E04-T05).
+ */
+export function isLandingPath(pathname: string): boolean {
+  const segments = decodePathSegments(pathname);
+  return (
+    segments !== null &&
+    segments.length === 1 &&
+    localeSchema.safeParse(segments[0]).success
+  );
+}
+
+/**
+ * Home, the first page of the signed-in area: where signing in ends unless
+ * `redirect_url` says otherwise, and where signed-in users of the landing
+ * page are sent.
+ */
+export function getHomePath(locale: Locale): string {
+  return `/${locale}/dashboard`;
+}
+
 /** Where signing out ends: the public landing page. */
 export function getLandingPath(locale: Locale): string {
   return `/${locale}`;

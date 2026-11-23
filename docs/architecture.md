@@ -45,8 +45,8 @@
 
 ## Authentication & authorization
 
-1. User signs in with Google through Clerk (`<SignIn withSignUp />` on `/{locale}/sign-in`, Google is the only method enabled in the Clerk dashboard; the first sign-in creates the account).
-2. Clerk middleware protects the signed-in area — every section of `app/[locale]/(app)/` (`/{locale}/dashboard`, `/sessions`, …) — and every API route except the webhooks (`/api/webhooks/*`) and the health check (`/api/health`); the landing page `/{locale}`, sign-in and the 404 page are public (`isProtectedPath()` in `src/lib/auth/auth-routes.ts`). Signed-out page requests go to `/{locale}/sign-in?redirect_url=…` and return there after sign-in; API routes answer 404. It runs in the app's one Proxy, `src/proxy.ts` (Next.js 16 renamed `middleware.ts` to `proxy.ts`): `clerkMiddleware` around next-intl's locale routing (E03-T01, E04-T01). Without Clerk keys (CI) the proxy refuses the same requests the same way, without Clerk. `<ClerkProvider>` (`components/common/auth/auth-provider.tsx`) follows the URL's locale and the design tokens.
+1. User signs in with Google through Clerk: "Continue with Google" on the landing page `/{locale}` starts Google's OAuth flow directly (`GoogleSignInButton`, Clerk's `useSignIn().signIn.sso()`, E04-T05), or `<SignIn withSignUp />` on `/{locale}/sign-in` (where the proxy sends signed-out visitors of a protected page; it also serves the OAuth callback `/{locale}/sign-in/sso-callback`). Google is the only method enabled in the Clerk dashboard; the first sign-in creates the account.
+2. Clerk middleware protects the signed-in area — every section of `app/[locale]/(app)/` (`/{locale}/dashboard`, `/sessions`, …) — and every API route except the webhooks (`/api/webhooks/*`) and the health check (`/api/health`); the landing page `/{locale}`, sign-in and the 404 page are public (`isProtectedPath()` in `src/lib/auth/auth-routes.ts`). Signed-out page requests go to `/{locale}/sign-in?redirect_url=…` and return there after sign-in; API routes answer 404. Signed-in users who open the landing page are redirected to Home (`/{locale}/dashboard`, `isLandingPath()`, E04-T05) by the proxy, from Clerk's session cookie without a database call, so the landing page itself stays prerendered (SSG) instead of reading `auth()` per request. Its HTML is served with `Cache-Control: s-maxage=31536000` (Next.js' default for prerendered pages); if a CDN or caching proxy is ever put in front of the app, it must not cache `/lt` and `/en` across visitors, or signed-in users would get the cached landing page instead of the redirect. It runs in the app's one Proxy, `src/proxy.ts` (Next.js 16 renamed `middleware.ts` to `proxy.ts`): `clerkMiddleware` around next-intl's locale routing (E03-T01, E04-T01). Without Clerk keys (CI) the proxy refuses the same requests the same way, without Clerk. `<ClerkProvider>` (`components/common/auth/auth-provider.tsx`) follows the URL's locale and the design tokens.
 3. Supabase is configured with **Clerk as a third-party auth provider** (E04-T02: local `supabase/config.toml` `[auth.third_party.clerk]`, opt-in via env; staging and production in the Supabase dashboard), and the Clerk instances have the Supabase integration activated, which adds `role: authenticated` to the session token. Supabase verifies the token with the Clerk instance's public keys (JWKS); a forged, expired or other-issuer token gets 401. The Supabase clients pass the Clerk session token as `accessToken`: on the server `createServerClient()` uses `(await auth()).getToken()`; in the browser `useSupabaseBrowserClient()` passes `useAccount()?.getToken` (Clerk's `session.getToken()`) to the tab's one client. No token (signed out, Clerk loading, no Clerk keys) = the `anon` role, which no policy lets read user data (fail closed).
 4. RLS policies use `uid()` (`public.uid()`, `auth.jwt()->>'sub'`, `stable`: the Clerk user id, `text`) as `(select uid())` to identify the user. Supabase's `auth.uid()` casts to uuid and must not be used.
 5. A Clerk webhook (`/api/webhooks/clerk`, verified with the Svix signature; missing/invalid/stale → 401) keeps the `profiles` table in sync (name, email, avatar) on `user.created` / `user.updated` / `user.deleted` (E04-T03). Writes go through the service-role-only SQL function `sync_profile_from_clerk()`, which only applies data newer than the stored `clerk_updated_at` (Clerk retries are unordered; replays change nothing) and ignores deleted users (`deleted_users`). As a fallback for a late webhook, the `(app)` layout's `EnsureProfile` calls `getCurrentProfile()` (`src/lib/profiles/`, React `cache()` per request), which reads the row through RLS and, if it is missing, creates it from `currentUser()` through the same function. Users can update only `locale` and `theme` (column grants).
@@ -61,7 +61,8 @@ src/
     [locale]/              lt | en; root layout (<html lang>, NextIntlClientProvider,
                            localized metadata); not-found.tsx + [...unknownPath]/
                            = localized 404
-      (public)/            landing; sign-in/[[...signIn]] (Clerk <SignIn />, E04-T01)
+      (public)/            landing page (E04-T05, SSG; og-image.png/ = its Open Graph
+                           image per locale); sign-in/[[...signIn]] (Clerk <SignIn />, E04-T01)
       (app)/               authenticated area; layout.tsx = AppShell (E02-T06),
                            each section has page / loading / error
         dashboard/         Home
@@ -81,22 +82,27 @@ src/
   components/
     ui/                    shadcn primitives (themed)
     common/                app-level shared components (auth/: AuthProvider = ClerkProvider,
-                           useAccount(), useSupabaseBrowserClient(), EnsureProfile; preferences/:
+                           useAccount(), useSupabaseBrowserClient(), EnsureProfile,
+                           GoogleSignInButton (E04-T05); preferences/:
                            saving language/theme to profiles, "Saved" toast, ApplySavedPreferences;
                            app-shell/, page/, language/, theme/)
   features/
     buddies/  sessions/  exercises/  logging/  progress/
       components/  actions.ts  queries.ts  schemas.ts
     settings/components/   settings page sections (E04-T04)
+    landing/               landing page (E04-T05): components/ (benefits, Continue with
+                           Google), open-graph/ (the Open Graph image)
   lib/
     auth/   (protected routes, Clerk env check, Clerk localization + appearance; E04-T01)
+    seo/    (getSiteUrl() from NEXT_PUBLIC_SITE_URL, readTokenColors() for server-drawn images; E04-T05)
     supabase/ (server.ts, client.ts, admin.ts — service role, webhook/admin jobs only)
     profiles/ (getCurrentProfile(), Clerk → profiles sync, webhook payload schemas; E04-T03;
                savePreferences() Server Action, E04-T04)
     i18n/   (locales, next-intl routing + request config + navigation, messages, time zone, format/ presets)
     tags/   (auto-tag rules)
     utils/
-  proxy.ts                 Clerk (route protection) around next-intl locale routing
+  proxy.ts                 Clerk (route protection, signed-in landing → Home) around
+                           next-intl locale routing
   global.d.ts              next-intl AppConfig: typed locales, message keys and named formats
   types/database.ts        generated by `supabase gen types`
 messages/en.json, lt.json  UI text per namespace (next-intl, E03); `npm run i18n:check` keeps them in sync

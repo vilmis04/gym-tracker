@@ -7,9 +7,11 @@ import {
 import createMiddleware from "next-intl/middleware";
 
 import {
+  getHomePath,
   getPathLocale,
   getSignInPath,
   isApiPath,
+  isLandingPath,
   isProtectedPath,
   REDIRECT_URL_SEARCH_PARAM,
 } from "@/lib/auth/auth-routes";
@@ -28,6 +30,12 @@ import { routing } from "@/lib/i18n/routing";
  * sign-in, `/api/health` and `/api/webhooks/*` are public. Without Clerk
  * keys (`isClerkConfigured`) the same pages are refused the same way, so
  * nothing protected is ever served without sign-in.
+ *
+ * Signed-in users who open the landing page (`/lt`, `/en`) are sent to Home
+ * (`/lt/dashboard`, E04-T05). That is decided here rather than in the page,
+ * because Clerk already knows the user here from the session cookie (no
+ * database or network call), and reading `auth()` in the page would render
+ * it per request instead of serving the prerendered HTML to visitors.
  *
  * Locale (pages only; API routes have no locale):
  * - `/lt/…` and `/en/…` pass through; the URL's locale wins and refreshes
@@ -70,7 +78,12 @@ const routeRequest = (request: NextRequest) =>
 const handleWithClerk = clerkMiddleware(
   async (auth, request) => {
     // Redirects to `signInUrl` below (pages) or answers 404 (API routes).
-    if (isProtectedPath(request.nextUrl.pathname)) await auth.protect();
+    const { pathname } = request.nextUrl;
+    if (isProtectedPath(pathname)) {
+      await auth.protect();
+    } else if (isLandingPath(pathname) && (await auth()).userId) {
+      return redirectToHome(request);
+    }
     return routeRequest(request);
   },
   (request) => {
@@ -80,6 +93,11 @@ const handleWithClerk = clerkMiddleware(
     return { signInUrl: signInPath, signUpUrl: signInPath };
   },
 );
+
+const redirectToHome = (request: NextRequest) => {
+  const locale = getPathLocale(request.nextUrl.pathname) ?? DEFAULT_LOCALE;
+  return NextResponse.redirect(new URL(getHomePath(locale), request.url));
+};
 
 /** Clerk's signed-out behaviour without Clerk: sign-in page or 404, never the page. */
 const handleWithoutClerk = (request: NextRequest) => {

@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { AuthProvider } from "@/components/common/auth/auth-provider";
 import { LOCALES } from "@/lib/i18n/locales";
+import { getSiteUrl } from "@/lib/seo/site-url";
 
 import { ROOT_VIEWPORT, RootDocument } from "../root-document";
 
@@ -21,6 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const translate = await getTranslations("common");
   const appName = translate("appName");
   return {
+    // Absolute URLs for link previews (the Open Graph image, E04-T05).
+    metadataBase: getSiteUrl(),
     title: { template: `%s · ${appName}`, default: appName },
     description: translate("metaDescription"),
   };
