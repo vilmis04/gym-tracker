@@ -36,7 +36,7 @@ import type {
  *
  * @example
  * const supabase = createServerClient();
- * const { data, error } = await supabase.from("sample_notes").select("id, body");
+ * const { data, error } = await supabase.from("profiles").select("id, locale");
  *
  * @throws {Error} When `NEXT_PUBLIC_SUPABASE_URL` or
  *   `NEXT_PUBLIC_SUPABASE_ANON_KEY` is missing.

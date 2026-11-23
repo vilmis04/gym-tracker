@@ -10,7 +10,7 @@ export const TEST_SUPABASE_ANON_KEY = "test-anon-key";
  *
  * @example
  * const getAuthorizationHeaders = stubSupabaseFetch();
- * await createServerClient().from("sample_notes").select("id");
+ * await createServerClient().from("profiles").select("id");
  * expect(getAuthorizationHeaders()).toEqual(["Bearer token"]);
  */
 export function stubSupabaseFetch(): () => (string | null)[] {

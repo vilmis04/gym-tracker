@@ -22,16 +22,29 @@ profiles ─┬─< buddy_connections >─┬─ profiles
 ## Tables
 
 ### `profiles`
+E04-T03, `20261123213711_add_profiles.sql`. One row per Clerk user; Clerk owns the identity columns.
+
 | Column | Type | Notes |
 |---|---|---|
-| id | text PK | Clerk user id |
-| display_name | text not null | |
-| email | text not null unique | used for buddy search (exact match) |
-| avatar_url | text | |
-| locale | text not null default `'lt'` | `en` \| `lt` |
-| theme | text not null default `'system'` | `light` \| `dark` \| `system` |
-| invite_code | text not null unique | random URL-safe code for buddy invite links (E05-T05) |
-| created_at / updated_at | timestamptz | |
+| id | text PK | Clerk user id (`user_…`), the JWT `sub` = `uid()` |
+| display_name | text not null | from Clerk: "first last", else username, else the email's local part; trimmed, not empty |
+| email | text not null unique | Clerk's primary email, stored trimmed + lowercase (check constraint); used for buddy search (exact match) |
+| avatar_url | text | Clerk `image_url` when the user has a photo (`has_image`), else `null` (initials); `https://` only (check constraint) |
+| locale | text not null default `'lt'` | `en` \| `lt` (check constraint = `LOCALES`) |
+| theme | text not null default `'system'` | `light` \| `dark` \| `system` (check constraint = `THEME_PREFERENCES`) |
+| invite_code | text not null unique | random URL-safe code for buddy invite links (E05-T05); default 96 random bits as 16 base64url characters (`pgcrypto`) |
+| clerk_updated_at | timestamptz not null | Clerk's `updated_at` of the data last written; an older event never overwrites newer data (webhooks can arrive out of order) |
+| created_at / updated_at | timestamptz not null default `now()` | `updated_at` is set on every update by the `profiles_set_updated_at` trigger (`set_updated_at()`, reusable) |
+
+Writes: only the service role creates, changes the Clerk columns and deletes rows, through two functions (execute revoked from `public`, `anon`, `authenticated`):
+
+- `sync_profile_from_clerk(incoming_id, incoming_display_name, incoming_email, incoming_clerk_updated_at, incoming_avatar_url default null) returns text` — upsert of the Clerk columns (normalizes email and name; never touches `locale`, `theme`, `invite_code`) unless the stored `clerk_updated_at` is the same or newer or the id is in `deleted_users`. Returns `synced`, `ignored_outdated` (also for a replayed event) or `ignored_deleted`. Used by the Clerk webhook and by the first-request fallback (`getCurrentProfile()`).
+- `delete_profile_from_clerk(incoming_id) returns void` — records the id in `deleted_users` and deletes the profile (missing profile = no-op).
+
+Users (`authenticated`): `select` and `update` of their own row (`id = (select uid())`), with column privileges `grant update (locale, theme)` only (any other column → `42501`); no insert / delete; `anon` has no privileges.
+
+### `deleted_users`
+E04-T03. Ids of Clerk users whose profile was deleted (`user.deleted`), so that a `user.created` / `user.updated` retried after the deletion doesn't recreate it (Clerk never reuses ids). `id text PK`, `deleted_at timestamptz not null default now()`. No personal data besides the id. RLS on with no policies and all privileges revoked from `anon` / `authenticated`: service role only. Full GDPR deletion of related data is E10-T05.
 
 ### `buddy_connections`
 | Column | Type | Notes |
@@ -154,7 +167,7 @@ Helper: `is_session_member(session uuid, user text)` → accepted participant.
 
 | Table | SELECT | INSERT / UPDATE / DELETE |
 |---|---|---|
-| profiles | self, buddies, users with a pending request to/from self, co-participants; search via RPC only | self (update); insert via webhook (service role) |
+| profiles | self (E04-T03); buddies, users with a pending request to/from self, co-participants later (E05-T01 / E07-T01); search via RPC only | self: update of `locale`, `theme` only (column grant); insert / Clerk columns / delete via `sync_profile_from_clerk()` / `delete_profile_from_clerk()` (service role: webhook, first-request fallback) |
 | buddy_connections | where self is requester or addressee | insert as requester; update status only as addressee; delete by either |
 | machines, exercises, tags, exercise_tags | any authenticated user | insert by any authenticated user; update/delete own entries only (tags: seed only) |
 | gym_sessions | session members + invited users | insert as owner; update/cancel by owner |
@@ -167,6 +180,7 @@ RLS is covered by SQL tests (pgTAP or Vitest against local Supabase) in CI.
 
 | RPC | Purpose |
 |---|---|
+| `sync_profile_from_clerk(…)`, `delete_profile_from_clerk(id)` | Service role only (E04-T03): Clerk → `profiles` sync, see [`profiles`](#profiles) |
 | `search_users(query text)` | Exact email or display-name prefix match, excludes self, returns public fields and buddy status |
 | `search_exercises(query text, limit int)` | Trigram + prefix ranking on name, includes machine name and tags |
 | `last_attempt(exercise uuid, user text, exclude_session uuid)` | Sets of the user's most recent other session for that exercise (D6) |
@@ -183,10 +197,6 @@ RLS is covered by SQL tests (pgTAP or Vitest against local Supabase) in CI.
 
 Tables that exist only for foundation tooling. They are **not** part of the product schema and must be dropped (in a new migration) once real tables cover their purpose.
 
-| Table | Added by | Used by | Drop when |
-|---|---|---|---|
-| `sample_notes` (`id uuid PK`, `owner_id text not null default auth.jwt()->>'sub'`, `body text not null`, `created_at timestamptz`) | `20261117215612_add_sample_notes_fixture.sql` (E01-T03) | `src/lib/supabase/__typetests__/server-client.typetest.tsx` (typed-query check), `tests/db/rls/sample-notes.test.ts` (E01-T04 example RLS test) | Real tables have their own RLS tests (at the latest with E04-T03 `profiles`); delete the type test and example RLS test in the same PR |
-
-`sample_notes` RLS: enabled; `select` / `insert` / `update` / `delete` only `to authenticated` where `(select auth.jwt()->>'sub') = owner_id`; no policy for `anon`. (It predates `uid()` and keeps the inline expression, which is equivalent; it is dropped in E04-T03.)
+None right now. `sample_notes` (E01-T03, `20261117215612_add_sample_notes_fixture.sql`) was dropped by `20261123213711_add_profiles.sql` (E04-T03) together with its RLS test; the typed-query check (`src/lib/supabase/__typetests__/server-client.typetest.tsx`) and the RLS example (`tests/db/rls/profiles.test.ts`) now use `profiles`.
 
 `uid_fixture_notes` (E04-T02) is not a migration: `tests/db/rls/third-party-auth.test.ts` creates it on the local stack while it runs (owner-only `select` / `insert` with `owner_id = (select uid())`) and drops it afterwards.

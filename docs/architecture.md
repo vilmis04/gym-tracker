@@ -49,8 +49,8 @@
 2. Clerk middleware protects the signed-in area — every section of `app/[locale]/(app)/` (`/{locale}/dashboard`, `/sessions`, …) — and every API route except the webhooks (`/api/webhooks/*`) and the health check (`/api/health`); the landing page `/{locale}`, sign-in and the 404 page are public (`isProtectedPath()` in `src/lib/auth/auth-routes.ts`). Signed-out page requests go to `/{locale}/sign-in?redirect_url=…` and return there after sign-in; API routes answer 404. It runs in the app's one Proxy, `src/proxy.ts` (Next.js 16 renamed `middleware.ts` to `proxy.ts`): `clerkMiddleware` around next-intl's locale routing (E03-T01, E04-T01). Without Clerk keys (CI) the proxy refuses the same requests the same way, without Clerk. `<ClerkProvider>` (`components/common/auth/auth-provider.tsx`) follows the URL's locale and the design tokens.
 3. Supabase is configured with **Clerk as a third-party auth provider** (E04-T02: local `supabase/config.toml` `[auth.third_party.clerk]`, opt-in via env; staging and production in the Supabase dashboard), and the Clerk instances have the Supabase integration activated, which adds `role: authenticated` to the session token. Supabase verifies the token with the Clerk instance's public keys (JWKS); a forged, expired or other-issuer token gets 401. The Supabase clients pass the Clerk session token as `accessToken`: on the server `createServerClient()` uses `(await auth()).getToken()`; in the browser `useSupabaseBrowserClient()` passes `useAccount()?.getToken` (Clerk's `session.getToken()`) to the tab's one client. No token (signed out, Clerk loading, no Clerk keys) = the `anon` role, which no policy lets read user data (fail closed).
 4. RLS policies use `uid()` (`public.uid()`, `auth.jwt()->>'sub'`, `stable`: the Clerk user id, `text`) as `(select uid())` to identify the user. Supabase's `auth.uid()` casts to uuid and must not be used.
-5. A Clerk webhook (verified with Svix signature) keeps the `profiles` table in sync (name, email, avatar). On first login the app also upserts the profile as a fallback in case the webhook is late.
-6. The service-role key is used **only** in the webhook handler, never in user-facing code paths.
+5. A Clerk webhook (`/api/webhooks/clerk`, verified with the Svix signature; missing/invalid/stale → 401) keeps the `profiles` table in sync (name, email, avatar) on `user.created` / `user.updated` / `user.deleted` (E04-T03). Writes go through the service-role-only SQL function `sync_profile_from_clerk()`, which only applies data newer than the stored `clerk_updated_at` (Clerk retries are unordered; replays change nothing) and ignores deleted users (`deleted_users`). As a fallback for a late webhook, the `(app)` layout's `EnsureProfile` calls `getCurrentProfile()` (`src/lib/profiles/`, React `cache()` per request), which reads the row through RLS and, if it is missing, creates it from `currentUser()` through the same function. Users can update only `locale` and `theme` (column grants).
+6. The service-role key is used **only** for Clerk → `profiles` sync (the webhook handler, and the first-request fallback's write of the verified `currentUser()` data), never to read or write data on a user's behalf.
 
 ## Code structure
 
@@ -75,12 +75,12 @@ src/
     (developer-tools)/     English-only root layout for dev/ (design previews)
                            and debug/ (error-tracking smoke test)
     root-document.tsx      <html>/<body>, font, ThemeProvider shared by both root layouts
-    api/webhooks/clerk/route.ts
+    api/webhooks/clerk/route.ts  Clerk user.* events → profiles (Svix-verified, service role; E04-T03)
     api/health/route.ts    public liveness check (Docker HEALTHCHECK, Coolify)
   components/
     ui/                    shadcn primitives (themed)
     common/                app-level shared components (auth/: AuthProvider = ClerkProvider,
-                           useAccount(), useSupabaseBrowserClient(); app-shell/, page/,
+                           useAccount(), useSupabaseBrowserClient(), EnsureProfile; app-shell/, page/,
                            language/, theme/)
   features/
     buddies/  sessions/  exercises/  logging/  progress/
@@ -88,6 +88,7 @@ src/
   lib/
     auth/   (protected routes, Clerk env check, Clerk localization + appearance; E04-T01)
     supabase/ (server.ts, client.ts, admin.ts — service role, webhook/admin jobs only)
+    profiles/ (getCurrentProfile(), Clerk → profiles sync, webhook payload schemas; E04-T03)
     i18n/   (locales, next-intl routing + request config + navigation, messages, time zone, format/ presets)
     tags/   (auto-tag rules)
     utils/

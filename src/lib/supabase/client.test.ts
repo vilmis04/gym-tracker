@@ -22,7 +22,7 @@ describe("createBrowserClient", () => {
     const getAuthorizationHeaders = stubSupabaseFetch();
     const createBrowserClient = await importCreateBrowserClient();
 
-    await createBrowserClient().from("sample_notes").select("id");
+    await createBrowserClient().from("profiles").select("id");
 
     expect(getAuthorizationHeaders()).toEqual([
       `Bearer ${TEST_SUPABASE_ANON_KEY}`,
@@ -34,13 +34,13 @@ describe("createBrowserClient", () => {
     const createBrowserClient = await importCreateBrowserClient();
 
     const signedOutClient = createBrowserClient();
-    await signedOutClient.from("sample_notes").select("id");
+    await signedOutClient.from("profiles").select("id");
     const signedInClient = createBrowserClient({
       accessToken: async () => "clerk-session-token",
     });
-    await signedInClient.from("sample_notes").select("id");
+    await signedInClient.from("profiles").select("id");
     // An older reference to the same client sends the new token too.
-    await signedOutClient.from("sample_notes").select("id");
+    await signedOutClient.from("profiles").select("id");
 
     expect(signedInClient).toBe(signedOutClient);
     expect(getAuthorizationHeaders()).toEqual([
