@@ -17,12 +17,17 @@ export type AccessTokenProvider = () => Promise<string | null>;
 
 /** Options shared by `createServerClient()` and `createBrowserClient()`. */
 export type SupabaseClientOptions = {
-  /** Supplies the user's Clerk session token; defaults to a signed-out stub. */
+  /**
+   * Supplies the user's Clerk session token. Defaults: the server client
+   * reads Clerk's `auth()`; the browser client is signed out (pass
+   * `useAccount()?.getToken`, or use `useSupabaseBrowserClient()`).
+   */
   accessToken?: AccessTokenProvider;
 };
 
 /**
- * Placeholder until Clerk is wired in (E04-T02): always signed out, so requests
- * use the anon key and RLS only lets through what `anon` may see.
+ * No user token: requests use the anon key and RLS only lets through what
+ * `anon` may see. The browser client's default, and the DB tests' anonymous
+ * requests.
  */
 export const signedOutAccessToken: AccessTokenProvider = async () => null;

@@ -108,19 +108,21 @@ npm run db:types              # regenerate src/types/database.ts
 
 Commit the migration and the regenerated `src/types/database.ts` in the same PR. `db:types` is deterministic: running it on an unchanged schema produces no diff, and CI fails the PR if the committed file is out of date. Never edit a migration that has already been merged; add a new one.
 
+**`uid()`** (E04-T02) returns the request's Clerk user id (`auth.jwt()->>'sub'`, `text`), `null` when signed out. Every RLS policy uses it as `(select uid())`, e.g. `using (owner_id = (select uid()))`.
+
 **Search helpers.** The first migration enables `pg_trgm` and `unaccent` (in the `extensions` schema) and adds `public.f_unaccent(text)`, an `immutable` wrapper you can use in generated columns and indexes, e.g. `lower(f_unaccent(trim(name)))`; `select f_unaccent('Ąžuolas')` returns `Azuolas`. Trigram indexes use `extensions.gin_trgm_ops`.
 
 **Troubleshooting.** If ports 54320–54329 are taken, stop the other stack (`npx supabase stop --project-id <id>`) or change the ports in `supabase/config.toml`. `npm run db:stop -- --no-backup` also deletes the local data volumes.
 
 ## Supabase clients
 
-Never call `createClient` from `@supabase/supabase-js` directly; use the helpers in [`src/lib/supabase`](src/lib/supabase). All three are typed with the generated `Database` (`src/types/database.ts`), so table and column names are checked by `npm run typecheck`.
+Never call `createClient` from `@supabase/supabase-js` directly; use the helpers in [`src/lib/supabase`](src/lib/supabase) (the browser hook wraps `createBrowserClient()` from `@/lib/supabase/client`). All three are typed with the generated `Database` (`src/types/database.ts`), so table and column names are checked by `npm run typecheck`.
 
-| Helper                  | Import                  | Use in                                                  | Key / RLS                                                    |
-| ----------------------- | ----------------------- | ------------------------------------------------------- | ------------------------------------------------------------ |
-| `createServerClient()`  | `@/lib/supabase/server` | Server Components, Server Actions, Route Handlers       | anon key + user's token, RLS applies; new client per request |
-| `createBrowserClient()` | `@/lib/supabase/client` | Client components (TanStack Query live views, Realtime) | anon key + user's token, RLS applies; singleton per tab      |
-| `createAdminClient()`   | `@/lib/supabase/admin`  | Clerk webhook and admin jobs only                       | **service-role key, bypasses RLS**; server only              |
+| Helper                       | Import                                                 | Use in                                                  | Key / RLS                                                    |
+| ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------ |
+| `createServerClient()`       | `@/lib/supabase/server`                                | Server Components, Server Actions, Route Handlers       | anon key + user's token, RLS applies; new client per request |
+| `useSupabaseBrowserClient()` | `@/components/common/auth/use-supabase-browser-client` | Client components (TanStack Query live views, Realtime) | anon key + user's token, RLS applies; singleton per tab      |
+| `createAdminClient()`        | `@/lib/supabase/admin`                                 | Clerk webhook and admin jobs only                       | **service-role key, bypasses RLS**; server only              |
 
 ```ts
 import { createServerClient } from "@/lib/supabase/server";
@@ -129,7 +131,7 @@ const supabase = createServerClient();
 const { data, error } = await supabase.from("sample_notes").select("id, body");
 ```
 
-- **User token.** Both user-facing helpers accept `{ accessToken }`, a `() => Promise<string | null>` that returns the Clerk session token (Clerk is a Supabase third-party auth provider). Until Clerk is wired in (E04-T02) the default returns `null`, so requests use the anon key and RLS only lets through what `anon` may see.
+- **User token (E04-T02).** Clerk is a Supabase third-party auth provider: requests carry the user's Clerk session token, Supabase checks it against the Clerk instance's keys, and RLS reads the Clerk user id with `uid()` ([data-model.md](docs/data-model.md)). `createServerClient()` gets the token from `(await auth()).getToken()` itself. In client components use `useSupabaseBrowserClient()` (`@/components/common/auth/use-supabase-browser-client`), which passes `useAccount()?.getToken` (Clerk's `session.getToken()`) to the tab's one `createBrowserClient()`. Signed out, while Clerk loads and without Clerk keys there is no token: requests use the anon key and RLS only lets through what `anon` may see (no user data), so start queries that need the user once `useAccount()` is set. `{ accessToken }` (`() => Promise<string | null>`) overrides the token, e.g. the DB tests' signed JWTs. Never use `auth.uid()` in SQL: it casts `sub` to uuid and fails on Clerk ids.
 - **Server only.** `server.ts` and `admin.ts` start with `import "server-only"`: importing them from a `"use client"` module fails `next build`. The service-role key has no `NEXT_PUBLIC_` prefix, so it is never inlined into the browser bundle.
 - **Env vars** are read when a client is created, not at import, so `npm run build` works without them; a missing variable throws an error naming it.
 
@@ -200,6 +202,7 @@ Sign-in is [Clerk](https://clerk.com) with **Google only** (E04-T01; dashboard s
 - **Routes.** `/{locale}/sign-in` is Clerk's `<SignIn />` (one sign-in-or-up flow: the first Google sign-in creates the account). The Proxy (`src/proxy.ts`) runs `clerkMiddleware` around the locale routing; signed out, every page of `src/app/[locale]/(app)/` redirects to `/{locale}/sign-in?redirect_url=<page>` and comes back there after sign-in (otherwise Home), and every API route except `/api/health` and `/api/webhooks/*` answers 404. The rules are `isProtectedPath()` in `src/lib/auth/auth-routes.ts`; a new `(app)` folder is protected automatically (a unit test checks the folders). Sign out (avatar menu) returns to the landing page.
 - **Server code:** `auth()` / `currentUser()` from `@clerk/nextjs/server`. **Components:** `useAccount()` (`src/components/common/auth/account-context.ts`: name, email, photo, `signOut(url)`; `null` while loading or signed out) instead of Clerk's hooks, so they also render where Clerk isn't loaded.
 - **Language and theme.** `<ClerkProvider>` (`AuthProvider`, in `app/[locale]/layout.tsx`) gets the URL's locale — Clerk has no Lithuanian, so our own strings for the sign-in flow are in `src/lib/auth/clerk-localizations.ts` (not in `messages/*.json`: Clerk uses `{{placeholder}}`, not ICU) — and `appearance` variables that point at the design tokens (`src/lib/auth/clerk-appearance.ts`), so the card follows light / dark.
+- **Supabase (E04-T02).** The app sends the Clerk session token to Supabase ([Supabase clients](#supabase-clients)). For the local stack to accept it, enable Clerk there: add `SUPABASE_AUTH_THIRD_PARTY_CLERK_ENABLED=true` and `CLERK_FRONTEND_API_DOMAIN=<your dev instance>.clerk.accounts.dev` (Clerk dashboard → _API keys_ → Frontend API URL, without `https://`) to `.env.local` — the Supabase CLI reads it too — and restart it (`npm run db:stop && npm run db:start`); `supabase start` then needs to reach that domain. Also activate the Supabase integration in the Clerk dev instance ([docs/deployment.md → Clerk](docs/deployment.md#4-clerk)), or tokens lack `role: authenticated` and RLS treats you as `anon`. Without these the local stack rejects real Clerk tokens (401); the DB tests don't need them.
 - **Without keys** (`isClerkConfigured()`, `src/lib/auth/clerk-env.ts`) the build and the public pages work and protected pages still redirect to sign-in, which then says sign-in isn't available. That is how CI's build, Docker and (without the secrets) e2e jobs run. Sign-in URLs are set in code per locale; don't set `NEXT_PUBLIC_CLERK_SIGN_IN_URL`.
 
 ## Tests

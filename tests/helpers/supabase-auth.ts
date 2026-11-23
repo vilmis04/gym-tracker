@@ -2,7 +2,10 @@ import { SignJWT } from "jose";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
-import type { TypedSupabaseClient } from "@/lib/supabase/types";
+import {
+  signedOutAccessToken,
+  type TypedSupabaseClient,
+} from "@/lib/supabase/types";
 
 import type { TestUser } from "../factories";
 
@@ -48,13 +51,23 @@ export async function signSupabaseJwt(
 export async function createClientAs(
   user: Pick<TestUser, "id" | "email">,
 ): Promise<TypedSupabaseClient> {
-  const token = await signSupabaseJwt(user);
+  return createClientWithToken(await signSupabaseJwt(user));
+}
+
+/**
+ * The app's server client sending `token` as is, e.g. a forged or expired
+ * one (E04-T02) to check that Supabase rejects it.
+ */
+export function createClientWithToken(token: string): TypedSupabaseClient {
   return createServerClient({ accessToken: async () => token });
 }
 
-/** The app's server client with no user token (signed out → `anon` role). */
+/**
+ * The app's server client with no user token (signed out → `anon` role).
+ * Explicit, because the default token provider asks Clerk (E04-T02).
+ */
 export function createAnonClient(): TypedSupabaseClient {
-  return createServerClient();
+  return createServerClient({ accessToken: signedOutAccessToken });
 }
 
 /**

@@ -369,13 +369,19 @@ enabled = false
 # user_pool_region = "us-east-1"
 
 # Use Clerk as a third-party provider alongside Supabase Auth.
-# Gym Tracker: enabled in E04 (Clerk auth). Until then it stays off so local
-# Supabase starts without a Clerk instance. Set `domain` to the Clerk dev
-# instance domain (e.g. via env("CLERK_DOMAIN")) when turning it on.
+# Gym Tracker (E04-T02): Clerk is the app's auth provider. Off by default, so
+# the stack starts without a Clerk instance (CI, fresh checkouts): with it on,
+# `supabase start` fetches the Clerk instance's signing keys and fails if it
+# can't. The DB tests' HS256 tokens work either way. To accept real Clerk
+# session tokens from `npm run dev`, set both in `.env.local` (read by the
+# CLI too) and restart the stack (README → Authentication):
+#   SUPABASE_AUTH_THIRD_PARTY_CLERK_ENABLED=true
+#   CLERK_FRONTEND_API_DOMAIN=<dev instance>.clerk.accounts.dev
+# Staging and production are set in the Supabase dashboard (docs/deployment.md).
 [auth.third_party.clerk]
 enabled = false
-# Obtain from https://clerk.com/setup/supabase
-# domain = "example.clerk.accounts.dev"
+# Clerk Frontend API domain, without https:// (https://clerk.com/setup/supabase).
+domain = "env(CLERK_FRONTEND_API_DOMAIN)"
 
 # OAuth server configuration
 [auth.oauth_server]

@@ -1,6 +1,6 @@
 # Data Model
 
-All tables live in the `public` schema with **RLS enabled**. User ids are Clerk ids (`text`). `uid()` below means `auth.jwt()->>'sub'`.
+All tables live in the `public` schema with **RLS enabled**. User ids are Clerk ids (`text`). `uid()` is `public.uid()` (E04-T02, `20261123213000_add_uid_function.sql`): `auth.jwt()->>'sub'`, the Clerk user id of the request, `null` when signed out; `stable`, `security invoker`, empty `search_path`. Policies call it as `(select uid())` so Postgres evaluates it once per statement, e.g. `using (owner_id = (select uid()))`, and owner columns default to `uid()`. Never use Supabase's `auth.uid()` (it casts `sub` to uuid and fails on Clerk ids).
 
 ## Entity relationships
 
@@ -187,4 +187,6 @@ Tables that exist only for foundation tooling. They are **not** part of the prod
 |---|---|---|---|
 | `sample_notes` (`id uuid PK`, `owner_id text not null default auth.jwt()->>'sub'`, `body text not null`, `created_at timestamptz`) | `20261117215612_add_sample_notes_fixture.sql` (E01-T03) | `src/lib/supabase/__typetests__/server-client.typetest.tsx` (typed-query check), `tests/db/rls/sample-notes.test.ts` (E01-T04 example RLS test) | Real tables have their own RLS tests (at the latest with E04-T03 `profiles`); delete the type test and example RLS test in the same PR |
 
-`sample_notes` RLS: enabled; `select` / `insert` / `update` / `delete` only `to authenticated` where `(select auth.jwt()->>'sub') = owner_id`; no policy for `anon`.
+`sample_notes` RLS: enabled; `select` / `insert` / `update` / `delete` only `to authenticated` where `(select auth.jwt()->>'sub') = owner_id`; no policy for `anon`. (It predates `uid()` and keeps the inline expression, which is equivalent; it is dropped in E04-T03.)
+
+`uid_fixture_notes` (E04-T02) is not a migration: `tests/db/rls/third-party-auth.test.ts` creates it on the local stack while it runs (owner-only `select` / `insert` with `owner_id = (select uid())`) and drops it afterwards.
