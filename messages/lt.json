@@ -26,7 +26,8 @@
   },
   "auth": {
     "signIn": "Prisijungti",
-    "signOut": "Atsijungti"
+    "signOut": "Atsijungti",
+    "signInUnavailable": "Prisijungti šiuo metu negalima. Bandykite vėliau."
   },
   "home": {
     "emptyState": "Čia matysite vykstančią treniruotę, artėjančias treniruotes ir kvietimus."

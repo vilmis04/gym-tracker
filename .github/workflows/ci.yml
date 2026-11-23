@@ -167,7 +167,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      # Optional until E04-T01: without both, Clerk sign-in specs are skipped.
+      # Without both, the specs that need a signed-in user (E04-T01: every
+      # page of the signed-in area) are skipped; set them to run those.
       # Clerk *dev* instance keys only (clerkSetup() refuses production keys).
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}

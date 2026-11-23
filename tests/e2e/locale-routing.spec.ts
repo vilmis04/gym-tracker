@@ -73,7 +73,7 @@ test("the URL wins over the cookie and becomes the remembered locale", async ({
     baseURL,
   });
 
-  await page.goto("/lt/dashboard");
+  await page.goto("/lt/sign-in");
   await expect(page.locator("html")).toHaveAttribute("lang", "lt");
   const cookies = await context.cookies();
   expect(
@@ -88,10 +88,15 @@ test("the URL wins over the cookie and becomes the remembered locale", async ({
 test("keeps the path and query when adding the locale", async ({ page }) => {
   await page.goto("/sessions?tab=planned");
 
-  await expect(page).toHaveURL(/\/en\/sessions\?tab=planned$/);
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Sessions" }),
-  ).toBeVisible();
+  // Signed out, the localized page then sends to sign-in (E04-T01), which
+  // keeps it as the page to return to.
+  await expect(page).toHaveURL(/\/en\/sign-in\?/);
+  const returnUrl = new URL(
+    new URL(page.url()).searchParams.get("redirect_url") ?? "",
+  );
+  expect(`${returnUrl.pathname}${returnUrl.search}`).toBe(
+    "/en/sessions?tab=planned",
+  );
 });
 
 test("localizes the title, meta description and client components", async ({
@@ -120,6 +125,15 @@ test("localizes the title, meta description and client components", async ({
     // ThemeToggle is a client component (useTranslations).
     await expect(page.getByRole("group", { name: themeLegend })).toBeVisible();
   }
+});
+
+test("an unknown locale ends on the 404 page under the browser's locale", async ({
+  page,
+}) => {
+  const response = await page.goto("/de/dashboard");
+
+  expect(response?.status()).toBe(404);
+  await expect(page).toHaveURL(/\/en\/de\/dashboard$/);
 });
 
 test("an unknown path shows the localized 404 page", async ({ page }) => {

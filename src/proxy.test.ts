@@ -3,13 +3,15 @@ import {
   getRedirectUrl,
   unstable_doesMiddlewareMatch,
 } from "next/experimental/testing/server";
-import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { NextRequest, NextResponse, type NextFetchEvent } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LOCALE_COOKIE_NAME } from "@/lib/i18n/locales";
 
 import { config, proxy } from "./proxy";
 
+// Without Clerk keys (as in CI): the proxy never calls Clerk, so it answers
+// synchronously. src/proxy.clerk.test.ts covers the same routes with Clerk.
 const requestPage = (
   path: string,
   {
@@ -21,8 +23,19 @@ const requestPage = (
   if (acceptLanguage) headers.set("accept-language", acceptLanguage);
   if (localeCookie)
     headers.set("cookie", `${LOCALE_COOKIE_NAME}=${localeCookie}`);
-  return proxy(new NextRequest(`http://localhost${path}`, { headers }));
+  const request = new NextRequest(`http://localhost${path}`, { headers });
+  // The event is only used by Clerk's middleware.
+  const response = proxy(request, NO_FETCH_EVENT);
+  if (!(response instanceof NextResponse))
+    throw new Error("Expected an immediate answer, without Clerk.");
+  return response;
 };
+
+const NO_FETCH_EVENT = { waitUntil: () => {} } as unknown as NextFetchEvent;
+
+beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "");
+});
 
 describe("proxy matcher", () => {
   it.each([
@@ -32,12 +45,14 @@ describe("proxy matcher", () => {
     "/sessions",
     "/de/dashboard",
     "/developers",
-  ])("runs for the page path %s", (url) => {
+    "/api/health",
+    "/api",
+    "/api/webhooks/clerk",
+  ])("runs for %s", (url) => {
     expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
   });
 
   it.each([
-    "/api/health",
     "/_next/static/chunks/app.js",
     "/dev/ui",
     "/dev",
@@ -90,7 +105,7 @@ describe("proxy locale detection", () => {
   });
 
   it("lets the URL's locale win and remembers it in the cookie", () => {
-    const response = requestPage("/lt/sessions", {
+    const response = requestPage("/lt/sign-in", {
       acceptLanguage: "en",
       localeCookie: "en",
     });
@@ -101,4 +116,41 @@ describe("proxy locale detection", () => {
     expect(localeCookie?.value).toBe("lt");
     expect(localeCookie?.maxAge).toBe(60 * 60 * 24 * 365);
   });
+});
+
+describe("proxy auth without Clerk keys", () => {
+  it("sends a protected page to sign-in in its language, keeping the URL to return to", () => {
+    const response = requestPage("/en/sessions/123?tab=sets");
+
+    expect(response.status).toBe(307);
+    const redirectUrl = new URL(getRedirectUrl(response) ?? "");
+    expect(redirectUrl.pathname).toBe("/en/sign-in");
+    expect(redirectUrl.searchParams.get("redirect_url")).toBe(
+      "http://localhost/en/sessions/123?tab=sets",
+    );
+  });
+
+  it("answers 404 for a protected API route", () => {
+    expect(requestPage("/api/sessions").status).toBe(404);
+  });
+
+  it.each(["/api/health", "/api/webhooks/clerk"])(
+    "lets the public API route %s through without a locale",
+    (path) => {
+      const response = requestPage(path);
+
+      expect(getRedirectUrl(response)).toBeNull();
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+    },
+  );
+
+  it.each(["/lt", "/lt/sign-in", "/en/sign-in/sso-callback", "/lt/nothing"])(
+    "serves the public page %s",
+    (path) => {
+      const response = requestPage(path);
+
+      expect(getRedirectUrl(response)).toBeNull();
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+    },
+  );
 });

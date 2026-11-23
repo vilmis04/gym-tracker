@@ -29,6 +29,7 @@
     "db:types": "supabase gen types typescript --schema public > src/types/database.ts && prettier --write --log-level warn src/types/database.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "7.9.25",
     "@sentry/nextjs": "11.12.0",
     "@supabase/supabase-js": "2.119.0",
     "clsx": "2.1.1",
@@ -46,7 +47,8 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@clerk/testing": "2.3.1",
+    "@clerk/backend": "3.27.0",
+    "@clerk/testing": "2.2.55",
     "@formatjs/icu-messageformat-parser": "3.5.18",
     "@playwright/test": "1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
@@ -77,6 +79,9 @@
   },
   "overrides": {
     "use-intl": "4.14.9",
-    "icu-minify": "4.14.9"
+    "icu-minify": "4.14.9",
+    "@clerk/backend": "3.27.0",
+    "@clerk/react": "6.18.6",
+    "@clerk/shared": "4.44.1"
   }
 }

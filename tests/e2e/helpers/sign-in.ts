@@ -1,7 +1,10 @@
+import { createClerkClient } from "@clerk/backend";
 import { clerk } from "@clerk/testing/playwright";
+import { test, type Page } from "@playwright/test";
+
+import { hasClerkTestKeys, MISSING_CLERK_KEYS_REASON } from "./clerk";
 
 import type { TestUser } from "../../factories";
-import type { Page } from "@playwright/test";
 
 /**
  * The Clerk user e2e tests sign in as. It must exist in the Clerk **dev**
@@ -24,8 +27,9 @@ export const e2eUser: Pick<TestUser, "email"> = {
  * sign-in tokens don't depend on the enabled strategies.
  *
  * Needs `CLERK_SECRET_KEY` + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (guard tests
- * with `hasClerkTestKeys()`) and a page that loads Clerk (`<ClerkProvider>`,
- * E04-T01). Lands on `path` (default `/`) signed in.
+ * with `hasClerkTestKeys()`, or use `signInBeforeEachTest()`). `/` redirects
+ * to the public landing page, which loads Clerk (`AuthProvider`, E04-T01).
+ * Lands on `path` (default `/`) signed in.
  *
  * @example
  * test.skip(!hasClerkTestKeys(), MISSING_CLERK_KEYS_REASON);
@@ -42,3 +46,53 @@ export async function signInAs(
   await clerk.signIn({ page, emailAddress: user.email });
   if (path !== "/") await page.goto(path);
 }
+
+/**
+ * For specs of the signed-in area (every `(app)` page is behind sign-in since
+ * E04-T01): skips the enclosing file or `describe` without Clerk keys, else
+ * signs `user` in before each test.
+ *
+ * @example
+ * test.describe("avatar menu", () => {
+ *   signInBeforeEachTest();
+ *   test("…", async ({ page }) => { await page.goto("/lt/sessions"); });
+ * });
+ */
+export function signInBeforeEachTest(
+  user: Pick<TestUser, "email"> = e2eUser,
+): void {
+  test.skip(!hasClerkTestKeys(), MISSING_CLERK_KEYS_REASON);
+  test.beforeEach(async ({ page }) => {
+    await signInAs(page, user);
+  });
+}
+
+/**
+ * A one-time sign-in token for `user` (Clerk Backend API, needs
+ * `CLERK_SECRET_KEY`). Opening the sign-in page with `?__clerk_ticket=<token>`
+ * makes `<SignIn />` complete the sign-in itself, like the end of a Google
+ * sign-in, and then follow its `redirect_url`: a real test of where the
+ * sign-in page sends the user, without Google.
+ */
+export async function createSignInTicket(
+  user: Pick<TestUser, "email"> = e2eUser,
+): Promise<string> {
+  const clerkClient = createClerkClient({
+    secretKey: process.env.CLERK_SECRET_KEY,
+  });
+  const { data: users } = await clerkClient.users.getUserList({
+    emailAddress: [user.email],
+  });
+  const clerkUser = users[0];
+  if (!clerkUser)
+    throw new Error(
+      `No user ${user.email} in the Clerk dev instance (tests/README.md → Signing in).`,
+    );
+  const { token } = await clerkClient.signInTokens.createSignInToken({
+    userId: clerkUser.id,
+    expiresInSeconds: SIGN_IN_TICKET_LIFETIME_SECONDS,
+  });
+  return token;
+}
+
+const SIGN_IN_TICKET_LIFETIME_SECONDS = 120;

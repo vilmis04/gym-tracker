@@ -4,6 +4,7 @@ import {
   openAccountMenuWithKey,
   pressAndExpectFocus,
 } from "./helpers/account-menu";
+import { signInBeforeEachTest } from "./helpers/sign-in";
 import {
   LOCALE_COOKIE_MAX_AGE_SECONDS,
   LOCALE_COOKIE_NAME,
@@ -19,8 +20,10 @@ test.use({ viewport: { width: 1440, height: 900 } });
 const getLocaleCookie = async (context: BrowserContext) =>
   (await context.cookies()).find(({ name }) => name === LOCALE_COOKIE_NAME);
 
-test.describe("in a Lithuanian browser", () => {
+test.describe("in a Lithuanian browser, signed in", () => {
   test.use({ locale: "lt-LT" });
+  // The avatar menu is on the signed-in pages only (E04-T01).
+  signInBeforeEachTest();
 
   test("the avatar menu switches to English from the keyboard, keeping path and query, and EN is remembered", async ({
     page,

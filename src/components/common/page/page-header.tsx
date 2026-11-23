@@ -12,8 +12,8 @@ import type { PageHeaderProps } from "./page-header.types";
 
 /**
  * The header of every app page (E02-T06): the title as `<h1>`, a back button
- * on detail pages, and the avatar menu (language, theme, settings) on the
- * right.
+ * on detail pages, and the avatar menu (user, language, theme, settings,
+ * sign out) on the right.
  */
 export function PageHeader({ title, backHref }: PageHeaderProps) {
   const translate = useTranslations("common");

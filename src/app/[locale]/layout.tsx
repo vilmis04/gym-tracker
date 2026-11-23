@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
+import { AuthProvider } from "@/components/common/auth/auth-provider";
 import { LOCALES } from "@/lib/i18n/locales";
 
 import { ROOT_VIEWPORT, RootDocument } from "../root-document";
@@ -29,7 +30,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * Root layout of every localized page (E03-T01): `<html lang>` is the URL's
  * locale, and client components get the messages through
  * `NextIntlClientProvider` (locale and messages come from
- * `src/lib/i18n/request.ts`).
+ * `src/lib/i18n/request.ts`). `AuthProvider` (Clerk, E04-T01) takes the same
+ * locale, so `<SignIn />` and the avatar menu follow the language switch.
  */
 export default async function LocaleLayout({
   children,
@@ -38,12 +40,11 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!hasLocale(LOCALES, locale)) notFound();
 
-  // TODO(E04-T01): wrap in <ClerkProvider localization={…}> (ltLT / enUS
-  // from `locale`). Switching language changes this layout's `locale`
-  // param, so Clerk's components follow the LanguageSwitcher.
   return (
     <RootDocument lang={locale}>
-      <NextIntlClientProvider>{children}</NextIntlClientProvider>
+      <AuthProvider locale={locale}>
+        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+      </AuthProvider>
     </RootDocument>
   );
 }

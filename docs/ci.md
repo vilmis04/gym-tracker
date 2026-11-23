@@ -66,7 +66,7 @@ None are required today. Optional, set under **Settings → Secrets and variable
 
 | Name                                | Kind     | Used by | Purpose                                                                   |
 | ----------------------------------- | -------- | ------- | ------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | secret   | e2e     | Clerk **dev** instance publishable key — enables the Clerk sign-in specs   |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | secret   | e2e     | Clerk **dev** instance publishable key — enables the signed-in e2e specs   |
 | `CLERK_SECRET_KEY`                  | secret   | e2e     | Clerk **dev** instance secret key (never production; `clerkSetup()` refuses it) |
 | `E2E_CLERK_USER_EMAIL`              | variable | e2e     | Override the e2e test user (default `e2e-user+clerk_test@example.com`)    |
 
@@ -74,7 +74,7 @@ No Sentry secret is used in CI: PR builds never upload source maps (that happens
 
 The deploy workflow's secrets (Supabase, Coolify) are **environment** secrets of the `staging` and `production` GitHub environments, not repository secrets, and are never available to CI or pull requests: [deployment.md → GitHub environments](deployment.md#9-github-environments-secrets-and-variables).
 
-Without both Clerk keys the sign-in specs are skipped with a reason. They become meaningful in E04-T01 (app wired to Clerk). Secrets are not passed to PRs from forks, so there they stay skipped.
+Without both Clerk keys the specs that need a signed-in user are skipped with a reason: since E04-T01 that is every spec of the signed-in area (`app-layout.spec.ts`, the avatar-menu test in `language-switcher.spec.ts`, the Clerk part of `sign-in.spec.ts`). The rest still runs, including the redirect of signed-out users to sign-in (the app fails closed without keys). **Set both secrets (dev instance) and create the e2e test user** to get that coverage back; then the e2e job is the real check for sign-in. Secrets are not passed to PRs from forks, so there they stay skipped.
 
 ## Branch protection on `main` (manual, one-time)
 
