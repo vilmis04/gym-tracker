@@ -1,8 +1,8 @@
 import type { Locale } from "@/lib/i18n/i18n.types";
 
 /**
- * Called after the user switches language, e.g. to save it to
- * `profiles.locale` once signed in (E04-T04).
+ * Called after the user switches language; signed-in pages pass
+ * `saveLocaleToProfile` (E04-T04), which saves it to `profiles.locale`.
  */
 export type OnLocaleChange = (locale: Locale) => void;
 

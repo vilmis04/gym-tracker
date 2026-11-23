@@ -15,4 +15,16 @@ describe("CLERK_LOCALIZATIONS", () => {
     expect(lt.signIn.start.title).toBe("Prisijunkite prie {{applicationName}}");
     expect(lt.signIn.start.titleCombined).toContain("{{applicationName}}");
   });
+
+  it("translates the account management dialog the settings page opens", () => {
+    const { userProfile } = CLERK_LOCALIZATIONS.lt;
+
+    expect(userProfile.navbar.title).toBe("Paskyra");
+    expect(userProfile.start.connectedAccountsSection.title).toBe(
+      "Susietos paskyros",
+    );
+    expect(
+      userProfile.connectedAccountPage.removeResource.messageLine1,
+    ).toContain("{{identifier}}");
+  });
 });

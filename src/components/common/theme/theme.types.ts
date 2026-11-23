@@ -5,8 +5,8 @@ import { type themePreferenceSchema } from "./theme-preferences";
 export type ThemePreference = z.infer<typeof themePreferenceSchema>;
 
 /**
- * Called after the user picks a theme, e.g. to save it to `profiles.theme`
- * once signed in (E04-T04).
+ * Called after the user picks a theme; signed-in pages pass
+ * `saveThemeToProfile` (E04-T04), which saves it to `profiles.theme`.
  */
 export type OnThemePreferenceChange = (preference: ThemePreference) => void;
 

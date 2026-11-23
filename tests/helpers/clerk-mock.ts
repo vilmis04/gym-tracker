@@ -11,7 +11,7 @@ import type { MockClerk, MockUserState } from "./clerk-mock.types";
  * `ClerkAccountProvider`); app components read `useAccount()` and are
  * tested with `<AccountContext value={…}>` instead. Signed out by default;
  * sign a user in for one test with `mockSignedInUser()`, check sign-out
- * with the `signOut` spy. The signed-in session's `getToken` spy returns
+ * with the `signOut` spy (account management: `openUserProfile`). The signed-in session's `getToken` spy returns
  * {@link MOCK_SESSION_TOKEN} (E04-T02).
  *
  * @example
@@ -20,6 +20,8 @@ import type { MockClerk, MockUserState } from "./clerk-mock.types";
  * expect(signOut).toHaveBeenCalledWith({ redirectUrl: "/lt" });
  */
 export const signOut = vi.fn(async () => {});
+
+export const openUserProfile = vi.fn();
 
 export const MOCK_SESSION_TOKEN = "mock-clerk-session-token";
 
@@ -33,6 +35,7 @@ export const ClerkProvider = ({ children }: { children: ReactNode }) =>
 
 export const useClerk = vi.fn<() => MockClerk>(() => ({
   signOut,
+  openUserProfile,
   session: null,
 }));
 
@@ -46,7 +49,7 @@ export function mockSignedInUser({
 }: Partial<Pick<TestUser, "displayName" | "email">> & {
   imageUrl?: string | null;
 } = {}) {
-  useClerk.mockReturnValue({ signOut, session: { getToken } });
+  useClerk.mockReturnValue({ signOut, openUserProfile, session: { getToken } });
   useUser.mockReturnValue({
     isLoaded: true,
     isSignedIn: true,

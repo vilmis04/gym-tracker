@@ -3,6 +3,7 @@ import { clerk } from "@clerk/testing/playwright";
 import { test, type Page } from "@playwright/test";
 
 import { hasClerkTestKeys, MISSING_CLERK_KEYS_REASON } from "./clerk";
+import { APPLIED_PREFERENCES_SESSION_STORAGE_KEY } from "../../../src/components/common/preferences/applied-preferences-session";
 
 import type { TestUser } from "../../factories";
 
@@ -31,6 +32,12 @@ export const e2eUser: Pick<TestUser, "email"> = {
  * to the public landing page, which loads Clerk (`AuthProvider`, E04-T01).
  * Lands on `path` (default `/`) signed in.
  *
+ * The e2e user's saved language and theme (`profiles`, E04-T04) are whatever
+ * the last test left there, so by default they are **not** applied after
+ * signing in: the session is marked as done for `ApplySavedPreferences`, and
+ * every page opens in the locale of its URL. Pass
+ * `shouldApplySavedPreferences: true` to test that step (`settings.spec.ts`).
+ *
  * @example
  * test.skip(!hasClerkTestKeys(), MISSING_CLERK_KEYS_REASON);
  * await signInAs(page, e2eUser);
@@ -38,12 +45,21 @@ export const e2eUser: Pick<TestUser, "email"> = {
 export async function signInAs(
   page: Page,
   user: Pick<TestUser, "email"> = e2eUser,
-  { path = "/" }: { path?: string } = {},
+  {
+    path = "/",
+    shouldApplySavedPreferences = false,
+  }: { path?: string; shouldApplySavedPreferences?: boolean } = {},
 ): Promise<void> {
   // clerk.signIn needs a public page that has loaded Clerk.
   await page.goto("/");
   await clerk.loaded({ page });
   await clerk.signIn({ page, emailAddress: user.email });
+  if (!shouldApplySavedPreferences) {
+    await page.evaluate((storageKey) => {
+      const sessionId = window.Clerk?.session?.id;
+      if (sessionId) localStorage.setItem(storageKey, sessionId);
+    }, APPLIED_PREFERENCES_SESSION_STORAGE_KEY);
+  }
   if (path !== "/") await page.goto(path);
 }
 

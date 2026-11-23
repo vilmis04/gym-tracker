@@ -21,6 +21,7 @@ const importModules = async () => {
 const createAccount = (token: string): Account => ({
   user: { name: "Rūta Žemaitė", email: null, imageUrl: null },
   signOut: vi.fn(async () => {}),
+  openAccountManagement: vi.fn(),
   getToken: vi.fn(async () => token),
 });
 

@@ -37,13 +37,12 @@ import { routing } from "@/lib/i18n/routing";
  *   `/sessions?tab=x` → `/en/sessions?tab=x` (then the auth check above),
  *   and an unknown first segment (`/de/dashboard` → `/lt/de/dashboard`)
  *   ends on the localized 404.
+ * - The language saved in the profile (`profiles.locale`, E04-T04) is not
+ *   read here (that would be a database lookup per request): right after
+ *   sign-in `ApplySavedPreferences` opens the page in that language, which
+ *   writes `NEXT_LOCALE`, so from then on the cookie step above carries it.
  */
 export function proxy(request: NextRequest, event: NextFetchEvent) {
-  // TODO(E04-T04): "saved profile locale" goes between the cookie and
-  // Accept-Language. Switching language already writes NEXT_LOCALE (E03-T02,
-  // in the browser); once E04-T04 also saves `profiles.locale` and sets the
-  // cookie from it on sign-in, only a signed-in user without the cookie (new
-  // device) needs a lookup.
   if (!isClerkConfigured()) return handleWithoutClerk(request);
   return handleWithClerk(request, event);
 }

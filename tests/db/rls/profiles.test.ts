@@ -2,7 +2,8 @@
  * RLS and column privileges of `profiles` (E04-T03): users read and update
  * only their own row, and only `locale` / `theme`; the identity columns come
  * from Clerk through the service role. Visibility to buddies (E05-T01) and
- * session co-participants (E07-T01) comes later.
+ * session co-participants (E07-T01) comes later. E04-T04:
+ * `preferences_updated_at` records when the user last saved a preference.
  */
 import { describe, expect, it } from "vitest";
 
@@ -104,6 +105,10 @@ describe("profiles RLS", () => {
     ["avatar_url", { avatar_url: "https://example.com/photo.png" }],
     ["invite_code", { invite_code: "chosen-code" }],
     ["id", { id: "user_other" }],
+    [
+      "preferences_updated_at",
+      { preferences_updated_at: "2020-01-01T00:00:00Z" },
+    ],
   ])("stops a user from changing their own %s", async (_column, change) => {
     const alice = createUser();
     const profile = await createProfile(alice);
@@ -233,5 +238,48 @@ describe("profiles RLS", () => {
     await expect(
       createProfile(createUser(), { email: first.email }),
     ).rejects.toMatchObject({ code: "23505" });
+  });
+
+  it("records when the user saved a preference, also the same value again", async () => {
+    const alice = createUser();
+    const profile = await createProfile(alice);
+    const asAlice = await createClientAs(alice);
+    expect(profile.preferences_updated_at).toBeNull();
+
+    // "lt" is already the value (the default): choosing it still counts.
+    const { data, error } = await asAlice
+      .from("profiles")
+      .update({ locale: "lt" })
+      .eq("id", alice.id)
+      .select("locale, preferences_updated_at")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.locale).toBe("lt");
+    expect(data?.preferences_updated_at).not.toBeNull();
+  });
+
+  it("doesn't count a Clerk sync as a saved preference", async () => {
+    const alice = createUser();
+    const profile = await createProfile(alice, {
+      clerk_updated_at: "2026-01-01T00:00:00Z",
+    });
+
+    const { error } = await createServiceClient().rpc(
+      "sync_profile_from_clerk",
+      {
+        incoming_id: alice.id,
+        incoming_display_name: "Alice Renamed",
+        incoming_email: alice.email,
+        incoming_clerk_updated_at: "2026-02-01T00:00:00Z",
+      },
+    );
+
+    expect(error).toBeNull();
+    expect(await readProfileAsService(alice.id)).toMatchObject({
+      display_name: "Alice Renamed",
+      preferences_updated_at: null,
+    });
+    expect(profile.preferences_updated_at).toBeNull();
   });
 });

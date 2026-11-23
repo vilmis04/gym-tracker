@@ -11,7 +11,9 @@ import type { SegmentedControlProps } from "./segmented-control.types";
  * or the theme toggle. Native radio buttons in a `fieldset`, so Tab moves
  * into the group, the arrow keys change the choice, and screen readers
  * announce the legend and the checked option. Pill shaped, 44 px targets,
- * checked option on `bg-primary-soft` in semibold.
+ * checked option on `bg-primary-soft` in semibold. The frame's radius
+ * (24 px, a pill at one row's 54 px) also fits when the options wrap onto a
+ * second row (the three Lithuanian theme names at 360 px, E04-T04).
  */
 export function SegmentedControl<Value extends string>({
   legend,
@@ -34,7 +36,7 @@ export function SegmentedControl<Value extends string>({
       >
         {legend}
       </legend>
-      <div className="inline-flex w-fit max-w-full flex-wrap gap-1 rounded-full border border-input p-1">
+      <div className="inline-flex w-fit max-w-full flex-wrap gap-1 rounded-3xl border border-input p-1">
         {options.map((option) => (
           <label
             key={option.value}

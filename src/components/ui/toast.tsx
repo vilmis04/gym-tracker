@@ -19,9 +19,9 @@ export const TOAST_DURATION_MS = 4000;
  */
 export function showToast(
   message: string,
-  { description, action }: ShowToastOptions = {},
+  { description, action, id }: ShowToastOptions = {},
 ) {
-  return toast(message, { description, action });
+  return toast(message, { description, action, id });
 }
 
 /**

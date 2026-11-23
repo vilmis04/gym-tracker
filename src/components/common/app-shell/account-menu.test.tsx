@@ -4,13 +4,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AccountContext } from "@/components/common/auth/account-context";
 import type { Account } from "@/components/common/auth/auth.types";
+import {
+  saveLocaleToProfile,
+  saveThemeToProfile,
+} from "@/components/common/preferences/preference-saving";
 import { ThemeProvider } from "@/components/common/theme/theme-provider";
 import type { Locale } from "@/lib/i18n/i18n.types";
 import { LOCALE_COOKIE_NAME } from "@/lib/i18n/locales";
 import { renderWithIntl } from "@tests/helpers/render-with-intl";
 import { stubAppRouterAt } from "@tests/helpers/stub-app-router";
+import { createTestAccount } from "@tests/helpers/test-account";
 
 import { AccountMenu } from "./account-menu";
+
+vi.mock("@/components/common/preferences/preference-saving", () => ({
+  saveLocaleToProfile: vi.fn(),
+  saveThemeToProfile: vi.fn(),
+}));
 
 vi.mock(import("next/navigation"), async (importOriginal) => ({
   ...(await importOriginal()),
@@ -21,7 +31,7 @@ vi.mock(import("next/navigation"), async (importOriginal) => ({
 const renderMenu = (
   locale: Locale = "en",
   url = `/${locale}/sessions/123`,
-  account: Account | null = createSignedInAccount(),
+  account: Account | null = createTestAccount(),
 ) => {
   const { replace } = stubAppRouterAt(url);
   renderWithIntl(
@@ -34,16 +44,6 @@ const renderMenu = (
   );
   return { replace, account };
 };
-
-const createSignedInAccount = (): Account => ({
-  user: {
-    name: "Rūta Žemaitė",
-    email: "ruta+clerk_test@example.com",
-    imageUrl: null,
-  },
-  signOut: vi.fn(async () => {}),
-  getToken: vi.fn(async () => null),
-});
 
 // Plain items and radio items, in document order.
 const getMenuItemNames = () =>
@@ -227,5 +227,35 @@ describe("AccountMenu", () => {
       "true",
     );
     expect(getMenuItemNames()[0]).toBe("Lietuvių");
+  });
+
+  it("saves the picked language and theme to the profile when signed in", async () => {
+    const user = userEvent.setup();
+    renderMenu("lt", "/lt/dashboard");
+    await user.click(
+      screen.getByRole("button", { name: "Paskyra, kalba ir tema" }),
+    );
+
+    await user.click(screen.getByRole("menuitemradio", { name: "Tamsi" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "English" }));
+
+    expect(saveThemeToProfile).toHaveBeenCalledExactlyOnceWith("dark");
+    expect(saveLocaleToProfile).toHaveBeenCalledExactlyOnceWith("en");
+  });
+
+  it("only applies the choice on this device while the user isn't loaded", async () => {
+    const user = userEvent.setup();
+    const { replace } = renderMenu("en", "/en/dashboard", null);
+    await user.click(
+      screen.getByRole("button", { name: "Account, language and theme" }),
+    );
+
+    await user.click(screen.getByRole("menuitemradio", { name: "Dark" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "Lietuvių" }));
+
+    expect(document.documentElement).toHaveClass("dark");
+    expect(replace).toHaveBeenCalledExactlyOnceWith("/lt/dashboard");
+    expect(saveThemeToProfile).not.toHaveBeenCalled();
+    expect(saveLocaleToProfile).not.toHaveBeenCalled();
   });
 });
