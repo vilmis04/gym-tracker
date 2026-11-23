@@ -34,6 +34,7 @@ E04-T03, `20261123213711_add_profiles.sql`. One row per Clerk user; Clerk owns t
 | theme | text not null default `'system'` | `light` \| `dark` \| `system` (check constraint = `THEME_PREFERENCES`) |
 | invite_code | text not null unique | random URL-safe code for buddy invite links (E05-T05); default 96 random bits as 16 base64url characters (`pgcrypto`) |
 | clerk_updated_at | timestamptz not null | Clerk's `updated_at` of the data last written; an older event never overwrites newer data (webhooks can arrive out of order) |
+| preferences_updated_at | timestamptz | E04-T04, `20261123224500_add_profile_preferences_updated_at.sql`: when the user last saved `locale` / `theme` (also the same value again); `null` = never, the values are the defaults. Set by the `profiles_set_preferences_updated_at` trigger (`before update of locale, theme`, `set_preferences_updated_at()`); not writable by users (no column grant), never touched by the Clerk sync. After a sign-in the app applies saved preferences, or saves the device's own while this is `null` |
 | created_at / updated_at | timestamptz not null default `now()` | `updated_at` is set on every update by the `profiles_set_updated_at` trigger (`set_updated_at()`, reusable) |
 
 Writes: only the service role creates, changes the Clerk columns and deletes rows, through two functions (execute revoked from `public`, `anon`, `authenticated`):
@@ -41,7 +42,7 @@ Writes: only the service role creates, changes the Clerk columns and deletes row
 - `sync_profile_from_clerk(incoming_id, incoming_display_name, incoming_email, incoming_clerk_updated_at, incoming_avatar_url default null) returns text` — upsert of the Clerk columns (normalizes email and name; never touches `locale`, `theme`, `invite_code`) unless the stored `clerk_updated_at` is the same or newer or the id is in `deleted_users`. Returns `synced`, `ignored_outdated` (also for a replayed event) or `ignored_deleted`. Used by the Clerk webhook and by the first-request fallback (`getCurrentProfile()`).
 - `delete_profile_from_clerk(incoming_id) returns void` — records the id in `deleted_users` and deletes the profile (missing profile = no-op).
 
-Users (`authenticated`): `select` and `update` of their own row (`id = (select uid())`), with column privileges `grant update (locale, theme)` only (any other column → `42501`); no insert / delete; `anon` has no privileges.
+Users (`authenticated`): `select` and `update` of their own row (`id = (select uid())`), with column privileges `grant update (locale, theme)` only (any other column → `42501`); no insert / delete; `anon` has no privileges. The app writes them with the `savePreferences` Server Action (E04-T04).
 
 ### `deleted_users`
 E04-T03. Ids of Clerk users whose profile was deleted (`user.deleted`), so that a `user.created` / `user.updated` retried after the deletion doesn't recreate it (Clerk never reuses ids). `id text PK`, `deleted_at timestamptz not null default now()`. No personal data besides the id. RLS on with no policies and all privileges revoked from `anon` / `authenticated`: service role only. Full GDPR deletion of related data is E10-T05.

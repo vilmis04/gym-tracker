@@ -50,7 +50,8 @@
 3. Supabase is configured with **Clerk as a third-party auth provider** (E04-T02: local `supabase/config.toml` `[auth.third_party.clerk]`, opt-in via env; staging and production in the Supabase dashboard), and the Clerk instances have the Supabase integration activated, which adds `role: authenticated` to the session token. Supabase verifies the token with the Clerk instance's public keys (JWKS); a forged, expired or other-issuer token gets 401. The Supabase clients pass the Clerk session token as `accessToken`: on the server `createServerClient()` uses `(await auth()).getToken()`; in the browser `useSupabaseBrowserClient()` passes `useAccount()?.getToken` (Clerk's `session.getToken()`) to the tab's one client. No token (signed out, Clerk loading, no Clerk keys) = the `anon` role, which no policy lets read user data (fail closed).
 4. RLS policies use `uid()` (`public.uid()`, `auth.jwt()->>'sub'`, `stable`: the Clerk user id, `text`) as `(select uid())` to identify the user. Supabase's `auth.uid()` casts to uuid and must not be used.
 5. A Clerk webhook (`/api/webhooks/clerk`, verified with the Svix signature; missing/invalid/stale → 401) keeps the `profiles` table in sync (name, email, avatar) on `user.created` / `user.updated` / `user.deleted` (E04-T03). Writes go through the service-role-only SQL function `sync_profile_from_clerk()`, which only applies data newer than the stored `clerk_updated_at` (Clerk retries are unordered; replays change nothing) and ignores deleted users (`deleted_users`). As a fallback for a late webhook, the `(app)` layout's `EnsureProfile` calls `getCurrentProfile()` (`src/lib/profiles/`, React `cache()` per request), which reads the row through RLS and, if it is missing, creates it from `currentUser()` through the same function. Users can update only `locale` and `theme` (column grants).
-6. The service-role key is used **only** for Clerk → `profiles` sync (the webhook handler, and the first-request fallback's write of the verified `currentUser()` data), never to read or write data on a user's behalf.
+6. Preferences (E04-T04): the user's language and theme live on the device (`NEXT_LOCALE` cookie, next-themes' local storage) and in `profiles.locale` / `theme`. Switching in the avatar menu or on `/{locale}/settings` applies on the device first, then the `savePreferences` Server Action (`src/lib/profiles/save-preferences.ts`, `withAction()`, RLS as the user) saves it; `preferences_updated_at` records that the user chose (null = defaults only). After a sign-in, `EnsureProfile` hands the profile's values and the Clerk session id to `ApplySavedPreferences`, which applies them once per session on that device (same path in the saved locale, which writes the cookie; next-themes for the theme), or saves the device's choice for a profile that never had one. The proxy never reads the profile.
+7. The service-role key is used **only** for Clerk → `profiles` sync (the webhook handler, and the first-request fallback's write of the verified `currentUser()` data), never to read or write data on a user's behalf.
 
 ## Code structure
 
@@ -80,15 +81,18 @@ src/
   components/
     ui/                    shadcn primitives (themed)
     common/                app-level shared components (auth/: AuthProvider = ClerkProvider,
-                           useAccount(), useSupabaseBrowserClient(), EnsureProfile; app-shell/, page/,
-                           language/, theme/)
+                           useAccount(), useSupabaseBrowserClient(), EnsureProfile; preferences/:
+                           saving language/theme to profiles, "Saved" toast, ApplySavedPreferences;
+                           app-shell/, page/, language/, theme/)
   features/
     buddies/  sessions/  exercises/  logging/  progress/
       components/  actions.ts  queries.ts  schemas.ts
+    settings/components/   settings page sections (E04-T04)
   lib/
     auth/   (protected routes, Clerk env check, Clerk localization + appearance; E04-T01)
     supabase/ (server.ts, client.ts, admin.ts — service role, webhook/admin jobs only)
-    profiles/ (getCurrentProfile(), Clerk → profiles sync, webhook payload schemas; E04-T03)
+    profiles/ (getCurrentProfile(), Clerk → profiles sync, webhook payload schemas; E04-T03;
+               savePreferences() Server Action, E04-T04)
     i18n/   (locales, next-intl routing + request config + navigation, messages, time zone, format/ presets)
     tags/   (auto-tag rules)
     utils/

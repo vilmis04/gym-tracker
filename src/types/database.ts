@@ -35,6 +35,7 @@ export type Database = {
           id: string;
           invite_code: string;
           locale: string;
+          preferences_updated_at: string | null;
           theme: string;
           updated_at: string;
         };
@@ -48,6 +49,7 @@ export type Database = {
           id: string;
           invite_code?: string;
           locale?: string;
+          preferences_updated_at?: string | null;
           theme?: string;
           updated_at?: string;
         };
@@ -60,6 +62,7 @@ export type Database = {
           id?: string;
           invite_code?: string;
           locale?: string;
+          preferences_updated_at?: string | null;
           theme?: string;
           updated_at?: string;
         };

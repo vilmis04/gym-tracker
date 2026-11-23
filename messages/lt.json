@@ -11,7 +11,9 @@
     "themeLight": "Šviesi",
     "themeDark": "Tamsi",
     "themeSystem": "Kaip sistemoje",
-    "tryAgain": "Bandyti dar kartą"
+    "tryAgain": "Bandyti dar kartą",
+    "preferencesSaved": "Išsaugota",
+    "preferencesNotSaved": "Nepavyko išsaugoti paskyroje. Pakeitimas galioja tik šiame įrenginyje."
   },
   "nav": {
     "mainLabel": "Pagrindinė",
@@ -48,7 +50,17 @@
     "emptyState": "Čia matysite savo treniruočių draugus ir draugystės kvietimus."
   },
   "settings": {
-    "emptyState": "Čia bus paskyros, kalbos ir temos nustatymai."
+    "accountTitle": "Paskyra",
+    "name": "Vardas",
+    "email": "El. paštas",
+    "managedByGoogle": "Tvarko „Google“: vardas, el. paštas ir nuotrauka gaunami iš jūsų „Google“ paskyros.",
+    "manageAccount": "Tvarkyti paskyrą",
+    "preferencesTitle": "Nuostatos",
+    "preferencesDescription": "Išsaugomos jūsų paskyroje, todėl galioja kiekviename įrenginyje, kuriame prisijungiate.",
+    "dataTitle": "Jūsų duomenys",
+    "dataComingSoon": "Netrukus: galėsite atsisiųsti visus savo įrašus arba ištrinti paskyrą su visais jos duomenimis.",
+    "exportData": "Eksportuoti duomenis",
+    "deleteAccount": "Ištrinti paskyrą"
   },
   "errors": {
     "unauthorized": "Prisijunkite, kad galėtumėte tęsti.",

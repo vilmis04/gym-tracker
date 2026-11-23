@@ -19,13 +19,18 @@ export interface AccountUser {
 }
 
 /**
- * What app components need from the auth provider: who, how to leave, and
- * the token that identifies them to Supabase.
+ * What app components need from the auth provider: who, how to leave or
+ * manage the account, and the token that identifies them to Supabase.
  */
 export interface Account {
   user: AccountUser;
   /** Ends the Clerk session, then opens `redirectUrl`. */
   signOut: (redirectUrl: string) => Promise<void>;
+  /**
+   * Opens Clerk's account management (E04-T04) in a dialog: the connected
+   * Google account, signed-in devices.
+   */
+  openAccountManagement: () => void;
   /**
    * The current Clerk session token for Supabase (E04-T02), `null` once
    * signed out. Use it through `useSupabaseBrowserClient()`.

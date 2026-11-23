@@ -8,6 +8,10 @@ import { useId, useMemo } from "react";
 import { useAccount } from "@/components/common/auth/account-context";
 import { useLocaleSwitch } from "@/components/common/language/use-locale-switch";
 import {
+  saveLocaleToProfile,
+  saveThemeToProfile,
+} from "@/components/common/preferences/preference-saving";
+import {
   THEME_PREFERENCE_OPTIONS,
   THEME_PREFERENCES,
   themePreferenceSchema,
@@ -40,18 +44,23 @@ import { getAppPath } from "./nav-items";
  * Picking a language opens the same page (query included) in that language
  * and remembers it in the `NEXT_LOCALE` cookie, like the `LanguageSwitcher`
  * on the landing page; picking a theme applies it at once and keeps the menu
- * open, so the user can compare. Signing out ends the Clerk session and
- * opens the landing page.
+ * open, so the user can compare. Once the user is loaded, both choices are
+ * also saved to their profile (E04-T04), which follows them to other
+ * devices; `PreferenceSaveToast` confirms it. Signing out ends the Clerk
+ * session and opens the landing page.
  */
 export function AccountMenu() {
-  // TODO(E04-T04): pass `onLocaleChange` to save it to profiles.locale.
-  const { locale, switchLocale } = useLocaleSwitch();
+  const account = useAccount();
+  const isSignedIn = account !== null;
+  const { locale, switchLocale } = useLocaleSwitch({
+    onLocaleChange: isSignedIn ? saveLocaleToProfile : undefined,
+  });
   const translateCommon = useTranslations("common");
   const translateNav = useTranslations("nav");
-  // TODO(E04-T04): pass `onThemePreferenceChange` to save it to profiles.theme.
-  const { themePreference, setThemePreference } = useThemePreference();
+  const { themePreference, setThemePreference } = useThemePreference({
+    onThemePreferenceChange: isSignedIn ? saveThemeToProfile : undefined,
+  });
   const translateAuth = useTranslations("auth");
-  const account = useAccount();
   const languageLabelId = useId();
   const themeLabelId = useId();
 
@@ -159,7 +168,7 @@ export function AccountMenu() {
             {translateNav("settings")}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={account === null} onSelect={handleSignOut}>
+        <DropdownMenuItem disabled={!isSignedIn} onSelect={handleSignOut}>
           <LogOut aria-hidden="true" size={20} strokeWidth={1.5} />
           {translateAuth("signOut")}
         </DropdownMenuItem>

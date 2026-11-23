@@ -11,7 +11,9 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "preferencesSaved": "Saved",
+    "preferencesNotSaved": "Couldn’t sync to your account. The change applies on this device only."
   },
   "nav": {
     "mainLabel": "Main",
@@ -48,7 +50,17 @@
     "emptyState": "Your gym buddies and buddy requests will appear here."
   },
   "settings": {
-    "emptyState": "Account, language and theme settings will appear here."
+    "accountTitle": "Account",
+    "name": "Name",
+    "email": "Email",
+    "managedByGoogle": "Managed by Google: your name, email and photo come from your Google account.",
+    "manageAccount": "Manage account",
+    "preferencesTitle": "Preferences",
+    "preferencesDescription": "Saved to your account, so they follow you to every device you sign in on.",
+    "dataTitle": "Your data",
+    "dataComingSoon": "Coming soon: download everything you’ve logged, or delete your account and all its data.",
+    "exportData": "Export data",
+    "deleteAccount": "Delete account"
   },
   "errors": {
     "unauthorized": "Please sign in to continue.",

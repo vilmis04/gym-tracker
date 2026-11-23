@@ -27,6 +27,7 @@ export function ClerkAccountProvider({ children }: { children: ReactNode }) {
         imageUrl: user.hasImage ? user.imageUrl : null,
       },
       signOut: (redirectUrl) => clerk.signOut({ redirectUrl }),
+      openAccountManagement: () => clerk.openUserProfile(),
       // Reads the session when called, not when the account was built, so a
       // token is never served after sign-out; Clerk caches and refreshes it.
       getToken: async () => (await clerk.session?.getToken()) ?? null,

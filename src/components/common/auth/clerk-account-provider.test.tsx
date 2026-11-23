@@ -5,6 +5,7 @@ import {
   getToken,
   MOCK_SESSION_TOKEN,
   mockSignedInUser,
+  openUserProfile,
   signOut,
   useClerk,
 } from "@tests/helpers/clerk-mock";
@@ -75,6 +76,15 @@ describe("ClerkAccountProvider", () => {
     expect(signOut).toHaveBeenCalledExactlyOnceWith({ redirectUrl: "/en" });
   });
 
+  it("opens Clerk's account management", () => {
+    mockSignedInUser();
+    const account = renderAccountObject();
+
+    account.current?.openAccountManagement();
+
+    expect(openUserProfile).toHaveBeenCalledOnce();
+  });
+
   it("reads the current Clerk session token for Supabase", async () => {
     mockSignedInUser();
     const account = renderAccountObject();
@@ -85,7 +95,11 @@ describe("ClerkAccountProvider", () => {
 
   it("has no token once the Clerk session is gone", async () => {
     mockSignedInUser();
-    const clerk: MockClerk = { signOut, session: { getToken } };
+    const clerk: MockClerk = {
+      signOut,
+      openUserProfile,
+      session: { getToken },
+    };
     useClerk.mockReturnValue(clerk);
     const account = renderAccountObject();
     // Clerk clears `session` on sign-out; an account built before reads it anew.
